@@ -11,85 +11,12 @@ import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"./lib/format";
 import{semanaISO,mesDe,diasEntre}from"./lib/dates";
 import{getSeedCostoTri,calcCosto,calcCostoTri}from"./lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino,pesoOtrosBodega}from"./lib/stock";
+import{Bdg,Fld,KPI,KPIDoble,Bar,Modal,AutoFitText,TablaScrollV,SelectDestino,destinoLabel}from"./components/ui";
 
 /* ─── EXCEL DATA (pre-processed) ─────────────────────────────────────────── */
 const XD={lotes:[],bodega:[],salidas:[],trilla:[],ventas_v:[],ventas_m:[],cb_mes:{},kg_mes:{},c_mes:{}};
 
 
-const Bdg=({label,col,bg})=><span style={tg(col||C.accent,bg)}>{label||"?"}</span>;
-const Fld=({label,children,half,third})=>{const w=third?"calc(33.3% - 8px)":half?"calc(50% - 6px)":"100%";return(<div style={{marginBottom:13,width:w,display:"inline-block",verticalAlign:"top",marginRight:half||third?"12px":"0"}}><label style={S.lbl}>{label}</label>{children}</div>);};
-// Claves fijas de destino (no dependen de texto/tildes) — usar SIEMPRE destino_key para logica de traslados, "cliente" solo es texto para mostrar
-const DESTINOS_SALIDA=[{key:"trilla",label:"Trilla"},{key:"blend",label:"Blend"},{key:"bodega_cf",label:"Bodega Cafe Fino"},{key:"trilla_cf",label:"Trilladora Cafe Fino"},{key:"blend_cf",label:"Blend Cafe Fino"},{key:"uba_tostado",label:"UBA Tostado"},{key:"otro",label:"Otro"}];
-const destinoLabel=(key)=>DESTINOS_SALIDA.find(d=>d.key===key)?.label||"";
-const SelectDestino=({value,destinoKey,onChange})=>{const esOtro=!destinoKey||destinoKey==="otro";return(<div><select style={S.select} value={esOtro?"otro":destinoKey} onChange={e=>{const k=e.target.value;onChange(k==="otro"?"":destinoLabel(k)||value,k);}}>{DESTINOS_SALIDA.map(d=>(<option key={d.key} value={d.key}>{d.label}</option>))}</select>{esOtro&&<input style={{...S.input,marginTop:6}} placeholder="Nombre del destino externo..." value={value} onChange={e=>onChange(e.target.value,"otro")}/>}</div>);};
-function KPI({label,value,sub,col,icon}){const c=col||C.accent;return(<div style={{...S.card,marginBottom:0,borderTop:"3px solid "+c}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}><span style={{color:C.textDim,fontSize:11,fontWeight:500,textTransform:"uppercase"}}>{label}</span>{icon&&<span style={{fontSize:18,opacity:.6}}>{icon}</span>}</div><div style={{color:C.navy,fontSize:22,fontWeight:700,lineHeight:1,marginBottom:4}}>{value}</div>{sub&&<div style={{color:C.textFaint,fontSize:11,marginTop:3}}>{sub}</div>}</div>);}
-function KPIDoble({label,kgVal,valorVal,col,icon}){const c=col||C.accent;return(<div style={{...S.card,marginBottom:0,borderTop:"3px solid "+c,display:"flex",flexDirection:"column"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}><span style={{color:C.textDim,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>{label}</span>{icon&&<span style={{fontSize:15,opacity:.5}}>{icon}</span>}</div><div style={{marginBottom:10}}><div style={{color:C.textFaint,fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Kilogramos</div><div style={{color:C.navy,fontSize:22,fontWeight:700,lineHeight:1,fontVariantNumeric:"tabular-nums"}}>{kgVal}</div></div><div style={{borderTop:"1px solid "+C.border,paddingTop:10}}><div style={{color:C.textFaint,fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Valor Total</div><div style={{color:c,fontSize:15,fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{valorVal}</div></div></div>);}
-function Bar({label,value,max,col}){const c=col||C.accent;const p=Math.min(100,(value/max)*100)||0;return(<div style={{marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{color:C.text,fontSize:12}}>{label}</span><span style={{color:c,fontSize:12,fontWeight:600}}>{fmt(value)} kg</span></div><div style={{background:C.bg,borderRadius:4,height:8,border:"1px solid "+C.border,overflow:"hidden"}}><div style={{background:c,width:p+"%",height:"100%",borderRadius:4}}/></div></div>);}
-function Modal({title,onClose,children,wide}){return(<div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}><div style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:28,width:wide?900:580,maxWidth:"95vw",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,paddingBottom:14,borderBottom:"1px solid "+C.border}}><span style={{color:C.navy,fontWeight:700,fontSize:15}}>{title}</span><button style={{...S.btnG,padding:"4px 10px",fontSize:15}} onClick={onClose}>x</button></div>{children}</div></div>);}
-
-function AutoFitText({text,minSize=9,style}){
-  const ref=useRef(null);
-  useLayoutEffect(()=>{
-    const el=ref.current;if(!el||!el.parentElement)return;
-    const par=el.parentElement;
-    let size=13;el.style.fontSize=size+"px";
-    const pad=(parseInt(getComputedStyle(par).paddingLeft)||0)+(parseInt(getComputedStyle(par).paddingRight)||0);
-    const avail=Math.max(par.clientWidth-pad,30);
-    let lo=minSize,hi=13;
-    while(hi-lo>0.4){
-      const mid=Math.round((lo+hi)/2*10)/10;
-      el.style.fontSize=mid+"px";
-      if(el.scrollWidth<=avail)lo=mid; else hi=mid;
-    }
-    el.style.fontSize=lo+"px";
-  },[text]);
-  return <span ref={ref} style={{display:"block",whiteSpace:"nowrap",overflow:"hidden",...(style||{})}}>{text??""}</span>;
-}
-
-function TablaScrollV({children,minWidth,maxHeight=480,botStyle}){
-  const contRef=useRef(null);
-  const thumbRef=useRef(null);
-  const trackRef=useRef(null);
-  const drag=useRef(null);
-  useLayoutEffect(()=>{
-    const cont=contRef.current;const thumb=thumbRef.current;const track=trackRef.current;
-    if(!cont||!thumb||!track)return;
-    // Ocultar scrollbar nativo empujándolo fuera del clip del padre
-    const sbw=cont.offsetWidth-cont.clientWidth;
-    if(sbw>0)cont.style.width='calc(100% + '+sbw+'px)';
-    const update=()=>{
-      const can=cont.scrollHeight>cont.clientHeight;
-      track.style.visibility=can?'visible':'hidden';
-      if(!can)return;
-      const ratio=cont.scrollTop/(cont.scrollHeight-cont.clientHeight);
-      const trkH=track.clientHeight;
-      const tmbH=Math.max(24,(cont.clientHeight/cont.scrollHeight)*trkH);
-      thumb.style.height=tmbH+'px';
-      thumb.style.top=(ratio*(trkH-tmbH))+'px';
-    };
-    cont.addEventListener('scroll',update);
-    const ro=new ResizeObserver(update);ro.observe(cont);
-    update();
-    const onDown=(e)=>{drag.current={y:e.clientY,s:cont.scrollTop};e.preventDefault();};
-    const onMove=(e)=>{if(!drag.current)return;const dy=e.clientY-drag.current.y;const trkH=track.clientHeight;const tmbH=thumb.clientHeight;cont.scrollTop=drag.current.s+(dy/(trkH-tmbH))*(cont.scrollHeight-cont.clientHeight);};
-    const onUp=()=>{drag.current=null;};
-    thumb.addEventListener('mousedown',onDown);
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('mouseup',onUp);
-    return()=>{cont.removeEventListener('scroll',update);ro.disconnect();thumb.removeEventListener('mousedown',onDown);document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
-  },[]);
-  const mh=(botStyle&&botStyle.maxHeight)?botStyle.maxHeight:maxHeight;
-  return(<div style={{display:'flex',alignItems:'stretch',gap:4}}>
-    <div ref={trackRef} style={{width:8,flexShrink:0,borderRadius:4,background:'#e2e8f0',position:'relative',visibility:'hidden',minHeight:20}}>
-      <div ref={thumbRef} style={{position:'absolute',left:0,right:0,top:0,height:0,background:'#94a3b8',borderRadius:4,cursor:'grab',userSelect:'none'}}/>
-    </div>
-    <div style={{flex:1,overflow:'hidden'}}>
-      <div ref={contRef} style={{overflowX:'auto',overflowY:'scroll',maxHeight:mh}}>
-        {children}
-      </div>
-    </div>
-  </div>);
-}
 
 function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino}){
   const [tabDash,setTabDash]=useState("central");const [filtroMesDash,setFiltroMesDash]=useState("todos");const [filtroMesBM,setFiltroMesBM]=useState("todos");const [filtroMesCF,setFiltroMesCF]=useState("todos");const [tabBlends,setTabBlends]=useState("blend");const [filtroMesBlend,setFiltroMesBlend]=useState("todos");const [filtroMesBlendf,setFiltroMesBlendf]=useState("todos");

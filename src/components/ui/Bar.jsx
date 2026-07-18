@@ -1,0 +1,3 @@
+import{C}from"../../theme";
+import{fmt}from"../../lib/format";
+export function Bar({label,value,max,col}){const c=col||C.accent;const p=Math.min(100,(value/max)*100)||0;return(<div style={{marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{color:C.text,fontSize:12}}>{label}</span><span style={{color:c,fontSize:12,fontWeight:600}}>{fmt(value)} kg</span></div><div style={{background:C.bg,borderRadius:4,height:8,border:"1px solid "+C.border,overflow:"hidden"}}><div style={{background:c,width:p+"%",height:"100%",borderRadius:4}}/></div></div>);}

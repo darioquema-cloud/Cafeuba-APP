@@ -1,0 +1,5 @@
+import{S}from"../../theme";
+// Claves fijas de destino (no dependen de texto/tildes) — usar SIEMPRE destino_key para logica de traslados, "cliente" solo es texto para mostrar
+const DESTINOS_SALIDA=[{key:"trilla",label:"Trilla"},{key:"blend",label:"Blend"},{key:"bodega_cf",label:"Bodega Cafe Fino"},{key:"trilla_cf",label:"Trilladora Cafe Fino"},{key:"blend_cf",label:"Blend Cafe Fino"},{key:"uba_tostado",label:"UBA Tostado"},{key:"otro",label:"Otro"}];
+export const destinoLabel=(key)=>DESTINOS_SALIDA.find(d=>d.key===key)?.label||"";
+export const SelectDestino=({value,destinoKey,onChange})=>{const esOtro=!destinoKey||destinoKey==="otro";return(<div><select style={S.select} value={esOtro?"otro":destinoKey} onChange={e=>{const k=e.target.value;onChange(k==="otro"?"":destinoLabel(k)||value,k);}}>{DESTINOS_SALIDA.map(d=>(<option key={d.key} value={d.key}>{d.label}</option>))}</select>{esOtro&&<input style={{...S.input,marginTop:6}} placeholder="Nombre del destino externo..." value={value} onChange={e=>onChange(e.target.value,"otro")}/>}</div>);};
