@@ -1,4 +1,4 @@
-import{useState,useMemo,useEffect,useRef,useLayoutEffect}from"react";
+﻿import{useState,useMemo,useEffect,useRef,useLayoutEffect}from"react";
 import*as XLSX from"xlsx";
 import{auth}from"./firebase";
 import{signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut as fbSignOut,signInWithEmailAndPassword,sendPasswordResetEmail,createUserWithEmailAndPassword,getAuth as fbGetAuth}from"firebase/auth";
@@ -12,8 +12,9 @@ const XD={lotes:[],bodega:[],salidas:[],trilla:[],ventas_v:[],ventas_m:[],cb_mes
 
 /* ─── PALETA ──────────────────────────────────────────────────────────────── */
 const C={bg:"#F4F6F9",panel:"#FFFFFF",panel2:"#F8FAFC",border:"#E2E8F0",border2:"#CBD5E1",navy:"#1E3A5F",accent:"#2563EB",accentBg:"#EFF6FF",gold:"#B45309",goldBg:"#FFFBEB",green:"#15803D",greenBg:"#F0FDF4",red:"#DC2626",redBg:"#FEF2F2",orange:"#C2410C",orangeBg:"#FFF7ED",teal:"#0E7490",tealBg:"#ECFEFF",purple:"#7C3AED",purpleBg:"#F5F3FF",text:"#0F172A",textDim:"#64748B",textFaint:"#94A3B8",white:"#FFFFFF"};
-const fmtCOP=n=>n==null||n===""?"":"$ "+Number(n).toLocaleString("es-CO",{minimumFractionDigits:1,maximumFractionDigits:1});
-const fmt=(n,d=0)=>n==null?"":Number(n).toLocaleString("es-CO",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtCOP=n=>(n==null||n===""||isNaN(n))?"":"$ "+Number(n).toLocaleString("es-CO",{minimumFractionDigits:1,maximumFractionDigits:1});
+const fmt=(n,d=0)=>(n==null||isNaN(n))?"":Number(n).toLocaleString("es-CO",{minimumFractionDigits:d,maximumFractionDigits:d});
+const numVal=(v,fallback=0)=>{const n=+v;return isFinite(n)&&!isNaN(n)?n:fallback;};
 const today=()=>new Date().toISOString().slice(0,10);
 const genId=()=>Math.random().toString(36).slice(2,8).toUpperCase();
 const semanaISO=(d)=>{if(!d)return"";const dt=new Date(d+"T00:00:00");dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+3-((dt.getDay()+6)%7));const w1=new Date(dt.getFullYear(),0,4);return 1+Math.round(((dt-w1)/86400000-3+((w1.getDay()+6)%7))/7);};
@@ -22,6 +23,8 @@ const diasEntre=(a,b)=>a&&b?Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:
 const dateToCode=(d)=>{if(!d)return"";const[y,m,dd]=d.split("-");return dd+m+y;};
 const fmtFecha=(d)=>{if(!d||typeof d!=="string")return"—";const p=d.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:d;};
 const pesoATrilladora=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key==="trilla").reduce((s,x)=>s+x.peso_salida,0);
+const SEED_COSTOS_TRI=[{codigo:"PARA CAPITAN MARK 151025",kg:487,costo:37209.35},{codigo:"BOURBON SUAZA 130125",kg:760,costo:32350.93},{codigo:"AGRAZ 2611",kg:470,costo:37052.83},{codigo:"MB 1501",kg:521,costo:41101.73},{codigo:"PARA CAPITAN MARK 151025",kg:1122.3,costo:36916.12},{codigo:"M 491-ESTATE CAPRI Y RIVIERA-2502",kg:593,costo:25923.84},{codigo:"M 494-DESCARTE CON OLOR -0203",kg:697,costo:29412.238},{codigo:"M 497-AR-0603",kg:296,costo:50325.159},{codigo:"M 504-GESHA TAMBO-1803",kg:209,costo:52492.652},{codigo:"M 492-DESCARTE SIN OLOR -2702",kg:1519,costo:35071.96},{codigo:"M 515-DR-2304",kg:499,costo:78620.582},{codigo:"M 526-SD-2505",kg:245,costo:73245.452},{codigo:"M 525-CONSUMO#1-2105",kg:1296,costo:960.877},{codigo:"M 528-MR-0206",kg:170,costo:76991.085},{codigo:"M 530-REGIONAL 1-0406",kg:1000,costo:26195.725},{codigo:"M 531-NR-0806",kg:56,costo:78389.204},{codigo:"M 532-MR-1106",kg:99,costo:62023.978},{codigo:"M 533-LYCHE-1106",kg:92,costo:62921.728},{codigo:"M 534-AGRAZ-1206",kg:47,costo:48926.989},{codigo:"M 537-CC-1806",kg:218,costo:47215.575},{codigo:"M 538-REGIONAL-1906",kg:7692,costo:25259.453},{codigo:"M 540-SD-2406",kg:76,costo:70906.021},{codigo:"M 541-BB-3006",kg:250,costo:41676.702},{codigo:"M 542-AGRAZ-3006",kg:1067,costo:67820.986},{codigo:"M 543-NR-0207",kg:439,costo:47177.156}];
+const getSeedCostoTri=(codigo,kgProducto)=>{const byKg=SEED_COSTOS_TRI.find(r=>r.codigo===codigo&&Math.abs(r.kg-(kgProducto||0))<1);return byKg?.costo||(SEED_COSTOS_TRI.find(r=>r.codigo===codigo)?.costo||0);};
 const pesoATrilladoraCafeFino=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key==="trilla_cf").reduce((s,x)=>s+x.peso_salida,0);
 const pesoOtrosBodega=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key!=="trilla"&&s.destino_key!=="trilla_cf").reduce((s,x)=>s+x.peso_salida,0);
 const FINCAS=["Milan","Buenos Aires","Capri","Riviera","Bascula","Palermo","Marsella","Sta Maria Huila","Externo Huila"];
@@ -49,7 +52,8 @@ const calcCosto=(lote,costos,lotes)=>{
   const totalCereza=(lote.cereza||[]).reduce((s,c)=>s+c.kg*c.valor_kg,0);
   const ins=lote.insumos||{};
   const totalIns=(ins.jugo||0)*(ins.vr_jugo||0)+(ins.panela||0)*(ins.vr_panela||0)+(ins.harina||0)*(ins.vr_harina||0)+(ins.levadura||0)*(ins.vr_levadura||0);
-  const a=totalCereza/lote.kg_producto;
+  // Fallback for direct trilla loads where cereza.valor_kg was not set at import time
+  const a=totalCereza>0?totalCereza/lote.kg_producto:(lote.trilla?.costo_kg_excelso||lote.costo_directo_kg||0);
   const b=totalIns/lote.kg_producto;
   // c: solo aplica a lotes que pasaron por CB (no a lotes manuales de trilla externa)
   let c_val=0;
@@ -145,31 +149,38 @@ function TablaScrollV({children,minWidth,maxHeight=480,botStyle}){
   </div>);
 }
 
-function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
-  const [tabDash,setTabDash]=useState("central");const [mesFiltCB,setMesFiltCB]=useState("todos");
+function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino}){
+  const [tabDash,setTabDash]=useState("central");const [filtroMesDash,setFiltroMesDash]=useState("todos");const [filtroMesBM,setFiltroMesBM]=useState("todos");const [filtroMesCF,setFiltroMesCF]=useState("todos");const [tabBlends,setTabBlends]=useState("blend");const [filtroMesBlend,setFiltroMesBlend]=useState("todos");const [filtroMesBlendf,setFiltroMesBlendf]=useState("todos");
   // ── Central de Procesos — solo lotes de recepción real (excluye carga masiva) ──
   const lotesCP=lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
-  const tkq=lotesCP.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
-  const tp=lotesCP.reduce((s,l)=>s+(l.kg_producto||0),0);
-  const tc=lotesCP.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
+  const lotesCPFilt=filtroMesDash==="todos"?lotesCP:lotesCP.filter(l=>l.mes===filtroMesDash);
+  const tkq=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
+  const tp=lotesCPFilt.reduce((s,l)=>s+(l.kg_producto||0),0);
+  const tc=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
   const tex=lotesCP.filter(l=>l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   const ep=lotesCP.filter(l=>!["Finalizado","Cerrado"].includes(l.estado)).length;
   const tcos=costos.reduce((s,c)=>s+c.valor,0);
   const enBodega=lotesCP.filter(l=>l.estado==="Bodega");
   const kgBodega=enBodega.reduce((s,l)=>{const sal=(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0);return s+(l.kg_producto-sal);},0);
-  const pf={};lotesCP.forEach(l=>l.cereza.forEach(c=>{pf[c.finca]=(pf[c.finca]||0)+c.kg;}));
+  const pf={};lotesCPFilt.forEach(l=>l.cereza.forEach(c=>{pf[c.finca]=(pf[c.finca]||0)+c.kg;}));
   const mf=Math.max(...Object.values(pf),1);
   const pe={};lotes.forEach(l=>{pe[l.estado]=(pe[l.estado]||0)+1;});
   const tr=[18380,25000,45687,80314,91189,92000,95000,88000,103000,110000,118000,125000];
   const mt=Math.max(...tr);const ml=["E","F","M","A","M","J","J","A","S","O","N","D"];
   const ing=tex*1250000;const mg=ing-tc-tcos;
   // ── Bodega Milan ──
-  const lotesBM=lotes.filter(l=>l.kg_producto>0);
-  const bmDetalle=lotesBM.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);return{...l,_stock:l.kg_producto-sal,_salTot:sal};});
+  const lotesBM=lotes.filter(l=>l.kg_producto>0&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
+  const lotesBMFilt=filtroMesBM==="todos"?lotesBM:lotesBM.filter(l=>l.mes===filtroMesBM);
+  const bmDetalle=lotesBMFilt.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);const cst=calcCosto(l,costos,lotes);const ck=cst?cst.total:0;return{...l,_stock:l.kg_producto-sal,_salTot:sal,_costoKg:ck,_costoTotal:ck*l.kg_producto};});
   const bmConStock=bmDetalle.filter(l=>l._stock>0);
-  const bmStockKg=bmConStock.reduce((s,l)=>s+l._stock,0);
+  const bmKgEnt=bmDetalle.reduce((s,l)=>s+l.kg_producto,0);
+  const bmValEnt=bmDetalle.reduce((s,l)=>s+l._costoTotal,0);
+  const bmStockKg=bmDetalle.reduce((s,l)=>s+l._stock,0);
   const bmSalidasKg=bmDetalle.reduce((s,l)=>s+l._salTot,0);
-  const bmValSalidas=lotesBM.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
+  const bmValSalidas=lotesBMFilt.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
+  const bmValStock=bmDetalle.reduce((s,l)=>s+l._stock*l._costoKg,0);
+  const bmPorProd={};bmDetalle.forEach(l=>{const p=l.producto||"Sin Producto";if(!bmPorProd[p])bmPorProd[p]={kgEnt:0,costoTot:0,kgSal:0,kgStock:0};bmPorProd[p].kgEnt+=l.kg_producto;bmPorProd[p].costoTot+=l._costoTotal;bmPorProd[p].kgSal+=l._salTot;bmPorProd[p].kgStock+=l._stock;});
+  const bmProdData=Object.entries(bmPorProd).sort((a,b)=>b[1].kgEnt-a[1].kgEnt).map(([prod,d])=>({prod,kgEnt:d.kgEnt,costoUk:d.kgEnt>0?d.costoTot/d.kgEnt:0,kgSal:d.kgSal,kgStock:d.kgStock}));
   // ── Trilla ──
   const lotesTrilla=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const triExcelso=lotesTrilla.reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
@@ -178,10 +189,16 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
   const triRend=triEntrada>0?((triExcelso/triEntrada)*100).toFixed(1):0;
   // ── Bodega CF ──
   const lotesBCF=(lotesFino||[]).filter(l=>!l.para_trilladora);
-  const bcfEntradas=lotesBCF.reduce((s,l)=>s+(l.kg_producto||0),0);
-  const bcfSalidas=lotesBCF.reduce((s,l)=>s+(l.salidas||[]).reduce((a,si)=>a+si.peso_salida,0),0);
+  const lotesBCFFilt=filtroMesCF==="todos"?lotesBCF:lotesBCF.filter(l=>l.mes===filtroMesCF);
+  const bcfDetalle=lotesBCFFilt.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);const ck=l.costo_compra_kg||0;return{...l,_stock:l.kg_producto-sal,_salTot:sal,_costoKg:ck,_costoTotal:ck*l.kg_producto};});
+  const bcfEntradas=bcfDetalle.reduce((s,l)=>s+l.kg_producto,0);
+  const bcfValEnt=bcfDetalle.reduce((s,l)=>s+l._costoTotal,0);
+  const bcfSalidas=bcfDetalle.reduce((s,l)=>s+l._salTot,0);
+  const bcfValSalidas=lotesBCFFilt.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
   const bcfStock=bcfEntradas-bcfSalidas;
-  const bcfValStock=lotesBCF.reduce((s,l)=>{const sal=(l.salidas||[]).reduce((a,si)=>a+si.peso_salida,0);return s+((l.kg_producto||0)-sal)*(l.costo_compra_kg||0);},0);
+  const bcfValStock=bcfDetalle.reduce((s,l)=>s+l._stock*l._costoKg,0);
+  const bcfPorProd={};bcfDetalle.forEach(l=>{const p=l.producto||"Sin Producto";if(!bcfPorProd[p])bcfPorProd[p]={kgEnt:0,costoTot:0,kgSal:0,kgStock:0};bcfPorProd[p].kgEnt+=l.kg_producto;bcfPorProd[p].costoTot+=l._costoTotal;bcfPorProd[p].kgSal+=l._salTot;bcfPorProd[p].kgStock+=l._stock;});
+  const bcfProdData=Object.entries(bcfPorProd).sort((a,b)=>b[1].kgEnt-a[1].kgEnt).map(([prod,d])=>({prod,kgEnt:d.kgEnt,costoUk:d.kgEnt>0?d.costoTot/d.kgEnt:0,kgSal:d.kgSal,kgStock:d.kgStock}));
   // ── Trilladora CF ──
   const lotesTCF=(lotesFino||[]).filter(l=>l.para_trilladora);
   const tcfExcelso=lotesTCF.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
@@ -191,6 +208,28 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
   const maqAll=maquilas||[];
   const maqActivas=maqAll.filter(m=>m.estado_pipeline!=="entregado");
   const maqKg=maqAll.reduce((s,m)=>s+(m.kg_recibidos||0),0);
+  // ── Blends ──
+  const _stockB=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
+  const blendsAll=blends||[];
+  const blendsFilt=filtroMesBlend==="todos"?blendsAll:blendsAll.filter(b=>mesDe(b.fecha)===filtroMesBlend);
+  const blendsKgTotal=blendsFilt.reduce((s,b)=>s+b.kg_total,0);
+  const blendsValTotal=blendsFilt.reduce((s,b)=>s+(b.valor_total||0),0);
+  const blendsStockKg=blendsFilt.reduce((s,b)=>s+_stockB(b),0);
+  const blendsKgSal=blendsFilt.reduce((s,b)=>s+(b.salidas||[]).reduce((a,si)=>a+si.peso_salida,0),0);
+  const blendsValSal=blendsFilt.reduce((s,b)=>s+(b.salidas||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
+  const blendsPorProd={};blendsFilt.forEach(b=>{const p=b.producto_comercial||b.nombre||"Sin Nombre";if(!blendsPorProd[p])blendsPorProd[p]={count:0,kgTotal:0,valTotal:0,kgSal:0,kgStock:0};blendsPorProd[p].count++;blendsPorProd[p].kgTotal+=b.kg_total;blendsPorProd[p].valTotal+=(b.valor_total||0);blendsPorProd[p].kgSal+=(b.salidas||[]).reduce((a,si)=>a+si.peso_salida,0);blendsPorProd[p].kgStock+=_stockB(b);});
+  const blendsProdData=Object.entries(blendsPorProd).sort((a,b)=>b[1].kgTotal-a[1].kgTotal).map(([prod,d])=>({prod,count:d.count,kgTotal:d.kgTotal,costoUk:d.kgTotal>0?d.valTotal/d.kgTotal:0,kgSal:d.kgSal,kgStock:d.kgStock}));
+  // ── Blends Cafe Fino ──
+  const _stockBF=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
+  const blendsFAll=blendsFino||[];
+  const blendsFfilt=filtroMesBlendf==="todos"?blendsFAll:blendsFAll.filter(b=>mesDe(b.fecha)===filtroMesBlendf);
+  const blendsFKgTotal=blendsFfilt.reduce((s,b)=>s+b.kg_total,0);
+  const blendsFValTotal=blendsFfilt.reduce((s,b)=>s+(b.valor_total||0),0);
+  const blendsFStockKg=blendsFfilt.reduce((s,b)=>s+_stockBF(b),0);
+  const blendsFKgSal=blendsFfilt.reduce((s,b)=>s+(b.salidas||[]).reduce((a,si)=>a+si.peso_salida,0),0);
+  const blendsFValSal=blendsFfilt.reduce((s,b)=>s+(b.salidas||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
+  const blendsFPorProd={};blendsFfilt.forEach(b=>{const p=b.producto_comercial||b.nombre||"Sin Nombre";if(!blendsFPorProd[p])blendsFPorProd[p]={count:0,kgTotal:0,valTotal:0,kgSal:0,kgStock:0};blendsFPorProd[p].count++;blendsFPorProd[p].kgTotal+=b.kg_total;blendsFPorProd[p].valTotal+=(b.valor_total||0);blendsFPorProd[p].kgSal+=(b.salidas||[]).reduce((a,si)=>a+si.peso_salida,0);blendsFPorProd[p].kgStock+=_stockBF(b);});
+  const blendsFProdData=Object.entries(blendsFPorProd).sort((a,b)=>b[1].kgTotal-a[1].kgTotal).map(([prod,d])=>({prod,count:d.count,kgTotal:d.kgTotal,costoUk:d.kgTotal>0?d.valTotal/d.kgTotal:0,kgSal:d.kgSal,kgStock:d.kgStock}));
   // ── UBA Tostado ──
   const tostAll=blendsTostado||[];
   const tostKg=tostAll.reduce((s,t)=>s+(t.kg_tostado||0),0);
@@ -198,40 +237,47 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
   const tostStock=tostKg-tostSal;
   const tostRend=tostAll.length>0?((tostAll.reduce((s,t)=>{const ka=t.kg_a_tostar||0;return s+(ka>0?(t.kg_tostado||0)/ka*100:0);},0)/tostAll.length).toFixed(1)):0;
   // ── Central de Procesos — datos para gráficos (solo lotes reales) ──
-  const cerezaMes={};lotesCP.forEach(l=>{const m=l.mes||mesDe(l.fecha_proceso||l.fecha_recibo)||"otros";cerezaMes[m]=(cerezaMes[m]||0)+l.cereza.reduce((a,c)=>a+c.kg,0);});
+  const cerezaMes={};lotesCPFilt.forEach(l=>{const m=l.mes||mesDe(l.fecha_proceso||l.fecha_recibo)||"otros";cerezaMes[m]=(cerezaMes[m]||0)+l.cereza.reduce((a,c)=>a+c.kg,0);});
   const mesMostrar=MESES.filter(m=>cerezaMes[m]).map(m=>({mes:m,kg:cerezaMes[m]}));
   const fincaData=Object.entries(pf).sort((a,b)=>b[1]-a[1]);
-  const byProd={};lotesCP.forEach(l=>{const p=l.producto||"Sin Producto";if(!byProd[p])byProd[p]={cereza:0,terminado:0,lotes:0};byProd[p].cereza+=l.cereza.reduce((a,c)=>a+c.kg,0);byProd[p].terminado+=l.kg_producto||0;byProd[p].lotes++;});
+  const byProd={};lotesCPFilt.forEach(l=>{const p=l.producto||"Sin Producto";if(!byProd[p])byProd[p]={cereza:0,terminado:0,lotes:0};byProd[p].cereza+=l.cereza.reduce((a,c)=>a+c.kg,0);byProd[p].terminado+=l.kg_producto||0;byProd[p].lotes++;});
   const prodData=Object.entries(byProd).sort((a,b)=>b[1].cereza-a[1].cereza);
   const INS_KEYS=[["jugo","Jugo"],["panela","Panela"],["harina","Harina"],["levadura","Levadura"]];
-  const insumosData=INS_KEYS.map(([k,nombre])=>{const qty=lotesCP.reduce((s,l)=>s+(l.insumos?.[k]||0),0);const val=lotesCP.reduce((s,l)=>{const ins=l.insumos||{};return s+(ins[k]||0)*(ins["vr_"+k]||0);},0);return{nombre,qty,val};});
+  const insumosData=INS_KEYS.map(([k,nombre])=>{const qty=lotesCPFilt.reduce((s,l)=>s+(l.insumos?.[k]||0),0);const val=lotesCPFilt.reduce((s,l)=>{const ins=l.insumos||{};return s+(ins[k]||0)*(ins["vr_"+k]||0);},0);return{nombre,qty,val};});
   const totalInsCP=insumosData.reduce((s,d)=>s+d.val,0);
-  const totalCBCostos=costos.filter(c=>c.centro==="Central de Beneficio").reduce((s,c)=>s+c.valor,0);
-  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(mesFiltCB==="todos"||c.mes===mesFiltCB));
+  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMesDash==="todos"||c.mes===filtroMesDash));
   const cbPorTipo={};cbCosFiltrados.forEach(c=>{cbPorTipo[c.tipo]=(cbPorTipo[c.tipo]||0)+c.valor;});
   const cbPieTotal=Object.values(cbPorTipo).reduce((s,v)=>s+v,0);
   const cbPieData=Object.entries(cbPorTipo).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([tipo,val])=>({tipo,val,pct:cbPieTotal>0?((val/cbPieTotal)*100).toFixed(1):"0.0"}));
   const promA=tp>0?tc/tp:0;
   const promB=tp>0?totalInsCP/tp:0;
-  const promC=tp>0?totalCBCostos/tp:0;
+  const promC=tp>0?cbPieTotal/tp:0;
   const promTotal=promA+promB+promC;
-  const TABS_DASH=[["central","Central de Procesos"],["bodega_milan","Bodega Milan"],["trilla","Trilla"],["bodega_cf","Bodega Cafe Fino"],["trilladora_cf","Trilladora CF"],["maquila","Maquila"],["uba_tostado","UBA Tostado"]];
+  const TABS_DASH=[["central","Central de Procesos"],["bodega_milan","Bodega Milan"],["trilla","Trilla"],["bodega_cf","Bodega Cafe Fino"],["trilladora_cf","Trilladora CF"],["blends","Blends"],["maquila","Maquila"],["uba_tostado","UBA Tostado"]];
   return(<div>
     <div style={{marginBottom:16}}><div style={{color:C.textDim,fontSize:11,fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PLAN MILAN - CENTRAL DE BENEFICIO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Dashboard Ejecutivo</div><div style={{color:C.textDim,fontSize:12,marginTop:3}}>{new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</div></div>
     <div style={{display:"flex",gap:4,marginBottom:20,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
       {TABS_DASH.map(([k,v])=>(<button key={k} onClick={()=>setTabDash(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:12,fontWeight:tabDash===k?700:400,color:tabDash===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabDash===k?"3px solid "+C.accent:"3px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif",whiteSpace:"nowrap"}}>{v}</button>))}
     </div>
     {tabDash==="central"&&(<>
-      {/* ── Tarea 1: KPI Cards ── */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:24}}>
-        {[{label:"Cereza Recibida",value:fmt(tkq)+" kg",sub:lotes.length+" lotes registrados",col:C.teal,icon:"☕"},{label:"Producto Terminado",value:fmt(tp)+" kg",sub:"café seco / pergamino",col:C.accent,icon:"📦"},{label:"Lotes Procesados",value:lotesCP.filter(l=>l.kg_producto>0).length,sub:"con producto terminado",col:C.navy,icon:"🔢"},{label:"Valor Materia Prima",value:fmtCOP(tc),sub:"costo total cereza",col:C.gold,icon:"💰"},{label:"Costo Insumos Proceso",value:fmtCOP(totalInsCP),sub:"jugo · panela · harina · levadura",col:C.purple,icon:"🧪"},{label:"Total Central Beneficio",value:fmtCOP(totalCBCostos),sub:"costos registrados CB",col:C.orange,icon:"📊",fs:18}].map(k=>(
-          <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px",borderLeft:"4px solid "+k.col,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1}}>{k.label}</div>
-              <span style={{fontSize:20}}>{k.icon}</span>
+      {/* ── Filtro global por mes ── */}
+      {(()=>{const mesesDisp=MESES.filter(m=>lotesCP.some(l=>l.mes===m)||costos.some(c=>c.centro==="Central de Beneficio"&&c.mes===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+        <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
+          {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        </div>
+        {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</span>}
+      </div>);})()}
+      {/* ── KPI Cards ── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
+        {[{label:"Cereza Recibida",value:fmt(tkq)+" kg",sub:lotesCPFilt.length+" lotes",col:C.teal,icon:"☕"},{label:"Producto Terminado",value:fmt(tp)+" kg",sub:"café seco / pergamino",col:C.accent,icon:"📦"},{label:"Lotes Procesados",value:lotesCPFilt.filter(l=>l.kg_producto>0).length,sub:"con producto terminado",col:C.navy,icon:"🔢"},{label:"Valor Materia Prima",value:fmtCOP(tc),sub:"costo total cereza",col:C.gold,icon:"💰"},{label:"Costo Insumos",value:fmtCOP(totalInsCP),sub:"jugo·panela·harina·lev",col:C.purple,icon:"🧪"},{label:"Total Costos CB",value:fmtCOP(cbPieTotal),sub:"costos registrados CB",col:C.orange,icon:"📊",fs:15}].map(k=>(
+          <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 10px",borderLeft:"3px solid "+k.col,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.8,lineHeight:1.3}}>{k.label}</div>
+              <span style={{fontSize:14}}>{k.icon}</span>
             </div>
-            <div style={{fontSize:k.fs||26,fontWeight:800,color:k.col,lineHeight:1,marginBottom:4,overflowWrap:"anywhere"}}>{k.value}</div>
-            <div style={{fontSize:11,color:C.textFaint}}>{k.sub}</div>
+            <div style={{fontSize:k.fs||19,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,overflowWrap:"anywhere"}}>{k.value}</div>
+            <div style={{fontSize:9,color:C.textFaint}}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -391,13 +437,9 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
         {/* Pastel: Distribución costos CB */}
         <div style={S.card}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Distribución de Costos — Central de Beneficio</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro de costo</div></div>
-            <select value={mesFiltCB} onChange={e=>setMesFiltCB(e.target.value)} style={{...S.sel,width:"auto",fontSize:11,padding:"4px 8px"}}>
-              <option value="todos">Todos los meses</option>
-              {MESES.filter(m=>costos.some(c=>c.centro==="Central de Beneficio"&&c.mes===m)).map(m=>(<option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
-            </select>
+            <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Distribución de Costos — Central de Beneficio</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro · {filtroMesDash==="todos"?"todos los meses":filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</div></div>
+            <div style={{textAlign:"right"}}><div style={{fontSize:10,color:C.textDim}}>Total</div><div style={{fontSize:14,fontWeight:800,color:C.orange}}>{fmtCOP(cbPieTotal)}</div></div>
           </div>
-          <div style={{textAlign:"right",marginBottom:6,fontSize:12,color:C.textDim}}>Total: <strong style={{color:C.orange}}>{fmtCOP(cbPieTotal)}</strong></div>
           {cbPieData.length===0
             ?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"40px 0"}}>Sin costos registrados para Central de Beneficio.</div>
             :(()=>{
@@ -461,28 +503,64 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
               <div style={{fontSize:15,fontWeight:800,color:r.bold?"#fff":r.col,fontVariantNumeric:"tabular-nums",fontFamily:"Inter,sans-serif"}}>{fmtCOP(r.val)}</div>
             </div>
           ))}
-          <div style={{marginTop:8,padding:"8px 12px",background:C.accentBg,borderRadius:8,fontSize:11,color:C.textDim,textAlign:"center"}}>{lotesCP.filter(l=>l.kg_producto>0).length} lotes · {fmt(tp)} kg totales</div>
+          <div style={{marginTop:8,padding:"8px 12px",background:C.accentBg,borderRadius:8,fontSize:11,color:C.textDim,textAlign:"center"}}>{lotesCPFilt.filter(l=>l.kg_producto>0).length} lotes · {fmt(tp)} kg totales</div>
         </div>
       </div>
     </>)}
     {tabDash==="bodega_milan"&&(<>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:20}}>
-        <KPI label="Lotes con Stock" value={bmConStock.length} sub={lotesBM.length+" lotes total"} col={C.accent}/>
-        <KPI label="Stock kg" value={fmt(bmStockKg)+" kg"} col={C.navy}/>
-        <KPI label="Salidas kg" value={fmt(bmSalidasKg)+" kg"} col={C.orange}/>
-        <KPI label="Valor Salidas" value={fmtCOP(bmValSalidas)} col={C.gold}/>
+      {/* ── Filtro por mes ── */}
+      {(()=>{const mesesBM=MESES.filter(m=>lotesBM.some(l=>l.mes===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+        <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
+          {["todos",...mesesBM].map(m=>(<button key={m} onClick={()=>setFiltroMesBM(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBM===m?C.navy:C.border),background:filtroMesBM===m?C.navy:"transparent",color:filtroMesBM===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBM===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        </div>
+        {filtroMesBM!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesBM.charAt(0).toUpperCase()+filtroMesBM.slice(1)}</span>}
+      </div>);})()}
+      {/* ── 7 KPI Cards ── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:10,marginBottom:18}}>
+        {[{label:"Lotes Entrada",value:bmDetalle.length,sub:lotesBM.length+" lotes total",col:C.navy,icon:"📥"},{label:"kg Entrada",value:fmt(bmKgEnt)+" kg",sub:"café pergamino",col:C.teal,icon:"⚖️"},{label:"Valor Entrada",value:fmtCOP(bmValEnt),sub:"costo total entrada",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(bmSalidasKg)+" kg",sub:"transferido / vendido",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(bmValSalidas),sub:"valor total salidas",col:C.accent,icon:"💸",fs:14},{label:"kg Stock",value:fmt(bmStockKg)+" kg",sub:"disponible en bodega",col:C.green,icon:"🏪"},{label:"Valor Stock",value:fmtCOP(bmValStock),sub:"valorización a costo",col:C.purple,icon:"📊",fs:14}].map(k=>(
+          <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 10px",borderLeft:"3px solid "+k.col,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.8,lineHeight:1.3}}>{k.label}</div>
+              <span style={{fontSize:14}}>{k.icon}</span>
+            </div>
+            <div style={{fontSize:k.fs||19,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,overflowWrap:"anywhere"}}>{k.value}</div>
+            <div style={{fontSize:9,color:C.textFaint}}>{k.sub}</div>
+          </div>
+        ))}
       </div>
-      <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Lotes Bodega Milan</div>
-        {bmDetalle.length===0?<div style={{color:C.textFaint,fontSize:13}}>Sin lotes registrados.</div>:(
-          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["Codigo","Mes","Producto","Entrada kg","Salidas kg","Stock kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-          <tbody>{[...bmDetalle].sort((a,b)=>b._stock-a._stock).map(l=>(<tr key={l.id}>
-            <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.accent,fontSize:11}}>{l.codigo}</td>
-            <td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td>
-            <td style={S.td}><Bdg label={l.producto||"—"} col={C.teal} bg={C.tealBg}/></td>
-            <td style={{...S.td,color:C.navy,fontWeight:600}}>{fmt(l.kg_producto)} kg</td>
-            <td style={{...S.td,color:C.orange}}>{fmt(l._salTot)} kg</td>
-            <td style={S.td}><span style={{color:l._stock>0?C.green:C.textDim,fontWeight:700}}>{fmt(l._stock)} kg</span></td>
-          </tr>))}</tbody></table></TablaScrollV>
+      {/* ── Tabla resumen por producto ── */}
+      <div style={S.card}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Resumen por Producto</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>{bmProdData.length} productos · {bmDetalle.length} lotes en total</div></div>
+          <div style={{display:"flex",gap:18,fontSize:11,color:C.textDim}}>
+            <span>Entrada: <strong style={{color:C.teal}}>{fmt(bmKgEnt)} kg</strong></span>
+            <span>Salidas: <strong style={{color:C.orange}}>{fmt(bmSalidasKg)} kg</strong></span>
+            <span>Stock: <strong style={{color:C.green}}>{fmt(bmStockKg)} kg</strong></span>
+          </div>
+        </div>
+        {bmProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"20px 0"}}>Sin lotes registrados para el periodo seleccionado.</div>:(
+          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:480}}>
+            <thead><tr>{["Producto","kg Entrada","Valor Unitario","kg Salidas","kg Stock"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+            <tbody>
+              {bmProdData.map(d=>(
+                <tr key={d.prod}>
+                  <td style={{...S.td,fontWeight:700}}><Bdg label={d.prod} col={C.teal} bg={C.tealBg}/></td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kgEnt)} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:C.gold,fontVariantNumeric:"tabular-nums"}}>{d.costoUk>0?fmtCOP(d.costoUk):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",color:C.orange,fontVariantNumeric:"tabular-nums"}}>{d.kgSal>0?fmt(d.kgSal)+" kg":"—"}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,fontVariantNumeric:"tabular-nums"}}><span style={{color:d.kgStock>0?C.green:C.textDim}}>{fmt(d.kgStock)} kg</span></td>
+                </tr>
+              ))}
+              <tr style={{background:C.navy}}>
+                <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmt(bmKgEnt)} kg</td>
+                <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.orange,fontVariantNumeric:"tabular-nums"}}>{bmSalidasKg>0?fmt(bmSalidasKg)+" kg":"—"}</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.green,fontVariantNumeric:"tabular-nums"}}>{fmt(bmStockKg)} kg</td>
+              </tr>
+            </tbody>
+          </table></TablaScrollV>
         )}
       </div>
     </>)}
@@ -514,27 +592,59 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
       </div>
     </>)}
     {tabDash==="bodega_cf"&&(<>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:20}}>
-        <KPI label="Lotes CF" value={lotesBCF.length} col={C.accent}/>
-        <KPI label="Entradas kg" value={fmt(bcfEntradas)+" kg"} col={C.navy}/>
-        <KPI label="Salidas kg" value={fmt(bcfSalidas)+" kg"} col={C.orange}/>
-        <KPI label="Stock kg" value={fmt(bcfStock)+" kg"} col={C.green}/>
-        <KPI label="Valor en Stock" value={fmtCOP(bcfValStock)} col={C.gold}/>
+      {/* ── Filtro por mes ── */}
+      {(()=>{const mesesCF=MESES.filter(m=>lotesBCF.some(l=>l.mes===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+        <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
+          {["todos",...mesesCF].map(m=>(<button key={m} onClick={()=>setFiltroMesCF(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesCF===m?C.green:C.border),background:filtroMesCF===m?C.green:"transparent",color:filtroMesCF===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesCF===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        </div>
+        {filtroMesCF!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesCF.charAt(0).toUpperCase()+filtroMesCF.slice(1)}</span>}
+      </div>);})()}
+      {/* ── 7 KPI Cards ── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:10,marginBottom:18}}>
+        {[{label:"Lotes Entrada",value:bcfDetalle.length,sub:lotesBCF.length+" lotes total",col:C.navy,icon:"📥"},{label:"kg Entrada",value:fmt(bcfEntradas)+" kg",sub:"café fino",col:C.teal,icon:"⚖️"},{label:"Valor Entrada",value:fmtCOP(bcfValEnt),sub:"costo total entrada",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(bcfSalidas)+" kg",sub:"transferido / vendido",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(bcfValSalidas),sub:"valor total salidas",col:C.accent,icon:"💸",fs:14},{label:"kg Stock",value:fmt(bcfStock)+" kg",sub:"disponible en bodega",col:C.green,icon:"🏪"},{label:"Valor Stock",value:fmtCOP(bcfValStock),sub:"valorización a costo",col:C.purple,icon:"📊",fs:14}].map(k=>(
+          <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 10px",borderLeft:"3px solid "+k.col,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.8,lineHeight:1.3}}>{k.label}</div>
+              <span style={{fontSize:14}}>{k.icon}</span>
+            </div>
+            <div style={{fontSize:k.fs||19,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,overflowWrap:"anywhere"}}>{k.value}</div>
+            <div style={{fontSize:9,color:C.textFaint}}>{k.sub}</div>
+          </div>
+        ))}
       </div>
-      <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Lotes Cafe Fino</div>
-        {lotesBCF.length===0?<div style={{color:C.textFaint,fontSize:13}}>Sin lotes registrados.</div>:(
-          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:750}}><thead><tr>{["Codigo","Mes","Producto","Proveedor","Entrada kg","Salidas kg","Stock kg","Costo/kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-          <tbody>{lotesBCF.map(l=>{const sal=(l.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);const stock=(l.kg_producto||0)-sal;return(<tr key={l.id}>
-            <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.accent,fontSize:11}}>{l.codigo}</td>
-            <td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td>
-            <td style={S.td}><Bdg label={l.producto||"—"} col={C.teal} bg={C.tealBg}/></td>
-            <td style={S.td}>{l.proveedor||"—"}</td>
-            <td style={{...S.td,color:C.navy,fontWeight:600}}>{fmt(l.kg_producto||0)} kg</td>
-            <td style={{...S.td,color:C.orange}}>{fmt(sal)} kg</td>
-            <td style={S.td}><span style={{color:stock>0?C.green:C.textDim,fontWeight:700}}>{fmt(stock)} kg</span></td>
-            <td style={{...S.td,color:C.gold}}>{fmtCOP(l.costo_compra_kg||0)}</td>
-          </tr>);})}
-          </tbody></table></TablaScrollV>
+      {/* ── Tabla resumen por producto ── */}
+      <div style={S.card}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Resumen por Producto</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>{bcfProdData.length} productos · {bcfDetalle.length} lotes en total</div></div>
+          <div style={{display:"flex",gap:18,fontSize:11,color:C.textDim}}>
+            <span>Entrada: <strong style={{color:C.teal}}>{fmt(bcfEntradas)} kg</strong></span>
+            <span>Salidas: <strong style={{color:C.orange}}>{fmt(bcfSalidas)} kg</strong></span>
+            <span>Stock: <strong style={{color:C.green}}>{fmt(bcfStock)} kg</strong></span>
+          </div>
+        </div>
+        {bcfProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"20px 0"}}>Sin lotes registrados para el periodo seleccionado.</div>:(
+          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:480}}>
+            <thead><tr>{["Producto","kg Entrada","Valor Unitario","kg Salidas","kg Stock"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+            <tbody>
+              {bcfProdData.map(d=>(
+                <tr key={d.prod}>
+                  <td style={{...S.td,fontWeight:700}}><Bdg label={d.prod} col={C.green} bg={C.greenBg}/></td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kgEnt)} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:C.gold,fontVariantNumeric:"tabular-nums"}}>{d.costoUk>0?fmtCOP(d.costoUk):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",color:C.orange,fontVariantNumeric:"tabular-nums"}}>{d.kgSal>0?fmt(d.kgSal)+" kg":"—"}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,fontVariantNumeric:"tabular-nums"}}><span style={{color:d.kgStock>0?C.green:C.textDim}}>{fmt(d.kgStock)} kg</span></td>
+                </tr>
+              ))}
+              <tr style={{background:C.navy}}>
+                <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmt(bcfEntradas)} kg</td>
+                <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.orange,fontVariantNumeric:"tabular-nums"}}>{bcfSalidas>0?fmt(bcfSalidas)+" kg":"—"}</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.green,fontVariantNumeric:"tabular-nums"}}>{fmt(bcfStock)} kg</td>
+              </tr>
+            </tbody>
+          </table></TablaScrollV>
         )}
       </div>
     </>)}
@@ -559,6 +669,196 @@ function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado}){
           </tbody></table></TablaScrollV>
         )}
       </div>
+    </>)}
+    {tabDash==="blends"&&(<>
+      {/* ── Sub-tabs Blend / Blend Cafe Fino ── */}
+      <div style={{display:"flex",gap:6,marginBottom:20,borderBottom:"2px solid "+C.border}}>
+        {[["blend","Blend"],["blend_fino","Blend Cafe Fino"]].map(([k,v])=>(<button key={k} onClick={()=>setTabBlends(k)} style={{padding:"7px 18px",cursor:"pointer",fontSize:12,fontWeight:tabBlends===k?700:400,color:tabBlends===k?C.purple:C.textDim,background:"transparent",border:"none",borderBottom:tabBlends===k?"3px solid "+C.purple:"3px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif",whiteSpace:"nowrap"}}>{v}</button>))}
+      </div>
+      {/* ── Subsección Blend ── */}
+      {tabBlends==="blend"&&(<>
+        {/* Filtro mes */}
+        {(()=>{const mesesB=MESES.filter(m=>blendsAll.some(b=>mesDe(b.fecha)===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+          <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
+            {["todos",...mesesB].map(m=>(<button key={m} onClick={()=>setFiltroMesBlend(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlend===m?C.purple:C.border),background:filtroMesBlend===m?C.purple:"transparent",color:filtroMesBlend===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlend===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          </div>
+          {filtroMesBlend!=="todos"&&<span style={{fontSize:11,color:C.purple,fontWeight:700,whiteSpace:"nowrap",background:C.purpleBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesBlend.charAt(0).toUpperCase()+filtroMesBlend.slice(1)}</span>}
+        </div>);})()}
+        {/* KPI Cards */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
+          {[{label:"Blends Creados",value:blendsFilt.length,sub:"periodo seleccionado",col:C.navy,icon:"🔀"},{label:"kg Producidos",value:fmt(blendsKgTotal)+" kg",sub:"acumulado",col:C.teal,icon:"⚖️"},{label:"Valor Producido",value:fmtCOP(blendsValTotal),sub:"costo total",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(blendsKgSal)+" kg",sub:"despachado",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(blendsValSal),sub:"facturado salidas",col:C.accent,icon:"💸",fs:14},{label:"kg en Stock",value:fmt(blendsStockKg)+" kg",sub:"disponible",col:C.green,icon:"🏪"}].map(k=>(
+            <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 10px",borderLeft:"3px solid "+k.col,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                <div style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.8,lineHeight:1.3}}>{k.label}</div>
+                <span style={{fontSize:14}}>{k.icon}</span>
+              </div>
+              <div style={{fontSize:k.fs||19,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,overflowWrap:"anywhere"}}>{k.value}</div>
+              <div style={{fontSize:9,color:C.textFaint}}>{k.sub}</div>
+            </div>
+          ))}
+        </div>
+        {/* Gráfico dona + Tabla */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1.6fr",gap:16,marginBottom:0}}>
+          <div style={S.card}>
+            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Participación por Producto</div>
+            <div style={{fontSize:11,color:C.textDim,marginBottom:14}}>% sobre kg producidos</div>
+            {blendsProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"30px 0"}}>Sin datos</div>:(()=>{
+              const PCOLS=[C.purple,C.navy,C.teal,C.accent,C.green,C.gold,C.orange,"#e11d48","#0369a1","#059669"];
+              const cx=90,cy=90,ro=72,ri=38;
+              const total=blendsProdData.reduce((s,d)=>s+d.kgTotal,0);
+              if(total===0)return<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"30px 0"}}>Sin datos</div>;
+              if(blendsProdData.length===1){const col=PCOLS[0];const d=blendsProdData[0];return(<svg viewBox="0 0 340 195" width="100%" style={{display:"block"}}>
+                <circle cx={cx} cy={cy} r={ro} fill={col} opacity="0.9"/>
+                <circle cx={cx} cy={cy} r={ri} fill={C.panel}/>
+                <text x={cx} y={cy-6} textAnchor="middle" fontSize="11" fill={col} fontWeight="800" fontFamily="Inter,sans-serif">100%</text>
+                <text x={cx} y={cy+8} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(d.kgTotal)} kg</text>
+                <rect x="195" y="15" width="11" height="11" fill={col} rx="2"/>
+                <text x="211" y="24" fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">{d.prod.length>20?d.prod.slice(0,19)+"…":d.prod}</text>
+                <text x="336" y="24" textAnchor="end" fontSize="10" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">100%</text>
+              </svg>);}
+              let cum=0;
+              const slices=blendsProdData.map((d,i)=>{const frac=d.kgTotal/total;const s0=cum*2*Math.PI;cum+=frac;const s1=cum*2*Math.PI;const x1=cx+ro*Math.cos(s0-Math.PI/2),y1=cy+ro*Math.sin(s0-Math.PI/2);const x2=cx+ro*Math.cos(s1-Math.PI/2),y2=cy+ro*Math.sin(s1-Math.PI/2);const xi1=cx+ri*Math.cos(s1-Math.PI/2),yi1=cy+ri*Math.sin(s1-Math.PI/2);const xi2=cx+ri*Math.cos(s0-Math.PI/2),yi2=cy+ri*Math.sin(s0-Math.PI/2);const path=`M${x1.toFixed(2)},${y1.toFixed(2)} A${ro},${ro} 0 ${(s1-s0)>Math.PI?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi1.toFixed(2)},${yi1.toFixed(2)} A${ri},${ri} 0 ${(s1-s0)>Math.PI?1:0} 0 ${xi2.toFixed(2)},${yi2.toFixed(2)} Z`;const mid=(s0+s1)/2-Math.PI/2;const pct=((frac)*100).toFixed(1);return{...d,path,col:PCOLS[i%PCOLS.length],frac,mid,pct};});
+              const vH=Math.max(195,40+blendsProdData.length*22);
+              return(<svg viewBox={`0 0 340 ${vH}`} width="100%" style={{display:"block"}}>
+                <circle cx={cx} cy={cy} r={ro+2} fill={C.bg} stroke={C.border} strokeWidth="1"/>
+                {slices.map(s=>(<path key={s.prod} d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2" opacity="0.92"/>))}
+                {slices.map(s=>s.frac>0.05&&(<text key={s.prod+"t"} x={(cx+(ro*0.63)*Math.cos(s.mid)).toFixed(2)} y={(cy+(ro*0.63)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">{s.pct}%</text>))}
+                <text x={cx} y={cy-5} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(total)}</text>
+                <text x={cx} y={cy+7} textAnchor="middle" fontSize="8" fill={C.textFaint} fontFamily="Inter,sans-serif">kg total</text>
+                {slices.map((s,i)=>{const ry=22+i*22;const label=s.prod.length>18?s.prod.slice(0,17)+"…":s.prod;return(<g key={s.prod+"l"}>
+                  <rect x="195" y={ry-9} width="11" height="11" fill={s.col} rx="2" opacity="0.9"/>
+                  <text x="211" y={ry} fontSize="9.5" fill={C.text} fontFamily="Inter,sans-serif">{label}</text>
+                  <text x="336" y={ry} textAnchor="end" fontSize="9.5" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>
+                </g>);})}
+              </svg>);
+            })()}
+          </div>
+          <div style={S.card}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Resumen por Producto</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>{blendsProdData.length} productos · {blendsFilt.length} blends</div></div>
+              <div style={{display:"flex",gap:14,fontSize:11,color:C.textDim}}>
+                <span>Stock: <strong style={{color:C.green}}>{fmt(blendsStockKg)} kg</strong></span>
+              </div>
+            </div>
+            {blendsProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"20px 0"}}>Sin blends registrados.</div>:(
+              <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead><tr>{["Producto Comercial","Blends","kg Producidos","Costo/kg","kg Salidas","kg Stock"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+                <tbody>
+                  {blendsProdData.map(d=>(<tr key={d.prod}>
+                    <td style={{...S.td,fontWeight:700}}><Bdg label={d.prod} col={C.purple} bg={C.purpleBg}/></td>
+                    <td style={{...S.td,textAlign:"center",color:C.textDim}}>{d.count}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kgTotal)} kg</td>
+                    <td style={{...S.td,textAlign:"right",color:C.gold,fontVariantNumeric:"tabular-nums"}}>{d.costoUk>0?fmtCOP(d.costoUk):"—"}</td>
+                    <td style={{...S.td,textAlign:"right",color:C.orange,fontVariantNumeric:"tabular-nums"}}>{d.kgSal>0?fmt(d.kgSal)+" kg":"—"}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:700,fontVariantNumeric:"tabular-nums"}}><span style={{color:d.kgStock>0?C.green:C.textDim}}>{fmt(d.kgStock)} kg</span></td>
+                  </tr>))}
+                  <tr style={{background:C.navy}}>
+                    <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                    <td style={{...S.td,textAlign:"center",color:"rgba(255,255,255,0.5)"}}>{blendsFilt.length}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmt(blendsKgTotal)} kg</td>
+                    <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.orange,fontVariantNumeric:"tabular-nums"}}>{blendsKgSal>0?fmt(blendsKgSal)+" kg":"—"}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.green,fontVariantNumeric:"tabular-nums"}}>{fmt(blendsStockKg)} kg</td>
+                  </tr>
+                </tbody>
+              </table></TablaScrollV>
+            )}
+          </div>
+        </div>
+      </>)}
+      {/* ── Subsección Blend Cafe Fino ── */}
+      {tabBlends==="blend_fino"&&(<>
+        {/* Filtro mes */}
+        {(()=>{const mesesBF2=MESES.filter(m=>blendsFAll.some(b=>mesDe(b.fecha)===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+          <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
+            {["todos",...mesesBF2].map(m=>(<button key={m} onClick={()=>setFiltroMesBlendf(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlendf===m?C.green:C.border),background:filtroMesBlendf===m?C.green:"transparent",color:filtroMesBlendf===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlendf===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          </div>
+          {filtroMesBlendf!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesBlendf.charAt(0).toUpperCase()+filtroMesBlendf.slice(1)}</span>}
+        </div>);})()}
+        {/* KPI Cards */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
+          {[{label:"Blends Creados",value:blendsFfilt.length,sub:"periodo seleccionado",col:C.navy,icon:"🔀"},{label:"kg Producidos",value:fmt(blendsFKgTotal)+" kg",sub:"acumulado",col:C.teal,icon:"⚖️"},{label:"Valor Producido",value:fmtCOP(blendsFValTotal),sub:"costo total",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(blendsFKgSal)+" kg",sub:"despachado",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(blendsFValSal),sub:"facturado salidas",col:C.accent,icon:"💸",fs:14},{label:"kg en Stock",value:fmt(blendsFStockKg)+" kg",sub:"disponible",col:C.green,icon:"🏪"}].map(k=>(
+            <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 10px",borderLeft:"3px solid "+k.col,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                <div style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.8,lineHeight:1.3}}>{k.label}</div>
+                <span style={{fontSize:14}}>{k.icon}</span>
+              </div>
+              <div style={{fontSize:k.fs||19,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,overflowWrap:"anywhere"}}>{k.value}</div>
+              <div style={{fontSize:9,color:C.textFaint}}>{k.sub}</div>
+            </div>
+          ))}
+        </div>
+        {/* Gráfico dona + Tabla */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1.6fr",gap:16}}>
+          <div style={S.card}>
+            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Participación por Producto</div>
+            <div style={{fontSize:11,color:C.textDim,marginBottom:14}}>% sobre kg producidos</div>
+            {blendsFProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"30px 0"}}>Sin datos</div>:(()=>{
+              const PCOLS=[C.green,C.teal,C.navy,C.purple,C.accent,C.gold,C.orange,"#e11d48","#0369a1","#059669"];
+              const cx=90,cy=90,ro=72,ri=38;
+              const total=blendsFProdData.reduce((s,d)=>s+d.kgTotal,0);
+              if(total===0)return<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"30px 0"}}>Sin datos</div>;
+              if(blendsFProdData.length===1){const col=PCOLS[0];const d=blendsFProdData[0];return(<svg viewBox="0 0 340 195" width="100%" style={{display:"block"}}>
+                <circle cx={cx} cy={cy} r={ro} fill={col} opacity="0.9"/>
+                <circle cx={cx} cy={cy} r={ri} fill={C.panel}/>
+                <text x={cx} y={cy-6} textAnchor="middle" fontSize="11" fill={col} fontWeight="800" fontFamily="Inter,sans-serif">100%</text>
+                <text x={cx} y={cy+8} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(d.kgTotal)} kg</text>
+                <rect x="195" y="15" width="11" height="11" fill={col} rx="2"/>
+                <text x="211" y="24" fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">{d.prod.length>20?d.prod.slice(0,19)+"…":d.prod}</text>
+                <text x="336" y="24" textAnchor="end" fontSize="10" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">100%</text>
+              </svg>);}
+              let cum=0;
+              const slices=blendsFProdData.map((d,i)=>{const frac=d.kgTotal/total;const s0=cum*2*Math.PI;cum+=frac;const s1=cum*2*Math.PI;const x1=cx+ro*Math.cos(s0-Math.PI/2),y1=cy+ro*Math.sin(s0-Math.PI/2);const x2=cx+ro*Math.cos(s1-Math.PI/2),y2=cy+ro*Math.sin(s1-Math.PI/2);const xi1=cx+ri*Math.cos(s1-Math.PI/2),yi1=cy+ri*Math.sin(s1-Math.PI/2);const xi2=cx+ri*Math.cos(s0-Math.PI/2),yi2=cy+ri*Math.sin(s0-Math.PI/2);const path=`M${x1.toFixed(2)},${y1.toFixed(2)} A${ro},${ro} 0 ${(s1-s0)>Math.PI?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi1.toFixed(2)},${yi1.toFixed(2)} A${ri},${ri} 0 ${(s1-s0)>Math.PI?1:0} 0 ${xi2.toFixed(2)},${yi2.toFixed(2)} Z`;const mid=(s0+s1)/2-Math.PI/2;const pct=((frac)*100).toFixed(1);return{...d,path,col:PCOLS[i%PCOLS.length],frac,mid,pct};});
+              const vH=Math.max(195,40+blendsFProdData.length*22);
+              return(<svg viewBox={`0 0 340 ${vH}`} width="100%" style={{display:"block"}}>
+                <circle cx={cx} cy={cy} r={ro+2} fill={C.bg} stroke={C.border} strokeWidth="1"/>
+                {slices.map(s=>(<path key={s.prod} d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2" opacity="0.92"/>))}
+                {slices.map(s=>s.frac>0.05&&(<text key={s.prod+"t"} x={(cx+(ro*0.63)*Math.cos(s.mid)).toFixed(2)} y={(cy+(ro*0.63)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">{s.pct}%</text>))}
+                <text x={cx} y={cy-5} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(total)}</text>
+                <text x={cx} y={cy+7} textAnchor="middle" fontSize="8" fill={C.textFaint} fontFamily="Inter,sans-serif">kg total</text>
+                {slices.map((s,i)=>{const ry=22+i*22;const label=s.prod.length>18?s.prod.slice(0,17)+"…":s.prod;return(<g key={s.prod+"l"}>
+                  <rect x="195" y={ry-9} width="11" height="11" fill={s.col} rx="2" opacity="0.9"/>
+                  <text x="211" y={ry} fontSize="9.5" fill={C.text} fontFamily="Inter,sans-serif">{label}</text>
+                  <text x="336" y={ry} textAnchor="end" fontSize="9.5" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>
+                </g>);})}
+              </svg>);
+            })()}
+          </div>
+          <div style={S.card}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Resumen por Producto</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>{blendsFProdData.length} productos · {blendsFfilt.length} blends</div></div>
+              <div style={{display:"flex",gap:14,fontSize:11,color:C.textDim}}>
+                <span>Stock: <strong style={{color:C.green}}>{fmt(blendsFStockKg)} kg</strong></span>
+              </div>
+            </div>
+            {blendsFProdData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"20px 0"}}>Sin blends registrados.</div>:(
+              <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead><tr>{["Producto Comercial","Blends","kg Producidos","Costo/kg","kg Salidas","kg Stock"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+                <tbody>
+                  {blendsFProdData.map(d=>(<tr key={d.prod}>
+                    <td style={{...S.td,fontWeight:700}}><Bdg label={d.prod} col={C.green} bg={C.greenBg}/></td>
+                    <td style={{...S.td,textAlign:"center",color:C.textDim}}>{d.count}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kgTotal)} kg</td>
+                    <td style={{...S.td,textAlign:"right",color:C.gold,fontVariantNumeric:"tabular-nums"}}>{d.costoUk>0?fmtCOP(d.costoUk):"—"}</td>
+                    <td style={{...S.td,textAlign:"right",color:C.orange,fontVariantNumeric:"tabular-nums"}}>{d.kgSal>0?fmt(d.kgSal)+" kg":"—"}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:700,fontVariantNumeric:"tabular-nums"}}><span style={{color:d.kgStock>0?C.green:C.textDim}}>{fmt(d.kgStock)} kg</span></td>
+                  </tr>))}
+                  <tr style={{background:C.navy}}>
+                    <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                    <td style={{...S.td,textAlign:"center",color:"rgba(255,255,255,0.5)"}}>{blendsFfilt.length}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmt(blendsFKgTotal)} kg</td>
+                    <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.orange,fontVariantNumeric:"tabular-nums"}}>{blendsFKgSal>0?fmt(blendsFKgSal)+" kg":"—"}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.green,fontVariantNumeric:"tabular-nums"}}>{fmt(blendsFStockKg)} kg</td>
+                  </tr>
+                </tbody>
+              </table></TablaScrollV>
+            )}
+          </div>
+        </div>
+      </>)}
     </>)}
     {tabDash==="maquila"&&(<>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:20}}>
@@ -616,6 +916,11 @@ function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
   const blankForm=()=>({fecha_proceso:today(),tipo:TIPOS[0],producto:"SD",canecas:"",equipo_ferm:EQUIPOS_FERM[0],fecha_lavado:"",notas:""});
   const [rows,setRows]=useState(blankRows());
   const [form,setForm]=useState(blankForm());
+  const [errReg,setErrReg]=useState("");
+  const [busquedaR,setBusquedaR]=useState("");
+  const [filtroMesR,setFiltroMesR]=useState("");
+  const [filtroProductoR,setFiltroProductoR]=useState("");
+  const [filtroTipoR,setFiltroTipoR]=useState("");
   const addRow=()=>setRows(p=>[...p,{finca:FINCAS[0],variedad:"",kg:"",flote:"",kg_proceso:"",valor_kg:""}]);
   const rmRow=i=>setRows(p=>p.filter((_,j)=>j!==i));
   const setRow=(i,k,v)=>setRows(p=>p.map((r,j)=>j===i?{...r,[k]:v}:r));
@@ -626,10 +931,11 @@ function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
   const mesAuto=mesDe(form.fecha_proceso);
   const abrirNuevo=()=>{setEditId(null);setForm(blankForm());setRows(blankRows());setModal(true);};
   const abrirEditar=(l)=>{setEditId(l.id);setForm({fecha_proceso:l.fecha_proceso,tipo:l.tipo,producto:l.producto,canecas:l.canecas||"",equipo_ferm:l.equipo_ferm||EQUIPOS_FERM[0],fecha_lavado:l.fecha_lavado||"",notas:l.notas||""});setRows(l.cereza.map(c=>({finca:c.finca,variedad:c.variedad,kg:c.kg,flote:c.flote,kg_proceso:c.kg_proceso,valor_kg:c.valor_kg})));setModal(true);};
-  const cerrarModal=()=>{setModal(false);setEditId(null);};
+  const cerrarModal=()=>{setModal(false);setEditId(null);setErrReg("");};
   const reg=()=>{
     const v=rows.filter(r=>r.kg&&r.valor_kg);if(!v.length)return;
     const cerezaRows=v.map(r=>({finca:r.finca,variedad:r.variedad,kg:+r.kg,flote:+(r.flote||0),kg_proceso:+(r.kg_proceso||r.kg),valor_kg:+r.valor_kg}));
+    if(!editId){const codNuevo=genCod();if(lotes.some(l=>l.codigo===codNuevo)){setErrReg("Ya existe un lote con el código "+codNuevo+". Cambia la fecha, tipo, producto o variedad para obtener un código único.");return;}setErrReg("");}
     if(editId){
       const loteActual=lotes.find(l=>l.id===editId);
       const codigoNuevo=genCod();
@@ -652,10 +958,29 @@ function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
   const editLote=editId?lotes.find(l=>l.id===editId):null;
   const lotesRecepcion=useMemo(()=>lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual"),[lotes]);
   const lotesOrdenados=useMemo(()=>[...lotesRecepcion].sort((a,b)=>(a.fecha_proceso||a.fecha_recibo||"").localeCompare(b.fecha_proceso||b.fecha_recibo||"")),[lotesRecepcion]);
+  const mesesR=[...new Set(lotesOrdenados.map(l=>l.mes).filter(Boolean))].sort();
+  const productosR=[...new Set(lotesOrdenados.map(l=>l.producto).filter(Boolean))].sort();
+  const tiposR=[...new Set(lotesOrdenados.map(l=>l.tipo).filter(Boolean))].sort();
+  const lotesRecFiltrados=lotesOrdenados.filter(l=>{
+    if(filtroMesR&&l.mes!==filtroMesR)return false;
+    if(filtroProductoR&&l.producto!==filtroProductoR)return false;
+    if(filtroTipoR&&l.tipo!==filtroTipoR)return false;
+    if(busquedaR){const q=busquedaR.toLowerCase();const fi=[...new Set(l.cereza.map(c=>c.finca))];if(!l.codigo.toLowerCase().includes(q)&&!(l.producto||"").toLowerCase().includes(q)&&!fi.some(f=>f.toLowerCase().includes(q)))return false;}
+    return true;
+  });
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.teal,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>OPERACION 01</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Recepcion de Cereza</div></div><button style={S.btn} onClick={abrirNuevo}>+ Nuevo Lote</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}><KPI label="Total Lotes" value={lotesRecepcion.length} col={C.teal}/><KPI label="kg Cereza" value={fmt(lotesRecepcion.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0))+" kg"} col={C.accent}/><KPI label="Valor Total" value={fmtCOP(lotesRecepcion.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0))} col={C.gold}/><KPI label="Fincas" value={[...new Set(lotesRecepcion.flatMap(l=>l.cereza.map(c=>c.finca)))].length} col={C.green}/></div>
-    <div style={S.card}><TablaScrollV minWidth={800}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>{["Codigo","Fecha","Mes","Fincas","kg Cereza","Valor COP","Equipo Ferm.","Proceso","Estado",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{lotesOrdenados.map(l=>{const kg=l.cereza.reduce((a,c)=>a+c.kg,0);const cop=l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0);const fi=[...new Set(l.cereza.map(c=>c.finca))];return(<tr key={l.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",maxWidth:160}}><AutoFitText text={l.codigo}/></td><td style={{...S.td,color:C.textDim}}>{fmtFecha(l.fecha_recibo)}</td><td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td><td style={S.td}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}</div></td><td style={{...S.td,fontWeight:600,color:C.navy}}>{fmt(kg)}</td><td style={{...S.td,color:C.gold,fontWeight:600}}>{fmtCOP(cop)}</td><td style={S.td}><Bdg label={l.equipo_ferm||"-"} col={C.purple} bg={C.purpleBg}/></td><td style={S.td}>{l.tipo} / {l.producto}</td><td style={S.td}><Bdg label={l.estado} col={ECOL[l.estado]||C.textDim} bg={EBG[l.estado]}/></td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditar(l)}>Editar</button></td></tr>);})}</tbody></table></TablaScrollV></div>
+    <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:8}}>
+      <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo, finca, variedad..." value={busquedaR} onChange={e=>setBusquedaR(e.target.value)}/>
+      <select style={{...S.select,width:150}} value={filtroMesR} onChange={e=>setFiltroMesR(e.target.value)}><option value="">Todos los meses</option>{mesesR.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:160}} value={filtroProductoR} onChange={e=>setFiltroProductoR(e.target.value)}><option value="">Todos los productos</option>{productosR.map(p=>(<option key={p}>{p}</option>))}</select>
+      <select style={{...S.select,width:160}} value={filtroTipoR} onChange={e=>setFiltroTipoR(e.target.value)}><option value="">Todos los tipos</option>{tiposR.map(t=>(<option key={t}>{t}</option>))}</select>
+      {(busquedaR||filtroMesR||filtroProductoR||filtroTipoR)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaR("");setFiltroMesR("");setFiltroProductoR("");setFiltroTipoR("");}}>✕ Limpiar</button>}
+      <span style={{color:C.textFaint,fontSize:12}}>{lotesRecFiltrados.length} de {lotesOrdenados.length} lotes</span>
+    </div>
+    {(busquedaR||filtroMesR||filtroProductoR||filtroTipoR)&&lotesRecFiltrados.length>0&&(()=>{const sumKgR=lotesRecFiltrados.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);const sumValR=lotesRecFiltrados.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>LOTES</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{lotesRecFiltrados.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG CEREZA</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumKgR)} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR TOTAL</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValR))}</div></div></div>);})()}
+    <div style={S.card}><TablaScrollV minWidth={800}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>{["Codigo","Fecha","Mes","Fincas","kg Cereza","Valor COP","Equipo Ferm.","Proceso","Estado",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{lotesRecFiltrados.map(l=>{const kg=l.cereza.reduce((a,c)=>a+c.kg,0);const cop=l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0);const fi=[...new Set(l.cereza.map(c=>c.finca))];return(<tr key={l.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",maxWidth:160}}><AutoFitText text={l.codigo}/></td><td style={{...S.td,color:C.textDim}}>{fmtFecha(l.fecha_recibo)}</td><td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td><td style={S.td}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}</div></td><td style={{...S.td,fontWeight:600,color:C.navy}}>{fmt(kg)}</td><td style={{...S.td,color:C.gold,fontWeight:600}}>{fmtCOP(cop)}</td><td style={S.td}><Bdg label={l.equipo_ferm||"-"} col={C.purple} bg={C.purpleBg}/></td><td style={S.td}>{l.tipo} / {l.producto}</td><td style={S.td}><Bdg label={l.estado} col={ECOL[l.estado]||C.textDim} bg={EBG[l.estado]}/></td><td style={S.td}><div style={{display:"flex",gap:6}}><button style={S.btnG} onClick={()=>abrirEditar(l)}>Editar</button>{(()=>{const puedeElim=(l.estado==="Recepcion"||l.estado==="Proceso")&&l.kg_producto===0&&(l.salidas_bodega||[]).length===0;return(<button style={{...S.btnG,color:puedeElim?C.red:C.textFaint,borderColor:puedeElim?C.red+"40":C.border,cursor:puedeElim?"pointer":"not-allowed"}} disabled={!puedeElim} title={!puedeElim?"No se puede eliminar: el lote ya tiene kg o movimientos registrados":""} onClick={()=>{if(window.confirm("¿Eliminar el lote "+l.codigo+"? Esta accion no se puede deshacer."))setLotes(p=>p.filter(x=>x.id!==l.id));}}>Eliminar</button>);})()}</div></td></tr>);})}</tbody></table></TablaScrollV></div>
     {modal&&(<Modal title={editId?"Editar Lote — "+(editLote?.codigo||""):"Nuevo Lote"} onClose={cerrarModal} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha Proceso" half><input style={S.input} type="date" value={form.fecha_proceso} onChange={e=>setForm(p=>({...p,fecha_proceso:e.target.value}))}/></Fld>
@@ -675,6 +1000,7 @@ function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
       </div>
       <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:14}}><span style={{color:C.textDim,fontSize:12}}>Codigo: </span><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:14}}>{genCod()}</span></div>
       <Fld label="Notas"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={form.notas} onChange={e=>setForm(p=>({...p,notas:e.target.value}))}/></Fld>
+      {errReg&&<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:10,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errReg}</div>}
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={cerrarModal}>Cancelar</button><button style={S.btn} onClick={reg}>{editId?"Guardar Cambios":"Registrar Lote"}</button></div>
     </Modal>)}
   </div>);
@@ -726,7 +1052,7 @@ function Procesamiento({lotes,setLotes,costos,lotesFino,setLotesFino}){
     {tab==="proceso"&&(<><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:16}}><KPI label="Lotes en Proceso" value={procesoStats.count} col={C.orange}/><KPI label="kg Cereza en Proceso" value={fmt(procesoStats.kg)+" kg"} col={C.teal}/><KPI label="Valor Cereza en Proceso" value={fmtCOP(procesoStats.valor)} col={C.gold}/></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.5fr",gap:16}}>
       <div><div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Lotes para Procesar</div>{dispP.length===0&&<div style={{color:C.textFaint,fontSize:13}}>Sin lotes.</div>}{dispP.map(l=>{const kg=l.cereza.reduce((a,c)=>a+c.kg,0);return(<div key={l.id} onClick={()=>setSelP(l)} style={{...S.card2,marginBottom:8,cursor:"pointer",borderLeft:"3px solid "+(selP?.id===l.id?C.orange:C.border)}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:12}}>{l.codigo}</span><span style={{color:C.textDim,fontSize:11}}>{fmtFecha(l.fecha_recibo)}</span></div><div style={{color:C.orange,fontSize:12,marginBottom:6}}>{l.tipo} - {l.producto}</div><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{[...new Set(l.cereza.map(c=>c.finca))].map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}<Bdg label={l.equipo_ferm} col={C.purple} bg={C.purpleBg}/><Bdg label={fmt(kg)+" kg"} col={C.gold} bg={C.goldBg}/></div></div>);})}</div>
-      <div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>En Proceso Activo</div>{lotes.filter(l=>l.estado==="Proceso").map(l=>(<div key={l.id} style={{...S.card2,marginBottom:8,borderLeft:"3px solid "+C.orange}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:12}}>{l.codigo}</span><Bdg label="En Proceso" col={C.orange} bg={C.orangeBg}/></div><div style={{color:C.textDim,fontSize:11,marginBottom:8}}>{l.tipo} - {l.canecas} canecas - {l.equipo_ferm}</div><div style={{display:"flex",gap:6}}><button style={{...S.btn,background:C.orange,flex:1,fontSize:12}} onClick={()=>setLotes(p=>p.map(x=>x.id===l.id?{...x,estado:"Secado"}:x))}>Mover a Secado</button><button style={{...S.btnG,fontSize:12}} onClick={()=>{setSelP(l);setFormP({canecas:l.canecas||"",jugo:l.insumos?.jugo||"",panela:l.insumos?.panela||"",harina:l.insumos?.harina||"",levadura:l.insumos?.levadura||"",vr_jugo:l.insumos?.vr_jugo||"",vr_panela:l.insumos?.vr_panela||"",vr_harina:l.insumos?.vr_harina||"",vr_levadura:l.insumos?.vr_levadura||"",notas:l.notas||""});}}>Editar</button></div></div>))}</div></div>
+      <div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>En Proceso Activo</div>{lotes.filter(l=>l.estado==="Proceso").map(l=>(<div key={l.id} style={{...S.card2,marginBottom:8,borderLeft:"3px solid "+C.orange}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:12}}>{l.codigo}</span><Bdg label="En Proceso" col={C.orange} bg={C.orangeBg}/></div><div style={{color:C.textDim,fontSize:11,marginBottom:8}}>{l.tipo} - {l.canecas} canecas - {l.equipo_ferm}</div><div style={{display:"flex",gap:6}}><button style={{...S.btn,background:C.orange,flex:1,fontSize:12}} onClick={()=>setLotes(p=>p.map(x=>x.id===l.id?{...x,estado:"Secado"}:x))}>Mover a Secado</button><button style={{...S.btnG,fontSize:12}} onClick={()=>{setSelP(l);setFormP({canecas:l.canecas||"",jugo:l.insumos?.jugo||"",panela:l.insumos?.panela||"",harina:l.insumos?.harina||"",levadura:l.insumos?.levadura||"",vr_jugo:l.insumos?.vr_jugo||"",vr_panela:l.insumos?.vr_panela||"",vr_harina:l.insumos?.vr_harina||"",vr_levadura:l.insumos?.vr_levadura||"",notas:l.notas||""});}}>Editar</button>{l.kg_producto===0&&(l.salidas_bodega||[]).length===0&&(<button style={{...S.btnG,fontSize:12,color:C.red,borderColor:C.red+"40"}} onClick={()=>{if(window.confirm("¿Eliminar el lote "+l.codigo+"? Esta accion no se puede deshacer."))setLotes(p=>p.filter(x=>x.id!==l.id));}}>Eliminar</button>)}</div></div>))}</div></div>
       <div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:16}}>Registrar Proceso e Insumos</div>
         {!selP?(<div style={{color:C.textFaint,fontSize:13,padding:20}}>Selecciona un lote</div>):(
           <><div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}><div style={{color:C.orange,fontWeight:700}}>{selP.codigo}</div><div style={{color:C.textDim,fontSize:12,marginTop:2}}>{selP.tipo} | {fmt(selP.cereza.reduce((a,c)=>a+c.kg,0))} kg | {selP.equipo_ferm}</div></div>
@@ -851,6 +1177,10 @@ function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubprodPerg})
   const [busqueda,setBusqueda]=useState("");
   const [tab,setTab]=useState("inventario");
   const [zoomTarget,setZoomTarget]=useState(null);
+  const [busquedaSal,setBusquedaSal]=useState("");
+  const [filtroMesSal,setFiltroMesSal]=useState("");
+  const [filtroProdSal,setFiltroProdSal]=useState("");
+  const [filtroDestinoSal,setFiltroDestinoSal]=useState("");
   const lotesB=lotes.filter(l=>l.kg_producto>0&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
   const mesesB=[...new Set(lotesB.map(l=>l.mes).filter(Boolean))].sort();
   const productosB=[...new Set(lotesB.map(l=>l.producto).filter(Boolean))].sort();
@@ -861,6 +1191,18 @@ function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubprodPerg})
     return true;
   });
   const stockDisponible=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0);
+  const DESTI_LABEL_B={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"};
+  const todasSalidasB=lotes.flatMap(l=>(l.salidas_bodega||[]).map(s=>({...s,codigo:l.codigo,loteId:l.id,loteRef:l}))).sort((a,b)=>(a.loteRef.fecha_proceso||"").localeCompare(b.loteRef.fecha_proceso||"")||(a.fecha||"").localeCompare(b.fecha||""));
+  const mesesSalB=[...new Set(todasSalidasB.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
+  const prodsSalB=[...new Set(todasSalidasB.map(s=>s.loteRef.producto).filter(Boolean))].sort();
+  const destiSalB=[...new Set(todasSalidasB.map(s=>s.destino_key).filter(Boolean))];
+  const salidasBodFiltradas=todasSalidasB.filter(s=>{
+    if(filtroMesSal&&mesDe(s.fecha||"")!==filtroMesSal)return false;
+    if(filtroProdSal&&s.loteRef.producto!==filtroProdSal)return false;
+    if(filtroDestinoSal&&s.destino_key!==filtroDestinoSal)return false;
+    if(busquedaSal){const q=busquedaSal.toLowerCase();if(!s.codigo.toLowerCase().includes(q)&&!(s.cliente||"").toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}
+    return true;
+  });
 
   const abrirEditar=(l)=>{setSelLote(l);setFormEditar({kg_producto:l.kg_producto||"",bultos:l.bultos||"",humedad:l.humedad||"",fecha_fin_secado:l.fecha_fin_secado||"",equipo_secado:l.equipo_secado||EQUIPOS_SECADO[0]});setModalEditar(true);};
   const guardarEdicion=()=>{
@@ -883,10 +1225,9 @@ function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubprodPerg})
   };
 
   const regSalida=()=>{
-    if(!selLote||!formSalida.peso_salida){setErrSalida("Ingresa el peso de salida.");return;}
-    const peso=+formSalida.peso_salida;
+    const peso=numVal(formSalida.peso_salida);
+    if(!selLote||!(peso>0)){setErrSalida("Ingresa un peso de salida válido (mayor a 0).");return;}
     const stockBase=stockDisponible(selLote)+(editSalidaId?(selLote.salidas_bodega||[]).find(x=>x.id===editSalidaId)?.peso_salida||0:0);
-    // FIX 1: Validar stock no negativo
     if(peso>stockBase){setErrSalida("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg). No se permite stock negativo.");return;}
     const vkg=+formSalida.valor_kg||0;
     // FIX 2: Registrar valor total y valor/kg
@@ -903,7 +1244,8 @@ function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubprodPerg})
     }
     if(formSalida.destino_key==="trilla_cf"){
       const fSal=formSalida.fecha||today();
-      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:vkg||0,valor_total:vtotal,notas:"Trasladado desde Bodega Milan a Trilladora CF — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,para_trilladora:true,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
+      const ckTri=vkg||calcCosto(selLote,costos,lotes)?.total||0;
+      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:ckTri,valor_total:vtotal,notas:"Trasladado desde Bodega Milan a Trilladora CF — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,para_trilladora:true,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
     }
     setModalSalida(false);setEditSalidaId(null);setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:""});setErrSalida("");
   };
@@ -1024,14 +1366,23 @@ function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubprodPerg})
     {tab==="historico"&&(lotes.some(l=>(l.salidas_bodega||[]).length>0)?(
     <div style={zoomTarget==="sal"?{position:"fixed",inset:0,zIndex:600,background:"rgba(15,23,42,0.75)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}:{}}>
     <div style={zoomTarget==="sal"?{background:C.panel,borderRadius:12,padding:24,width:"98vw",maxHeight:"95vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.4)"}:S.card}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas</span>
         <button style={S.btnG} onClick={()=>setZoomTarget(t=>t==="sal"?null:"sal")}>{zoomTarget==="sal"?"✕ Cerrar":"⛶ Ampliar"}</button>
       </div>
-      <TablaScrollV botStyle={{maxHeight:zoomTarget==="sal"?"calc(95vh - 100px)":"450px",overflowY:"auto"}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}>
+        <input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar por lote, cliente, factura..." value={busquedaSal} onChange={e=>setBusquedaSal(e.target.value)}/>
+        <select style={{...S.select,width:140}} value={filtroMesSal} onChange={e=>setFiltroMesSal(e.target.value)}><option value="">Todos los meses</option>{mesesSalB.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:160}} value={filtroProdSal} onChange={e=>setFiltroProdSal(e.target.value)}><option value="">Todos los productos</option>{prodsSalB.map(p=>(<option key={p}>{p}</option>))}</select>
+        <select style={{...S.select,width:150}} value={filtroDestinoSal} onChange={e=>setFiltroDestinoSal(e.target.value)}><option value="">Todos los destinos</option>{destiSalB.map(d=>(<option key={d} value={d}>{DESTI_LABEL_B[d]||d}</option>))}</select>
+        {(busquedaSal||filtroMesSal||filtroProdSal||filtroDestinoSal)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaSal("");setFiltroMesSal("");setFiltroProdSal("");setFiltroDestinoSal("");}}>✕ Limpiar</button>}
+        <span style={{color:C.textFaint,fontSize:12}}>{salidasBodFiltradas.length} de {todasSalidasB.length} salidas</span>
+      </div>
+      {(busquedaSal||filtroMesSal||filtroProdSal||filtroDestinoSal)&&salidasBodFiltradas.length>0&&(()=>{const sumKgSal=salidasBodFiltradas.reduce((s,x)=>s+x.peso_salida,0);const sumValSal=salidasBodFiltradas.reduce((s,x)=>s+(x.valor_total||0),0);return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{salidasBodFiltradas.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumKgSal)} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR TOTAL</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValSal))}</div></div></div>);})()}
+      <TablaScrollV botStyle={{maxHeight:zoomTarget==="sal"?"calc(95vh - 200px)":"420px",overflowY:"auto"}}>
       <table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}><thead style={{position:"sticky",top:0,zIndex:2,background:C.panel2}}><tr>{["Lote","Fecha","Destino","Factura","Remision","Cliente","Peso Salida","Valor/kg","Valor Total",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{lotes.flatMap(l=>(l.salidas_bodega||[]).map(s=>({...s,codigo:l.codigo,loteId:l.id,loteRef:l}))).sort((a,b)=>(a.loteRef.fecha_proceso||"").localeCompare(b.loteRef.fecha_proceso||"")||(a.fecha||"").localeCompare(b.fecha||"")).map(s=>{
-        const destiLabel={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"}[s.destino_key]||s.destino_key||"-";
+      <tbody>{salidasBodFiltradas.map(s=>{
+        const destiLabel=DESTI_LABEL_B[s.destino_key]||s.destino_key||"-";
         const destiCol={bodega_cf:C.green,trilla_cf:C.teal,muestras:C.purple,blend:C.gold,trilla:C.accent}[s.destino_key]||C.textDim;
         return(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={S.td}><Bdg label={destiLabel} col={destiCol}/></td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,display:"flex",gap:4}}><button style={S.btnG} onClick={()=>abrirEditarSalida(s.loteRef,s)}>Editar</button><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarSalida(s.loteId,s.id)}>Eliminar</button></td></tr>);})}
       </tbody></table></TablaScrollV></div></div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
@@ -1462,6 +1813,7 @@ function BodegaTrilladora({lotes,setLotes,costos,setLotesFino}){
   const [filtroProducto,setFiltroProducto]=useState("");
   const [busqueda,setBusqueda]=useState("");
   const [tab,setTab]=useState("inventario");
+  const [hBusqT,setHBusqT]=useState("");const [hMesT,setHMesT]=useState("");const [hProdT,setHProdT]=useState("");
   const trilledLotes=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const mesesT=[...new Set(trilledLotes.map(l=>l.mes).filter(Boolean))].sort();
   const productosT=[...new Set(trilledLotes.map(l=>l.producto).filter(Boolean))].sort();
@@ -1506,8 +1858,8 @@ function BodegaTrilladora({lotes,setLotes,costos,setLotesFino}){
     setModalSalidaT(true);
   };
   const regSalidaT=()=>{
-    if(!selLoteT||!formSalidaT.peso_salida){setErrSalidaT("Ingresa el peso de salida.");return;}
-    const peso=+formSalidaT.peso_salida;
+    const peso=numVal(formSalidaT.peso_salida);
+    if(!selLoteT||!(peso>0)){setErrSalidaT("Ingresa un peso de salida válido (mayor a 0).");return;}
     const stockBase=stockGrupoDe(selLoteT)+(editSalidaTId?(selLoteT.salidas_trilladora||[]).find(x=>x.id===editSalidaTId)?.peso_salida||0:0);
     if(peso>stockBase){setErrSalidaT("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalidaT.valor_kg||0;
@@ -1582,10 +1934,11 @@ function BodegaTrilladora({lotes,setLotes,costos,setLotesFino}){
         const repr=grupo[0];
         const t=repr.trilla;
         const excelsoGrupo=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
-        const pesoTotalGrupo=grupo.reduce((s,x)=>s+pesoATrilladora(x),0);
-        const costoTotalGrupo=grupo.reduce((s,x)=>{const cl=calcCosto(x,costos,lotes);return s+(cl?cl.total*pesoATrilladora(x):0);},0);
-        const waRate=(key)=>pesoTotalGrupo>0?grupo.reduce((s,x)=>{const cl=calcCosto(x,costos,lotes);return s+((cl?cl[key]:0)*pesoATrilladora(x));},0)/pesoTotalGrupo:null;
-        const aProm=waRate('a'),bProm=waRate('b'),cProm=waRate('c');
+        const efPeso=(x)=>pesoATrilladora(x)||(x.trilla?.kg_excelso||0);
+        const efCostoKg=(x)=>{const p=pesoATrilladora(x);const cl=calcCosto(x,costos,lotes);if(p>0&&cl?.total>0)return cl.total;const stored=x.trilla?.costo_kg_excelso||0;return stored>0?stored:getSeedCostoTri(x.codigo,x.kg_producto);};
+        const pesoEf=grupo.reduce((s,x)=>s+efPeso(x),0);
+        const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
+        const aProm=pesoEf>0?costoTotalGrupo/pesoEf:null;
         const D=calcCostoTri(repr.mes,costos,lotes).costoTriKg;
         const costoKgEx=excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
         const fi=[...new Set(grupo.flatMap(x=>x.cereza.map(c=>c.finca)))];
@@ -1610,7 +1963,7 @@ function BodegaTrilladora({lotes,setLotes,costos,setLotesFino}){
         </tr>);
       })}</tbody></table></TablaScrollV>
     </div></>)}
-    {tab==="historico"&&(trilledLotes.some(l=>(l.salidas_trilladora||[]).length>0)?(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historico de Salidas - Trilladora</div><TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{trilledLotes.flatMap(l=>(l.salidas_trilladora||[]).map(s=>({...s,codigo:l.codigo,loteRef:l}))).sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaT(s.loteRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
+    {tab==="historico"&&(()=>{const todasHT=trilledLotes.flatMap(l=>(l.salidas_trilladora||[]).map(s=>({...s,codigo:l.codigo,producto:l.producto,loteRef:l}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));const mesesHT=[...new Set(todasHT.map(s=>mesDe(s.fecha)).filter(Boolean))].sort();const prodsHT=[...new Set(todasHT.map(s=>s.producto).filter(Boolean))].sort();const filtHT=todasHT.filter(s=>{if(hMesT&&mesDe(s.fecha)!==hMesT)return false;if(hProdT&&s.producto!==hProdT)return false;if(hBusqT){const q=hBusqT.toLowerCase();if(!s.codigo?.toLowerCase().includes(q)&&!s.cliente?.toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}return true;});return todasHT.length===0?(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>):(<div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas - Trilladora</span><span style={{color:C.textFaint,fontSize:12}}>{filtHT.length} de {todasHT.length} salidas</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}><input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar lote, cliente, factura..." value={hBusqT} onChange={e=>setHBusqT(e.target.value)}/><select style={{...S.select,width:140}} value={hMesT} onChange={e=>setHMesT(e.target.value)}><option value="">Todos los meses</option>{mesesHT.map(m=>(<option key={m}>{m}</option>))}</select><select style={{...S.select,width:160}} value={hProdT} onChange={e=>setHProdT(e.target.value)}><option value="">Todos los productos</option>{prodsHT.map(p=>(<option key={p}>{p}</option>))}</select>{(hBusqT||hMesT||hProdT)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setHBusqT("");setHMesT("");setHProdT("");}}>✕ Limpiar</button>}</div>{(hBusqT||hMesT||hProdT)&&filtHT.length>0&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{filtHT.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(filtHT.reduce((s,x)=>s+x.peso_salida,0))} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(filtHT.reduce((s,x)=>s+(x.valor_total||0),0))}</div></div></div>)}<TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{filtHT.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaT(s.loteRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>);})()}
 
     {modalSalidaT&&selLoteT&&(<Modal title={(editSalidaTId?"Editar Salida Trilladora - ":"Registrar Salida Trilladora - ")+selLoteT.codigo} onClose={()=>{setModalSalidaT(false);setEditSalidaTId(null);setErrSalidaT("");}}>
       <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
@@ -1670,6 +2023,10 @@ function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
   const [busqueda,setBusqueda]=useState("");
   const [tab,setTab]=useState("inventario");
   const [poolSel,setPoolSel]=useState([]);
+  const [busquedaBH,setBusquedaBH]=useState("");
+  const [filtroMesBH,setFiltroMesBH]=useState("");
+  const [filtroProductoBH,setFiltroProductoBH]=useState("");
+  const [filtroDestinoBH,setFiltroDestinoBH]=useState("");
 
   const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
   const poolAll=[
@@ -1755,8 +2112,8 @@ function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
   const abrirSalidaB=(b)=>{setSelBlend(b);setEditSalidaBId(null);setFormSalidaB({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:Math.round(b.costo_kg)||"",valor_total:"",observaciones:""});setErrB("");setModalSalidaB(true);};
   const abrirEditarSalidaB=(b,s)=>{setSelBlend(b);setEditSalidaBId(s.id);setFormSalidaB({fecha:s.fecha,factura:s.factura,remision:s.remision,cliente:s.cliente||"",destino_key:s.destino_key||"",peso_salida:s.peso_salida,valor_kg:s.valor_kg,valor_total:s.valor_total,observaciones:s.observaciones||""});setErrB("");setModalSalidaB(true);};
   const regSalidaB=()=>{
-    if(!selBlend||!formSalidaB.peso_salida){setErrB("Ingresa el peso de salida.");return;}
-    const peso=+formSalidaB.peso_salida;
+    const peso=numVal(formSalidaB.peso_salida);
+    if(!selBlend||!(peso>0)){setErrB("Ingresa un peso de salida válido (mayor a 0).");return;}
     const stockBase=stockBlend(selBlend)+(editSalidaBId?(selBlend.salidas||[]).find(x=>x.id===editSalidaBId)?.peso_salida||0:0);
     if(peso>stockBase){setErrB("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalidaB.valor_kg||0;
@@ -1800,6 +2157,18 @@ function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
   const totalKgBlends=blends.reduce((s,b)=>s+b.kg_total,0);
   const totalValBlends=blends.reduce((s,b)=>s+b.valor_total,0);
   const totalValSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).reduce((a,x)=>a+(x.valor_total||0),0),0);
+  const DESTI_LABEL_BL={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"};
+  const todasSalidasBl=blends.flatMap(b=>(b.salidas||[]).filter(s=>!s.auto_blend).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const mesesSalBl=[...new Set(todasSalidasBl.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
+  const nomComSalBl=[...new Set(todasSalidasBl.map(s=>s.blendRef.producto_comercial).filter(Boolean))].sort();
+  const destiSalBl=[...new Set(todasSalidasBl.map(s=>s.destino_key).filter(Boolean))];
+  const salidasBlFiltradas=todasSalidasBl.filter(s=>{
+    if(filtroMesBH&&mesDe(s.fecha||"")!==filtroMesBH)return false;
+    if(filtroProductoBH&&s.blendRef.producto_comercial!==filtroProductoBH)return false;
+    if(filtroDestinoBH&&s.destino_key!==filtroDestinoBH)return false;
+    if(busquedaBH){const q=busquedaBH.toLowerCase();if(!s.codigo.toLowerCase().includes(q)&&!(s.cliente||"").toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}
+    return true;
+  });
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>MEZCLAS</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Blend</div><div style={{color:C.textDim,fontSize:12,marginTop:2}}>Combina excelso de varios lotes en un blend nuevo</div></div><button style={{...S.btn,background:C.purple}} onClick={abrirNuevo}>+ Nuevo Blend</button></div>
@@ -1871,7 +2240,19 @@ function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
       {blendsFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{blends.length===0?'Sin blends registrados. El excelso debe salir de Bodega Trilladora con destino "Blend" para estar disponible aqui.':"Ningun blend coincide con el filtro."}</div>}
     </div></>)}
 
-    {tab==="historico"&&(blends.some(b=>(b.salidas||[]).length>0)?(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historico de Salidas - Blend</div><TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Blend","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{blends.flatMap(b=>(b.salidas||[]).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(s=>(<tr key={s.id}><td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaB(s.blendRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
+    {tab==="historico"&&(blends.some(b=>(b.salidas||[]).filter(s=>!s.auto_blend).length>0)?(<div style={S.card}>
+      <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Historico de Salidas - Blend</div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}>
+        <input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar por blend, cliente, factura..." value={busquedaBH} onChange={e=>setBusquedaBH(e.target.value)}/>
+        <select style={{...S.select,width:140}} value={filtroMesBH} onChange={e=>setFiltroMesBH(e.target.value)}><option value="">Todos los meses</option>{mesesSalBl.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:180}} value={filtroProductoBH} onChange={e=>setFiltroProductoBH(e.target.value)}><option value="">Todos los productos</option>{nomComSalBl.map(p=>(<option key={p}>{p}</option>))}</select>
+        <select style={{...S.select,width:150}} value={filtroDestinoBH} onChange={e=>setFiltroDestinoBH(e.target.value)}><option value="">Todos los destinos</option>{destiSalBl.map(d=>(<option key={d} value={d}>{DESTI_LABEL_BL[d]||d}</option>))}</select>
+        {(busquedaBH||filtroMesBH||filtroProductoBH||filtroDestinoBH)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaBH("");setFiltroMesBH("");setFiltroProductoBH("");setFiltroDestinoBH("");}}>✕ Limpiar</button>}
+        <span style={{color:C.textFaint,fontSize:12}}>{salidasBlFiltradas.length} de {todasSalidasBl.length} salidas</span>
+      </div>
+      {(busquedaBH||filtroMesBH||filtroProductoBH||filtroDestinoBH)&&salidasBlFiltradas.length>0&&(()=>{const sumKgBH=salidasBlFiltradas.reduce((s,x)=>s+x.peso_salida,0);const sumValBH=salidasBlFiltradas.reduce((s,x)=>s+(x.valor_total||0),0);return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{salidasBlFiltradas.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumKgBH)} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR TOTAL</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValBH))}</div></div></div>);})()}
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Blend","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{salidasBlFiltradas.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaB(s.blendRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV>
+    </div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
 
     {modal&&(<Modal title={editId?"Editar Blend":"Nuevo Blend"} onClose={cerrarModal} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
@@ -1961,6 +2342,7 @@ function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostado,lotes
   const [errSalida,setErrSalida]=useState("");
   const [editSalidaId,setEditSalidaId]=useState(null);
   const [tab,setTab]=useState("inventario");
+  const [hBusqF,setHBusqF]=useState("");const [hMesF,setHMesF]=useState("");const [hProdF,setHProdF]=useState("");
   const [filMesB,setFilMesB]=useState("");
   const [filProdB,setFilProdB]=useState("");
   const [busqB,setBusqB]=useState("");
@@ -1998,10 +2380,10 @@ function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostado,lotes
   };
   const abrirEditarSalida=(l,s)=>{setSelLote(l);setEditSalidaId(s.id);setFormSalida({fecha:s.fecha,factura:s.factura,remision:s.remision,cliente:s.cliente||"",destino_key:s.destino_key||"",peso_salida:s.peso_salida,valor_kg:s.valor_kg,valor_total:s.valor_total});setErrSalida("");setModalSalida(true);};
   const regSalida=()=>{
-    if(!selLote||!formSalida.peso_salida){setErrSalida("Ingresa el peso de salida.");return;}
-    // item 8: campo obligatorio cuando destino = UBA Tostado
+    const peso=numVal(formSalida.peso_salida);
+    if(!selLote||!(peso>0)){setErrSalida("Ingresa un peso de salida válido (mayor a 0).");return;}
     if(esUbaTostado&&!formSalida.nombre_producto_tostado){setErrSalida("Para UBA Tostado debes ingresar el Nombre de Producto Comercial Tostado.");return;}
-    const peso=+formSalida.peso_salida;
+
     const stockBase=stockDe(selLote)+(editSalidaId?(selLote.salidas_bodega||[]).find(x=>x.id===editSalidaId)?.peso_salida||0:0);
     if(peso>stockBase){setErrSalida("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalida.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalida.valor_total||0);
@@ -2019,7 +2401,7 @@ function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostado,lotes
     }
     // esBlendFino: salida already recorded in salidas_bodega above; poolBlendFino picks it up automatically
     if(esTrilladoraFino){
-      setLotesFino(p=>[{id:genId(),codigo:selLote.codigo,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),semana:semanaISO(formSalida.fecha),producto:selLote.producto||"",proveedor:"Bodega Café Fino",kg_producto:peso,costo_compra_kg:vkg||0,notas:"Trasladado desde Bodega CF — "+selLote.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:[]},para_trilladora:true},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selLote.codigo,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),semana:semanaISO(formSalida.fecha),producto:selLote.producto||"",proveedor:"Bodega Café Fino",kg_producto:peso,costo_compra_kg:vkg||selLote.costo_compra_kg||0,notas:"Trasladado desde Bodega CF — "+selLote.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:[]},para_trilladora:true},...p]);
     }
     setModalSalida(false);setEditSalidaId(null);setErrSalida("");
     setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",nombre_producto_tostado:""});
@@ -2091,7 +2473,7 @@ function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostado,lotes
       </tr>);})}</tbody></table></TablaScrollV>
       {lotesFiltradosB.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{hayFiltroB?"Sin lotes que coincidan con los filtros.":"Sin lotes registrados todavia."}</div>}
     </div>)}
-    {tab==="historico"&&(lotesBodega.some(l=>(l.salidas_bodega||[]).length>0)?(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historico de Salidas</div><TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote","Fecha","Factura","Remision","Cliente","Peso Salida","Valor/kg","Valor Total",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{lotesBodega.flatMap(l=>(l.salidas_bodega||[]).map(s=>({...s,codigo:l.codigo,loteRef:l}))).sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalida(s.loteRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
+    {tab==="historico"&&(()=>{const todasHF=lotesBodega.flatMap(l=>(l.salidas_bodega||[]).map(s=>({...s,codigo:l.codigo,producto:l.producto,loteRef:l}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));const mesesHF=[...new Set(todasHF.map(s=>mesDe(s.fecha)).filter(Boolean))].sort();const prodsHF=[...new Set(todasHF.map(s=>s.producto).filter(Boolean))].sort();const filtHF=todasHF.filter(s=>{if(hMesF&&mesDe(s.fecha)!==hMesF)return false;if(hProdF&&s.producto!==hProdF)return false;if(hBusqF){const q=hBusqF.toLowerCase();if(!s.codigo?.toLowerCase().includes(q)&&!s.cliente?.toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}return true;});return todasHF.length===0?(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>):(<div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas</span><span style={{color:C.textFaint,fontSize:12}}>{filtHF.length} de {todasHF.length} salidas</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}><input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar lote, cliente, factura..." value={hBusqF} onChange={e=>setHBusqF(e.target.value)}/><select style={{...S.select,width:140}} value={hMesF} onChange={e=>setHMesF(e.target.value)}><option value="">Todos los meses</option>{mesesHF.map(m=>(<option key={m}>{m}</option>))}</select><select style={{...S.select,width:160}} value={hProdF} onChange={e=>setHProdF(e.target.value)}><option value="">Todos los productos</option>{prodsHF.map(p=>(<option key={p}>{p}</option>))}</select>{(hBusqF||hMesF||hProdF)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setHBusqF("");setHMesF("");setHProdF("");}}>✕ Limpiar</button>}</div>{(hBusqF||hMesF||hProdF)&&filtHF.length>0&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{filtHF.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(filtHF.reduce((s,x)=>s+x.peso_salida,0))} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(filtHF.reduce((s,x)=>s+(x.valor_total||0),0))}</div></div></div>)}<TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote","Fecha","Factura","Remision","Cliente","Peso Salida","Valor/kg","Valor Total",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{filtHF.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalida(s.loteRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>);})()}
 
     {modal&&(<Modal title={editId?"Editar Lote Cafe Fino":"Nuevo Lote Cafe Fino"} onClose={()=>setModal(false)}>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
@@ -2156,12 +2538,172 @@ function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostado,lotes
   </div>);
 }
 
-function TrilladoraFino({lotesFino,setLotesFino}){
+function BodegaTrilladoraFino({lotesFino,setLotesFino}){
+  const [selGrupo,setSelGrupo]=useState(null);
+  const [modalSalida,setModalSalida]=useState(false);
+  const [formSalida,setFormSalida]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",observaciones:""});
+  const [errSalida,setErrSalida]=useState("");
+  const [editSalidaId,setEditSalidaId]=useState(null);
+  const [filtroMes,setFiltroMes]=useState("");
+  const [filtroProducto,setFiltroProducto]=useState("");
+  const [busqueda,setBusqueda]=useState("");
+  const [tab,setTab]=useState("inventario");
+  const [hBusqTF,setHBusqTF]=useState("");const [hMesTF,setHMesTF]=useState("");const [hProdTF,setHProdTF]=useState("");
+  const [editCostoId,setEditCostoId]=useState(null);
+  const [editCostoVal,setEditCostoVal]=useState("");
+
+  const trilledFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
+  const mesesBTF=[...new Set(trilledFino.map(l=>mesDe(l.trilla?.fecha_trilla||"")).filter(Boolean))].sort();
+  const productosBTF=[...new Set(trilledFino.map(l=>l.producto).filter(Boolean))].sort();
+  const grupoDeBTF=(l)=>[l,...lotesFino.filter(x=>(l.trilla?.lotes_combinados||[]).includes(x.id))];
+  const stockGrupoBTF=(grupo)=>{const exc=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);const sal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);return exc-sal;};
+  const construirGruposBTF=(arr)=>{const vistos=new Set();const gs=[];arr.forEach(l=>{if(vistos.has(l.id))return;const g=grupoDeBTF(l);g.forEach(x=>vistos.add(x.id));gs.push(g);});return gs;};
+  const costoKgExFinoDe=(grupo)=>{for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}return 0;};
+  const guardarCostoBTF=(grupo,val)=>{const c=+val||0;setLotesFino(p=>p.map(l=>grupo.some(g=>g.id===l.id)?{...l,trilla:{...l.trilla,costo_kg_excelso:c}}:l));setEditCostoId(null);setEditCostoVal("");};
+
+  const todosGrupos=construirGruposBTF(trilledFino);
+  const gruposFiltrados=todosGrupos.filter(grupo=>{
+    if(filtroMes&&mesDe(grupo[0].trilla?.fecha_trilla||"")!==filtroMes)return false;
+    if(filtroProducto&&!grupo.some(l=>l.producto===filtroProducto))return false;
+    if(busqueda){const q=busqueda.toLowerCase();if(!grupo[0].trilla?.nombre_trillado?.toLowerCase().includes(q)&&!grupo.some(l=>l.codigo.toLowerCase().includes(q)))return false;}
+    return true;
+  });
+  const totalExcelsoBTF=trilledFino.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
+  const totalSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
+  const stockTotalBTF=totalExcelsoBTF-totalSalidasBTF;
+  const totalValorSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).reduce((a,b)=>a+(b.valor_total||0),0),0);
+  const valorStockBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g),0);
+
+  const abrirSalidaBTF=(grupo)=>{
+    const reprId=grupo[0].id;
+    const reprFresh=lotesFino.find(l=>l.id===reprId)||grupo[0];
+    const grupoFresh=[reprFresh,...lotesFino.filter(x=>(reprFresh.trilla?.lotes_combinados||[]).includes(x.id))];
+    if(stockGrupoBTF(grupoFresh)<=0)return;
+    const costoKg=costoKgExFinoDe(grupoFresh);
+    const ultimaVenta=grupoFresh.flatMap(x=>x.salidas_trilladora||[]).filter(s=>s.valor_kg>0).slice(-1)[0]?.valor_kg||"";
+    setSelGrupo(grupoFresh);setEditSalidaId(null);
+    setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:costoKg||ultimaVenta,valor_total:"",observaciones:""});
+    setErrSalida("");setModalSalida(true);
+  };
+  const abrirEditarSalidaBTF=(grupo,s)=>{
+    setSelGrupo(grupo);setEditSalidaId(s.id);
+    setFormSalida({fecha:s.fecha,factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"",destino_key:s.destino_key||"",peso_salida:s.peso_salida,valor_kg:s.valor_kg,valor_total:s.valor_total,observaciones:s.observaciones||""});
+    setErrSalida("");setModalSalida(true);
+  };
+  const regSalidaBTF=()=>{
+    const peso=numVal(formSalida.peso_salida);const reprId=selGrupo[0].id;
+    if(!selGrupo||!(peso>0)){setErrSalida("Ingresa un peso de salida válido (mayor a 0).");return;}
+    const stockBase=stockGrupoBTF(selGrupo)+(editSalidaId?(selGrupo[0].salidas_trilladora||[]).find(x=>x.id===editSalidaId)?.peso_salida||0:0);
+    if(peso>stockBase){setErrSalida("ERROR: El peso ("+fmt(peso)+" kg) supera el stock ("+fmt(stockBase)+" kg).");return;}
+    const vkg=+formSalida.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalida.valor_total||0);
+    setLotesFino(p=>p.map(l=>{
+      if(l.id!==reprId)return l;
+      let sal;
+      if(editSalidaId){sal=(l.salidas_trilladora||[]).map(s=>s.id===editSalidaId?{...s,fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalida.observaciones}:s);}
+      else{sal=[...(l.salidas_trilladora||[]),{id:genId(),fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalida.observaciones}];}
+      return{...l,salidas_trilladora:sal};
+    }));
+    setModalSalida(false);setEditSalidaId(null);setErrSalida("");
+  };
+
+  return(<div>
+    <div style={{marginBottom:22}}>
+      <div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>INVENTARIO</div>
+      <div style={{color:C.navy,fontSize:22,fontWeight:700}}>Bodega Trilladora Cafe Fino</div>
+      <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Inventario de cafe excelso fino trillado</div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
+      <KPI label="Excelso Total kg" value={fmt(totalExcelsoBTF)+" kg"} col={C.green}/>
+      <KPI label="Stock Disponible kg" value={fmt(stockTotalBTF)+" kg"} col={C.accent}/>
+      <KPI label="Valor Stock Disponible" value={fmtCOP(Math.round(valorStockBTF))} col={C.gold}/>
+      <KPI label="Valor Salidas" value={fmtCOP(totalValorSalidasBTF)} col={C.purple}/>
+      <KPI label="Costo Prom/kg Ex" value={stockTotalBTF>0?fmtCOP(Math.round(valorStockBTF/stockTotalBTF)):"—"} col={C.teal}/>
+    </div>
+    <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
+      {[["inventario","Inventario"],["historico","Historico de Salidas"]].map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tab===k?600:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+    </div>
+    {tab==="inventario"&&(<>
+      <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+        <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo o corte..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
+        <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesBTF.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m}</option>))}</select>
+        <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosBTF.map(p=>(<option key={p}>{p}</option>))}</select>
+        {(filtroMes||filtroProducto||busqueda)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("");setFiltroProducto("");setBusqueda("");}}>✕ Limpiar</button>}
+        <span style={{color:C.textFaint,fontSize:12}}>{gruposFiltrados.length} de {todosGrupos.length} grupos</span>
+      </div>
+      {(filtroMes||filtroProducto||busqueda)&&(()=>{
+        const sumExc=gruposFiltrados.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.trilla?.kg_excelso||0),0),0);
+        const sumSal=gruposFiltrados.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).reduce((b,c)=>b+c.peso_salida,0),0),0);
+        const sumValSal=gruposFiltrados.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).reduce((b,c)=>b+(c.valor_total||0),0),0),0);
+        const sumValStk=gruposFiltrados.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g),0);
+        return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>GRUPOS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{gruposFiltrados.length}</div></div>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG EXCELSO</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumExc)} kg</div></div>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG STOCK</div><div style={{color:"#6ee7b7",fontWeight:700,fontSize:15}}>{fmt(sumExc-sumSal)} kg</div></div>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR STOCK</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValStk))}</div></div>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumSal)} kg</div></div>
+          <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR SALIDAS</div><div style={{color:"#bbf7d0",fontWeight:700,fontSize:13}}>{fmtCOP(sumValSal)}</div></div>
+        </div>);
+      })()}
+      <div style={S.card}>
+        <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario por Lote</div>
+        <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1000}}><thead><tr>
+          {["Corte / Trillado","Lotes Origen","Fecha Trilla","Mes","Producto","kg Excelso","Salidas kg","Stock kg","Costo/kg Ex","Valor en Stock","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+        </tr></thead>
+        <tbody>{gruposFiltrados.map(grupo=>{
+          const repr=grupo[0];const t=repr.trilla;
+          const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
+          const salTotal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
+          const stock=excelso-salTotal;
+          const costoEx=costoKgExFinoDe(grupo);
+          return(<tr key={repr.id}>
+            <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||repr.codigo}</td>
+            <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
+            <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha_trilla)}</td>
+            <td style={{...S.td,textTransform:"capitalize"}}>{repr.mes}</td>
+            <td style={S.td}><Bdg label={grupo.map(x=>x.producto).filter(Boolean).join("/")||"—"} col={C.navy} bg={C.accentBg}/></td>
+            <td style={{...S.td,fontWeight:600}}>{fmt(excelso)} kg</td>
+            <td style={{...S.td,color:C.orange}}>{salTotal>0?fmt(salTotal)+" kg":"—"}</td>
+            <td style={S.td}><span style={{fontWeight:700,fontSize:14,color:stock>0?C.green:C.textFaint}}>{fmt(stock)} kg</span></td>
+            <td style={{...S.td,color:C.purple,fontWeight:600}}>
+              {editCostoId===repr.id
+                ?(<input autoFocus type="number" style={{width:90,padding:"3px 6px",border:"1px solid "+C.accent,borderRadius:4,fontSize:12,color:C.purple}} value={editCostoVal} onChange={e=>setEditCostoVal(e.target.value)} onBlur={()=>guardarCostoBTF(grupo,editCostoVal)} onKeyDown={e=>{if(e.key==="Enter")guardarCostoBTF(grupo,editCostoVal);if(e.key==="Escape"){setEditCostoId(null);setEditCostoVal("");}}}/>)
+                :(<span title="Clic para editar costo/kg" style={{cursor:"pointer",borderBottom:"1px dashed "+(costoEx?C.purple:C.orange),color:costoEx?C.purple:C.orange}} onClick={()=>{setEditCostoId(repr.id);setEditCostoVal(costoEx||"");}}>{costoEx?fmtCOP(costoEx):"✏ agregar costo"}</span>)}
+            </td>
+            <td style={{...S.td,color:C.gold,fontWeight:700}}>{stock>0&&costoEx?fmtCOP(Math.round(stock*costoEx)):"—"}</td>
+            <td style={S.td}><button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaBTF(grupo)}>+ Salida</button></td>
+          </tr>);
+        })}{gruposFiltrados.length===0&&<tr><td colSpan={11} style={{...S.td,color:C.textFaint,textAlign:"center"}}>Sin lotes trillados registrados todavia.</td></tr>}</tbody></table></TablaScrollV>
+      </div>
+    </>)}
+    {tab==="historico"&&(()=>{const todasHTF=trilledFino.flatMap(l=>(l.salidas_trilladora||[]).map(s=>({...s,corte:l.trilla?.nombre_trillado||l.codigo,loteRef:l,grupo:grupoDeBTF(l)}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));const mesesHTF=[...new Set(todasHTF.map(s=>mesDe(s.fecha)).filter(Boolean))].sort();const prodsHTF=[...new Set(todasHTF.map(s=>s.corte).filter(Boolean))].sort();const filtHTF=todasHTF.filter(s=>{if(hMesTF&&mesDe(s.fecha)!==hMesTF)return false;if(hProdTF&&s.corte!==hProdTF)return false;if(hBusqTF){const q=hBusqTF.toLowerCase();if(!s.corte?.toLowerCase().includes(q)&&!s.cliente?.toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}return true;});return todasHTF.length===0?(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>):(<div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas</span><span style={{color:C.textFaint,fontSize:12}}>{filtHTF.length} de {todasHTF.length} salidas</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}><input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar corte, cliente, factura..." value={hBusqTF} onChange={e=>setHBusqTF(e.target.value)}/><select style={{...S.select,width:140}} value={hMesTF} onChange={e=>setHMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesHTF.map(m=>(<option key={m}>{m}</option>))}</select><select style={{...S.select,width:160}} value={hProdTF} onChange={e=>setHProdTF(e.target.value)}><option value="">Todos los cortes</option>{prodsHTF.map(p=>(<option key={p}>{p}</option>))}</select>{(hBusqTF||hMesTF||hProdTF)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setHBusqTF("");setHMesTF("");setHProdTF("");}}>✕ Limpiar</button>}</div>{(hBusqTF||hMesTF||hProdTF)&&filtHTF.length>0&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{filtHTF.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(filtHTF.reduce((s,x)=>s+x.peso_salida,0))} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(filtHTF.reduce((s,x)=>s+(x.valor_total||0),0))}</div></div></div>)}<TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote/Corte","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{filtHTF.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{s.corte}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaBTF(s.grupo,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>);})()}
+    {modalSalida&&selGrupo&&(<Modal title={(editSalidaId?"Editar Salida - ":"Registrar Salida - ")+(selGrupo[0].trilla?.nombre_trillado||selGrupo[0].codigo)} onClose={()=>{setModalSalida(false);setEditSalidaId(null);setErrSalida("");}}>
+      <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
+        <div style={{color:C.navy,fontWeight:700}}>{selGrupo[0].trilla?.nombre_trillado||selGrupo[0].codigo}</div>
+        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Stock disponible: <b style={{color:C.green,fontSize:15}}>{fmt(stockGrupoBTF(selGrupo))} kg</b></div>
+      </div>
+      {errSalida&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errSalida}</div>)}
+      <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
+        <Fld label="Fecha de Salida" half><input style={S.input} type="date" value={formSalida.fecha} onChange={e=>setFormSalida(p=>({...p,fecha:e.target.value}))}/></Fld>
+        <Fld label="kg Venta/Salida" half>
+          <input style={{...S.input,borderColor:errSalida?C.red:C.border2}} type="number" value={formSalida.peso_salida} onChange={e=>{setFormSalida(p=>({...p,peso_salida:e.target.value,valor_total:+e.target.value*(+formSalida.valor_kg||0)||""}));setErrSalida("");}}/>
+          <div style={{color:C.textDim,fontSize:11,marginTop:3}}>Max: {fmt(stockGrupoBTF(selGrupo))} kg</div>
+        </Fld>
+        <Fld label="Precio por Unidad (kg COP)" half><input style={S.input} type="number" value={formSalida.valor_kg} onChange={e=>setFormSalida(p=>({...p,valor_kg:e.target.value,valor_total:+e.target.value*(+formSalida.peso_salida||0)||""}))}/></Fld>
+        <Fld label="Valor Total Salida" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} type="number" placeholder="Calculado automatico" value={formSalida.valor_total} onChange={e=>setFormSalida(p=>({...p,valor_total:e.target.value}))}/></Fld>
+        <Fld label="N Factura" half><input style={S.input} value={formSalida.factura} placeholder="FAC-001" onChange={e=>setFormSalida(p=>({...p,factura:e.target.value}))}/></Fld>
+        <Fld label="N Remision" half><input style={S.input} value={formSalida.remision} placeholder="REM-001" onChange={e=>setFormSalida(p=>({...p,remision:e.target.value}))}/></Fld>
+        <Fld label="Cliente / Destino"><SelectDestino value={formSalida.cliente} destinoKey={formSalida.destino_key} onChange={(v,k)=>setFormSalida(p=>({...p,cliente:v,destino_key:k}))}/></Fld>
+        <Fld label="Observaciones"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={formSalida.observaciones} onChange={e=>setFormSalida(p=>({...p,observaciones:e.target.value}))}/></Fld>
+      </div>
+      {formSalida.destino_key==="blend_cf"&&(<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.accent,fontWeight:600,marginBottom:10}}>&#8505; Este excelso quedara disponible en Blend Cafe Fino.</div>)}
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModalSalida(false);setEditSalidaId(null);setErrSalida("");}}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaBTF}>{editSalidaId?"Guardar Cambios":"Registrar Salida"}</button></div>
+    </Modal>)}
+  </div>);
+}
+
+function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const MAX_LOTES=8;
-  const blankForm=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:""});
-  const [filMesTF,setFilMesTF]=useState("");
-  const [filProdTF,setFilProdTF]=useState("");
-  const [busqTF,setBusqTF]=useState("");
+  const blankForm=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:"",costoKgExcelso:""});
   const [selArr,setSelArr]=useState([]);
   const [isEditing,setIsEditing]=useState(false);
   const [form,setForm]=useState(blankForm());
@@ -2169,24 +2711,6 @@ function TrilladoraFino({lotesFino,setLotesFino}){
   const stockDe=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);
   const disp=lotesFino.filter(l=>l.para_trilladora&&!l.trilla?.kg_excelso&&stockDe(l)>0);
   const tril=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
-
-  // Salida de excelso trillado (item 4: solo destinos marcados explicitamente alimentan Blend Cafe Fino)
-  const [modalSalidaTF,setModalSalidaTF]=useState(false);
-  const [selGrupoTF,setSelGrupoTF]=useState(null);
-  const [formSalidaTF,setFormSalidaTF]=useState({fecha:today(),peso_salida:"",valor_kg:"",valor_total:"",cliente:"",destino_key:""});
-  const [errSalidaTF,setErrSalidaTF]=useState("");
-  const stockExcelsoGrupo=(grupo)=>{const excelsoTotal=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);const salTotal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);return excelsoTotal-salTotal;};
-  const abrirSalidaTF=(grupo)=>{setSelGrupoTF(grupo);setFormSalidaTF({fecha:today(),peso_salida:"",valor_kg:"",valor_total:"",cliente:"",destino_key:""});setErrSalidaTF("");setModalSalidaTF(true);};
-  const regSalidaTF=()=>{
-    if(!selGrupoTF||!formSalidaTF.peso_salida){setErrSalidaTF("Ingresa el peso de salida.");return;}
-    const peso=+formSalidaTF.peso_salida;
-    const stockBase=stockExcelsoGrupo(selGrupoTF);
-    if(peso>stockBase){setErrSalidaTF("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
-    const vkg=+formSalidaTF.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalidaTF.valor_total||0);
-    const reprId=selGrupoTF[0].id;
-    setLotesFino(p=>p.map(l=>l.id===reprId?{...l,salidas_trilladora:[...(l.salidas_trilladora||[]),{id:genId(),fecha:formSalidaTF.fecha,cliente:formSalidaTF.cliente,destino_key:formSalidaTF.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal}]}:l));
-    setModalSalidaTF(false);setErrSalidaTF("");
-  };
 
   const toggleSel=(l)=>{
     if(isEditing)return;
@@ -2234,7 +2758,7 @@ function TrilladoraFino({lotesFino,setLotesFino}){
     const grupo=[l,...lotesFino.filter(x=>(l.trilla?.lotes_combinados||[]).includes(x.id))];
     setSelArr(grupo);setIsEditing(true);setErrTrilla("");
     const sum=(k)=>grupo.reduce((s,x)=>s+(x.trilla?.[k]||0),0);
-    setForm({excelso:sum("kg_excelso"),pasilla_elec:sum("pasilla_elec"),catadora_dens:sum("catadora_dens"),inferiores:sum("inferiores"),cisco:sum("cisco"),humedad:l.trilla.humedad_salida||"",norma:l.trilla.norma||NORMAS[0],fecha_trilla:l.trilla.fecha_trilla||"",codigo_corte:l.trilla.codigo_corte||"",con_proceso:l.trilla.con_proceso||"Con Proceso",obs:l.trilla.obs||""});
+    setForm({excelso:sum("kg_excelso"),pasilla_elec:sum("pasilla_elec"),catadora_dens:sum("catadora_dens"),inferiores:sum("inferiores"),cisco:sum("cisco"),humedad:l.trilla.humedad_salida||"",norma:l.trilla.norma||NORMAS[0],fecha_trilla:l.trilla.fecha_trilla||"",codigo_corte:l.trilla.codigo_corte||"",con_proceso:l.trilla.con_proceso||"Con Proceso",obs:l.trilla.obs||"",costoKgExcelso:l.trilla.costo_kg_excelso||""});
   };
 
   const reg=()=>{
@@ -2251,6 +2775,10 @@ function TrilladoraFino({lotesFino,setLotesFino}){
     const pasillasParts=splitProporcional(pasillasCalc,pesos);
     const nombreTr=genNombreTrillado();
     const idsGrupo=selArr.map(l=>l.id);
+    const costoManualTF=+form.costoKgExcelso||0;
+    const costoTotalTF=selArr.reduce((s,l,i)=>{const ck=l.costo_compra_kg||(lotesFino.find(o=>!o.para_trilladora&&o.codigo===l.codigo)?.costo_compra_kg||0);return s+ck*pesos[i];},0);
+    const excelsoTotalTF=+form.excelso||0;
+    const costoKgExTF=costoManualTF>0?costoManualTF:(excelsoTotalTF>0?Math.round(costoTotalTF/excelsoTotalTF):0);
     setLotesFino(p=>p.map(l=>{
       const idx=selArr.findIndex(x=>x.id===l.id);
       if(idx===-1)return l;
@@ -2263,81 +2791,14 @@ function TrilladoraFino({lotesFino,setLotesFino}){
         lotes_combinados:idsGrupo.filter(id=>id!==l.id),
         factor_industrial:factorIndustrial,
         factor_pretrilla_ponderado:factorPretrillaPonderado,
+        costo_kg_excelso:costoKgExTF,
       }};
     }));
     limpiarSeleccion();
   };
 
-  const gruposVistos=new Set();
-  const gruposHistorico=[];
-  tril.forEach(l=>{
-    if(gruposVistos.has(l.id))return;
-    const grupo=[l,...lotesFino.filter(x=>(l.trilla.lotes_combinados||[]).includes(x.id))];
-    grupo.forEach(x=>gruposVistos.add(x.id));
-    gruposHistorico.push(grupo);
-  });
-
-  // Trilladora filter computations
-  const mesesTF=[...new Set(gruposHistorico.map(g=>mesDe(g[0].trilla?.fecha_trilla||"")).filter(Boolean))].sort();
-  const productosTF=[...new Set(gruposHistorico.flatMap(g=>g.map(x=>x.producto).filter(Boolean)))].sort();
-  const gruposFiltradosTF=gruposHistorico.filter(grupo=>{
-    const t=grupo[0].trilla;
-    if(filMesTF&&mesDe(t?.fecha_trilla||"")!==filMesTF)return false;
-    if(filProdTF&&!grupo.some(x=>x.producto===filProdTF))return false;
-    if(busqTF){const q=busqTF.toLowerCase();if(!t?.nombre_trillado?.toLowerCase().includes(q)&&!t?.codigo_corte?.toLowerCase().includes(q)&&!grupo.some(x=>x.codigo?.toLowerCase().includes(q)))return false;}
-    return true;
-  });
-  const hayFiltroTF=!!(filMesTF||filProdTF||busqTF);
-  const sumTFExc=gruposFiltradosTF.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.trilla?.kg_excelso||0),0),0);
-  const sumTFSal=gruposFiltradosTF.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).reduce((aa,b)=>aa+b.peso_salida,0),0),0);
-  const sumTFStk=sumTFExc-sumTFSal;
-  const sumTFValSal=gruposFiltradosTF.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).reduce((aa,b)=>aa+(b.valor_total||0),0),0),0);
-  const sumTFEnt=gruposFiltradosTF.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.trilla?.entrada_usada||0),0),0);
-  const sumTFCostoTotal=gruposFiltradosTF.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.costo_compra_kg||0)*(x.trilla?.entrada_usada||0),0),0);
-  const sumTFValStk=sumTFExc>0?Math.round(sumTFStk*(sumTFCostoTotal/sumTFExc)):0;
-
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>TRILLA CAFE FINO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilladora Cafe Fino</div></div>
-    {tril.length>0&&(<div style={{...S.card,marginBottom:16}}>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
-        <input style={{...S.input,maxWidth:200,marginBottom:0,flex:"1 1 150px"}} placeholder="Buscar corte, código..." value={busqTF} onChange={e=>setBusqTF(e.target.value)}/>
-        <select style={{...S.select,flex:"1 1 130px",maxWidth:160}} value={filMesTF} onChange={e=>setFilMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesTF.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m}</option>))}</select>
-        <select style={{...S.select,flex:"1 1 140px",maxWidth:180}} value={filProdTF} onChange={e=>setFilProdTF(e.target.value)}><option value="">Todos los productos</option>{productosTF.map(p=>(<option key={p}>{p}</option>))}</select>
-        {hayFiltroTF&&<button style={{...S.btnG,fontSize:11,padding:"6px 10px",color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusqTF("");setFilMesTF("");setFilProdTF("");}}>✕ Limpiar</button>}
-        <span style={{color:C.textFaint,fontSize:12,marginLeft:4}}>{gruposFiltradosTF.length} de {gruposHistorico.length}</span>
-      </div>
-      {hayFiltroTF&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>CORTES</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{gruposFiltradosTF.length}</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG ENTRADA</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumTFEnt)} kg</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG EXCELSO</div><div style={{color:"#6ee7b7",fontWeight:700,fontSize:15}}>{fmt(sumTFExc)} kg</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG STOCK</div><div style={{color:"#34d399",fontWeight:800,fontSize:15}}>{fmt(sumTFStk)} kg</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR STOCK</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(sumTFValStk)}</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumTFSal)} kg</div></div>
-        <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR SALIDAS</div><div style={{color:"#bbf7d0",fontWeight:700,fontSize:13}}>{fmtCOP(sumTFValSal)}</div></div>
-      </div>)}
-      <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Inventario Trilladora Café Fino</div>
-      <TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Corte / Trillado","Lotes Origen","Producto","Fecha Trilla","Mes","kg Excelso","Salidas kg","Stock Excelso","Costo/kg Ex.","Valor en Stock"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{gruposFiltradosTF.map(grupo=>{
-        const repr=grupo[0];const t=repr.trilla;
-        const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
-        const salTotal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
-        const stock=excelso-salTotal;
-        const costoTotal=grupo.reduce((s,x)=>s+((x.costo_compra_kg||0)*(x.trilla?.entrada_usada||0)),0);
-        const costoEx=excelso>0?Math.round(costoTotal/excelso):0;
-        return(<tr key={repr.id}>
-          <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||repr.codigo}</td>
-          <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
-          <td style={S.td}><Bdg label={grupo.map(x=>x.producto).filter(Boolean).join("/")||"—"} col={C.navy} bg={C.accentBg}/></td>
-          <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha_trilla)}</td>
-          <td style={{...S.td,textTransform:"capitalize"}}>{repr.mes}</td>
-          <td style={{...S.td,fontWeight:600}}>{fmt(excelso)} kg</td>
-          <td style={{...S.td,color:C.orange}}>{salTotal>0?fmt(salTotal)+" kg":"—"}</td>
-          <td style={S.td}><span style={{fontWeight:700,fontSize:14,color:stock>0?C.green:C.textFaint}}>{fmt(stock)} kg</span></td>
-          <td style={{...S.td,color:C.purple,fontWeight:600}}>{costoEx?fmtCOP(costoEx):"—"}</td>
-          <td style={{...S.td,color:C.gold,fontWeight:700}}>{stock>0&&costoEx?fmtCOP(Math.round(stock*costoEx)):"—"}</td>
-        </tr>);
-      })}{gruposFiltradosTF.length===0&&<tr><td colSpan={9} style={{...S.td,color:C.textFaint,textAlign:"center"}}>{hayFiltroTF?"Sin cortes que coincidan con los filtros.":"Sin trillas registradas todavia."}</td></tr>}</tbody></table></TablaScrollV>
-    </div>)}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
       <div>{disp.length===0&&<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin lotes disponibles en Bodega Cafe Fino.</div>}
         <div style={{color:C.textFaint,fontSize:11,marginBottom:8}}>Selecciona de 1 a {MAX_LOTES} lotes para trillar juntos.</div>
@@ -2387,58 +2848,13 @@ function TrilladoraFino({lotesFino,setLotesFino}){
             </div>
           </div>
           <Fld label="Norma de Produccion"><select style={S.select} value={form.norma} onChange={e=>setForm(p=>({...p,norma:e.target.value}))}>{NORMAS.map(n=>(<option key={n}>{n}</option>))}</select></Fld>
+          <Fld label="Costo por KG Excelso COP"><input style={S.input} type="number" placeholder="Ej: 8500  (opcional, se arrastra a Salida)" value={form.costoKgExcelso} onChange={e=>setForm(p=>({...p,costoKgExcelso:e.target.value}))}/></Fld>
           {errTrilla&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errTrilla}</div>)}
           <Fld label="Observaciones"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={form.obs} onChange={e=>setForm(p=>({...p,obs:e.target.value}))}/></Fld>
           <button style={{...S.btn,background:C.green,width:"100%"}} onClick={reg}>{isEditing?"Guardar Cambios":"Registrar Trilla"}</button></>
         )}
       </div>
     </div>
-    {gruposHistorico.length>0&&(<div style={{...S.card,marginTop:16}}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Historico Trilla Cafe Fino</div><TablaScrollV minWidth={1200}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1200}}><thead><tr>{["Fecha Trilla","Corte","Lotes","Cod. Trillado","Proceso","Perg. kg","Excelso kg","Merma kg","% Merma","FI","FP Pond.","Dif.","Rend.","Costo/kg Ex","Stock Excelso","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-    <tbody>{gruposHistorico.map(grupo=>{
-      const repr=grupo[0];const t=repr.trilla;
-      const entrada=grupo.reduce((s,x)=>s+(x.trilla?.entrada_usada||0),0);
-      const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
-      const merma=grupo.reduce((s,x)=>s+(x.trilla?.kg_merma||0),0);
-      const costoTotalGrupo=grupo.reduce((s,x)=>s+((x.costo_compra_kg||0)*(x.trilla?.entrada_usada||0)),0);
-      const costoEx=excelso>0?Math.round(costoTotalGrupo/excelso):null;
-      const stockEx=stockExcelsoGrupo(grupo);
-      const dif=(t.factor_industrial!=null&&t.factor_pretrilla_ponderado!=null)?(t.factor_industrial-t.factor_pretrilla_ponderado):null;
-      return(<tr key={repr.id}>
-        <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha_trilla)}</td>
-        <td style={S.td}><Bdg label={t.codigo_corte||"—"} col={C.accent}/></td>
-        <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
-        <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||"—"}</td>
-        <td style={S.td}><Bdg label={t.con_proceso||"—"} col={t.con_proceso==="Sin Proceso"?C.orange:C.teal}/></td>
-        <td style={{...S.td,fontWeight:600}}>{fmt(entrada)}</td>
-        <td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(excelso)}</td>
-        <td style={{...S.td,color:C.red}}>{fmt(merma)}</td>
-        <td style={{...S.td,color:C.red,fontWeight:600}}>{entrada?((merma/entrada)*100).toFixed(1)+"%":"?"}</td>
-        <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.factor_industrial!=null?fmt(t.factor_industrial,1):"?"}</td>
-        <td style={{...S.td,color:C.purple,fontWeight:600}}>{t.factor_pretrilla_ponderado!=null?fmt(t.factor_pretrilla_ponderado,1):"?"}</td>
-        <td style={{...S.td,color:dif>0?C.red:C.green,fontWeight:600}}>{dif!=null?fmt(dif,1):"?"}</td>
-        <td style={{...S.td,color:C.green,fontWeight:600}}>{entrada?((excelso/entrada)*100).toFixed(1)+"%":"?"}</td>
-        <td style={{...S.td,color:C.purple,fontWeight:700}}>{costoEx?fmtCOP(costoEx):"?"}</td>
-        <td style={S.td}><span style={{color:stockEx>0?C.green:C.textFaint,fontWeight:700}}>{fmt(stockEx)} kg</span></td>
-        <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stockEx>0?C.accent:C.textFaint,cursor:stockEx>0?"pointer":"not-allowed"}} disabled={stockEx<=0} onClick={()=>abrirSalidaTF(grupo)}>+ Salida</button><button style={S.btnG} onClick={()=>abrirEditarGrupo(repr)}>Editar</button><button style={{...S.btnG,fontSize:11,padding:"6px 12px",color:C.orange,borderColor:C.orange+"40"}} onClick={()=>{if(window.confirm("¿Retroceder la trilla de "+repr.codigo+"? Los lotes volveran a Bodega Cafe Fino disponibles para trillar.")){setLotesFino(p=>p.map(l=>grupo.some(g=>g.id===l.id)?{...l,trilla:null,salidas_trilladora:[]}:l));}}}>Retroceder</button></div></td>
-      </tr>);
-    })}</tbody></table></TablaScrollV></div>)}
-
-    {modalSalidaTF&&selGrupoTF&&(<Modal title={"Salida de Excelso - "+(selGrupoTF[0].trilla.nombre_trillado||selGrupoTF[0].codigo)} onClose={()=>{setModalSalidaTF(false);setErrSalidaTF("");}}>
-      <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
-        <div style={{color:C.navy,fontWeight:700}}>{selGrupoTF[0].trilla.nombre_trillado||selGrupoTF[0].codigo}</div>
-        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Stock disponible: <b style={{color:C.green,fontSize:15}}>{fmt(stockExcelsoGrupo(selGrupoTF))} kg</b></div>
-      </div>
-      {errSalidaTF&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errSalidaTF}</div>)}
-      <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
-        <Fld label="Fecha de Salida" half><input style={S.input} type="date" value={formSalidaTF.fecha} onChange={e=>setFormSalidaTF(p=>({...p,fecha:e.target.value}))}/></Fld>
-        <Fld label="kg Salida" half><input style={S.input} type="number" value={formSalidaTF.peso_salida} onChange={e=>{setFormSalidaTF(p=>({...p,peso_salida:e.target.value,valor_total:+e.target.value*(+p.valor_kg||0)||""}));setErrSalidaTF("");}}/></Fld>
-        <Fld label="Valor por kg COP" half><input style={S.input} type="number" value={formSalidaTF.valor_kg} onChange={e=>setFormSalidaTF(p=>({...p,valor_kg:e.target.value,valor_total:+e.target.value*(+p.peso_salida||0)||""}))}/></Fld>
-        <Fld label="Valor Total COP" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} type="number" value={formSalidaTF.valor_total} onChange={e=>setFormSalidaTF(p=>({...p,valor_total:e.target.value}))}/></Fld>
-        <Fld label="Cliente / Destino"><SelectDestino value={formSalidaTF.cliente} destinoKey={formSalidaTF.destino_key} onChange={(v,k)=>setFormSalidaTF(p=>({...p,cliente:v,destino_key:k}))}/></Fld>
-      </div>
-      {formSalidaTF.destino_key==="blend_cf"&&(<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.accent,fontWeight:600,marginBottom:10}}>&#8505; Este excelso quedara disponible en Blend Cafe Fino.</div>)}
-      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>setModalSalidaTF(false)}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaTF}>Registrar Salida</button></div>
-    </Modal>)}
   </div>);
 }
 
@@ -2466,7 +2882,7 @@ const poolBlendFino=(lotesFino,blendsFino,editId)=>{
   return pool;
 };
 
-function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
+function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBlendsTostado}){
   const [filMesBF,setFilMesBF]=useState("");
   const [filNomComBF,setFilNomComBF]=useState("");
   const [busqBF,setBusqBF]=useState("");
@@ -2479,10 +2895,11 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
   const [errBlendForm,setErrBlendForm]=useState("");
   const [modalSalidaB,setModalSalidaB]=useState(false);
   const [selBlend,setSelBlend]=useState(null);
-  const [formSalidaB,setFormSalidaB]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",observaciones:""});
+  const [formSalidaB,setFormSalidaB]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",observaciones:"",nombre_producto_tostado:""});
   const [errB,setErrB]=useState("");
   const [editSalidaBId,setEditSalidaBId]=useState(null);
   const [tab,setTab]=useState("inventario");
+  const [hBusqBF,setHBusqBF]=useState("");const [hMesBF,setHMesBF]=useState("");const [hProdBF,setHProdBF]=useState("");
 
   const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
   const poolAll=poolBlendFino(lotesFino,blendsFino,editId);
@@ -2553,11 +2970,13 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
     setModal(false);
   };
 
-  const abrirSalidaB=(b)=>{setSelBlend(b);setEditSalidaBId(null);setFormSalidaB({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:Math.round(b.costo_kg)||"",valor_total:"",observaciones:""});setErrB("");setModalSalidaB(true);};
-  const abrirEditarSalidaB=(b,s)=>{setSelBlend(b);setEditSalidaBId(s.id);setFormSalidaB({fecha:s.fecha,factura:s.factura,remision:s.remision,cliente:s.cliente||"",destino_key:s.destino_key||"",peso_salida:s.peso_salida,valor_kg:s.valor_kg,valor_total:s.valor_total,observaciones:s.observaciones||""});setErrB("");setModalSalidaB(true);};
+  const abrirSalidaB=(b)=>{setSelBlend(b);setEditSalidaBId(null);setFormSalidaB({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:Math.round(b.costo_kg)||"",valor_total:"",observaciones:"",nombre_producto_tostado:""});setErrB("");setModalSalidaB(true);};
+  const abrirEditarSalidaB=(b,s)=>{setSelBlend(b);setEditSalidaBId(s.id);setFormSalidaB({fecha:s.fecha,factura:s.factura,remision:s.remision,cliente:s.cliente||"",destino_key:s.destino_key||"",peso_salida:s.peso_salida,valor_kg:s.valor_kg,valor_total:s.valor_total,observaciones:s.observaciones||"",nombre_producto_tostado:""});setErrB("");setModalSalidaB(true);};
   const regSalidaB=()=>{
-    if(!selBlend||!formSalidaB.peso_salida){setErrB("Ingresa el peso de salida.");return;}
-    const peso=+formSalidaB.peso_salida;
+    const peso=numVal(formSalidaB.peso_salida);
+    if(!selBlend||!(peso>0)){setErrB("Ingresa un peso de salida válido (mayor a 0).");return;}
+    if(formSalidaB.destino_key==="uba_tostado"&&!formSalidaB.nombre_producto_tostado){setErrB("Para UBA Tostado debes ingresar el Nombre de Producto Tostado.");return;}
+
     const stockBase=stockBlend(selBlend)+(editSalidaBId?(selBlend.salidas||[]).find(x=>x.id===editSalidaBId)?.peso_salida||0:0);
     if(peso>stockBase){setErrB("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalidaB.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalidaB.valor_total||0);
@@ -2568,7 +2987,19 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
       else{sal=[...(b.salidas||[]),{id:genId(),fecha:formSalidaB.fecha,factura:formSalidaB.factura,remision:formSalidaB.remision,cliente:formSalidaB.cliente,destino_key:formSalidaB.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalidaB.observaciones}];}
       return{...b,salidas:sal};
     }));
+    if(formSalidaB.destino_key==="uba_tostado"&&setBlendsTostado&&!editSalidaBId){
+      const nomProd=formSalidaB.nombre_producto_tostado||selBlend.nombre||selBlend.codigo;
+      const codUBA="UBA-"+nomProd.replace(/\s+/g,"")+"-"+dateToCode(formSalidaB.fecha);
+      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:formSalidaB.fecha,mes:mesDe(formSalidaB.fecha),nombre_producto:nomProd,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:selBlend.codigo,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend.items||[]).map(it=>it.codigo)},...p]);
+    }
     setModalSalidaB(false);setEditSalidaBId(null);setErrB("");
+  };
+
+  const eliminarSalidaB=(b,salidaId)=>{
+    const s=(b.salidas||[]).find(x=>x.id===salidaId);
+    if(!s)return;
+    if(!window.confirm("¿Eliminar salida de "+fmt(s.peso_salida)+" kg del blend "+b.codigo+"? Los kg regresarán al stock."))return;
+    setBlendsFino(p=>p.map(x=>x.id!==b.id?x:{...x,salidas:(x.salidas||[]).filter(s=>s.id!==salidaId)}));
   };
 
   const mesesBF=[...new Set(blendsFino.map(b=>mesDe(b.fecha)).filter(Boolean))].sort();
@@ -2645,7 +3076,7 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
       </tr>);})}</tbody></table></TablaScrollV>
       {blendsFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{hayFiltroBF?"Sin blends que coincidan con los filtros.":"Sin blends registrados todavia."}</div>}
     </div>)}
-    {tab==="historico"&&(blendsFino.some(b=>(b.salidas||[]).length>0)?(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historico de Salidas</div><TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Blend","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{blendsFino.flatMap(b=>(b.salidas||[]).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(s=>(<tr key={s.id}><td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaB(s.blendRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
+    {tab==="historico"&&(()=>{const todasHBF=blendsFino.flatMap(b=>(b.salidas||[]).map(s=>({...s,codigo:b.codigo,nombreProd:b.producto_comercial||b.nombre||b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));const mesesHBF=[...new Set(todasHBF.map(s=>mesDe(s.fecha)).filter(Boolean))].sort();const prodsHBF=[...new Set(todasHBF.map(s=>s.nombreProd).filter(Boolean))].sort();const filtHBF=todasHBF.filter(s=>{if(hMesBF&&mesDe(s.fecha)!==hMesBF)return false;if(hProdBF&&s.nombreProd!==hProdBF)return false;if(hBusqBF){const q=hBusqBF.toLowerCase();if(!s.codigo?.toLowerCase().includes(q)&&!s.cliente?.toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q)&&!s.nombreProd?.toLowerCase().includes(q))return false;}return true;});return todasHBF.length===0?(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>):(<div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas</span><span style={{color:C.textFaint,fontSize:12}}>{filtHBF.length} de {todasHBF.length} salidas</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}><input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar blend, cliente, factura..." value={hBusqBF} onChange={e=>setHBusqBF(e.target.value)}/><select style={{...S.select,width:140}} value={hMesBF} onChange={e=>setHMesBF(e.target.value)}><option value="">Todos los meses</option>{mesesHBF.map(m=>(<option key={m}>{m}</option>))}</select><select style={{...S.select,width:180}} value={hProdBF} onChange={e=>setHProdBF(e.target.value)}><option value="">Todos los productos</option>{prodsHBF.map(p=>(<option key={p}>{p}</option>))}</select>{(hBusqBF||hMesBF||hProdBF)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setHBusqBF("");setHMesBF("");setHProdBF("");}}>✕ Limpiar</button>}</div>{(hBusqBF||hMesBF||hProdBF)&&filtHBF.length>0&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{filtHBF.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(filtHBF.reduce((s,x)=>s+x.peso_salida,0))} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(filtHBF.reduce((s,x)=>s+(x.valor_total||0),0))}</div></div></div>)}<TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Blend","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{filtHBF.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={S.btnG} onClick={()=>abrirEditarSalidaB(s.blendRef,s)}>Editar</button><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarSalidaB(s.blendRef,s.id)}>Eliminar</button></div></td></tr>))}</tbody></table></TablaScrollV></div>);})()}
 
     {modal&&(<Modal title={editId?"Editar Blend Fino":"Nuevo Blend Fino"} onClose={cerrarModal} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
@@ -2696,6 +3127,10 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino}){
         <Fld label="Cliente / Destino"><SelectDestino value={formSalidaB.cliente} destinoKey={formSalidaB.destino_key} onChange={(v,k)=>setFormSalidaB(p=>({...p,cliente:v,destino_key:k}))}/></Fld>
         <Fld label="Observaciones"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={formSalidaB.observaciones} onChange={e=>setFormSalidaB(p=>({...p,observaciones:e.target.value}))}/></Fld>
       </div>
+      {formSalidaB.destino_key==="uba_tostado"&&(<>
+        <div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Se creara automaticamente un registro en UBA Tostado con la informacion de este blend (ingredientes, kg y valor).</div>
+        <Fld label="Nombre de Producto Tostado (obligatorio)"><input style={S.input} placeholder="Ej: Espresso Milan" value={formSalidaB.nombre_producto_tostado} onChange={e=>setFormSalidaB(p=>({...p,nombre_producto_tostado:e.target.value}))}/></Fld>
+      </>)}
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModalSalidaB(false);setEditSalidaBId(null);setErrB("");}}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaB}>{editSalidaBId?"Guardar Cambios":"Registrar Salida"}</button></div>
     </Modal>)}
   </div>);
@@ -2963,13 +3398,13 @@ function Maquila({maquilas,setMaquilas,setLotesFino}){
 
 const TIPOS_TOSTION=["Ligero","Medio","Oscuro","Especialidad","Otro"];
 
-function UbaTostado({blendsTostado,setBlendsTostado}){
+function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
-  const blankForm=()=>({fecha:today(),nombre_producto:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:""});
+  const blankForm=()=>({fecha:today(),nombre_producto:"",kg_origen:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[]});
   const [form,setForm]=useState(blankForm());
   const abrirNuevo=()=>{setEditId(null);setForm(blankForm());setModal(true);};
-  const abrirEditar=(t)=>{setEditId(t.id);setForm({fecha:t.fecha,nombre_producto:t.nombre_producto||"",kg_a_tostar:t.kg_a_tostar,valor_unitario:t.valor_unitario,valor_total:t.valor_total,temperatura:t.temperatura||"",tiempo:t.tiempo||"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:t.kg_cafe_tostado||"",catacion:t.catacion||"",responsable:t.responsable||"",codigo_lote_origen:t.codigo_lote_origen||"",fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||""});setModal(true);};
+  const abrirEditar=(t)=>{setEditId(t.id);setForm({fecha:t.fecha,nombre_producto:t.nombre_producto||"",kg_origen:t.kg_origen||"",kg_a_tostar:t.kg_a_tostar,valor_unitario:t.valor_unitario,valor_total:t.valor_total,temperatura:t.temperatura||"",tiempo:t.tiempo||"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:t.kg_cafe_tostado||"",catacion:t.catacion||"",responsable:t.responsable||"",codigo_lote_origen:t.codigo_lote_origen||"",fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||"",fuentes:t.fuentes||[]});setModal(true);};
 
   // item 6: accion de salida sobre el cafe tostado resultante
   const stockTostado=(t)=>(t.kg_cafe_tostado||0)-(t.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
@@ -2977,10 +3412,11 @@ function UbaTostado({blendsTostado,setBlendsTostado}){
   const [selTost,setSelTost]=useState(null);
   const [formSalidaUBA,setFormSalidaUBA]=useState({fecha:today(),peso_salida:"",valor_kg:"",valor_total:"",cliente:"",observaciones:""});
   const [errSalidaUBA,setErrSalidaUBA]=useState("");
-  const abrirSalidaUBA=(t)=>{setSelTost(t);setFormSalidaUBA({fecha:today(),peso_salida:"",valor_kg:"",valor_total:"",cliente:"",observaciones:""});setErrSalidaUBA("");setModalSalidaUBA(true);};
+  const [errReg,setErrReg]=useState("");
+  const abrirSalidaUBA=(t)=>{setSelTost(t);const vkgRef=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):0);setFormSalidaUBA({fecha:today(),peso_salida:"",valor_kg:vkgRef||"",valor_total:"",cliente:"",observaciones:""});setErrSalidaUBA("");setModalSalidaUBA(true);};
   const regSalidaUBA=()=>{
-    if(!selTost||!formSalidaUBA.peso_salida){setErrSalidaUBA("Ingresa el peso de salida.");return;}
-    const peso=+formSalidaUBA.peso_salida;
+    const peso=numVal(formSalidaUBA.peso_salida);
+    if(!selTost||!(peso>0)){setErrSalidaUBA("Ingresa un peso de salida válido (mayor a 0).");return;}
     const stockBase=stockTostado(selTost);
     if(peso>stockBase){setErrSalidaUBA("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalidaUBA.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalidaUBA.valor_total||0);
@@ -2989,60 +3425,124 @@ function UbaTostado({blendsTostado,setBlendsTostado}){
   };
   const reg=()=>{
     if(!form.kg_a_tostar||!form.fecha)return;
-    const vt=(+form.kg_a_tostar||0)*(+form.valor_unitario||0);
+    if(!editId&&form.fuentes.length>0){
+      for(const f of form.fuentes){if(!(numVal(f.kg_tomados)>0)){setErrReg("Ingresa kg válidos (>0) en cada lote de origen.");return;}const pool=poolHistorico.find(p=>p.salidaId===f.salidaId);if(pool&&numVal(f.kg_tomados)>pool.kg_a_tostar+0.01){setErrReg("El lote "+f.blendCodigo+" solo tiene "+fmt(pool.kg_a_tostar)+" kg disponibles.");return;}}
+    }
+    setErrReg("");
+    const kgTotal=form.fuentes.length>0?form.fuentes.reduce((s,f)=>s+numVal(f.kg_tomados),0):numVal(form.kg_a_tostar);
+    const vtTotal=form.fuentes.length>0?form.fuentes.reduce((s,f)=>s+(f.valor_total_fuente||0),0):kgTotal*numVal(form.valor_unitario);
+    const vunit=kgTotal>0?Math.round(vtTotal/kgTotal):numVal(form.valor_unitario);
+    const codOrigen=form.fuentes.length>0?form.fuentes.map(f=>f.blendCodigo).join(", "):form.codigo_lote_origen;
+    const lotesBld=form.fuentes.length>0?[...new Set(form.fuentes.flatMap(f=>f.lotes_blend||[]))]:[];
+    const kgOrig=numVal(form.kg_origen)||kgTotal;
+    const kgCafeTostado=numVal(form.kg_cafe_tostado);
+    const vutostado=kgCafeTostado>0?Math.round(vtTotal/kgCafeTostado):0;
     if(editId){
-      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:+form.kg_a_tostar,valor_unitario:+form.valor_unitario,valor_total:vt,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:+form.kg_cafe_tostado||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:form.codigo_lote_origen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado}:t));
+      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_origen:kgOrig,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld.length>0?lotesBld:t.lotes_blend||[]}:t));
     }else{
       const cod="UBA-"+form.nombre_producto.replace(/\s+/g,"")+"-"+dateToCode(form.fecha);
-      setBlendsTostado(p=>[{id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:+form.kg_a_tostar,valor_unitario:+form.valor_unitario,valor_total:vt,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:+form.kg_cafe_tostado||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:form.codigo_lote_origen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,lotes_blend:[]},...p]);
+      setBlendsTostado(p=>[{id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_origen:kgOrig,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld},...p]);
     }
     setModal(false);
+  };
+  const eliminarTueste=(t)=>{
+    if((t.salidas||[]).length>0){alert("Este tueste tiene "+t.salidas.length+" salida(s) registrada(s). Elimina primero las salidas para poder borrar el tueste.");return;}
+    if(!window.confirm("¿Eliminar el tueste "+t.codigo+"? El lote volverá a 'Lotes Listos para Tostar'."))return;
+    setBlendsTostado(p=>p.filter(x=>x.id!==t.id));
   };
   const totalKgTostar=blendsTostado.reduce((s,t)=>s+(t.kg_a_tostar||0),0);
   const totalKgTostado=blendsTostado.reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
   const rendProm=totalKgTostar>0?((totalKgTostado/totalKgTostar)*100).toFixed(1):0;
+  const pendientes=blendsTostado.filter(t=>t.kg_a_tostar>0&&(!t.kg_cafe_tostado||t.kg_cafe_tostado===0));
+  const parciales=blendsTostado.filter(t=>t.kg_cafe_tostado>0&&(t.kg_origen!=null&&t.kg_origen!==""?t.kg_origen:t.kg_a_tostar)>(t.kg_a_tostar||0));
+  const abrirNuevoBatch=(t)=>{const kgOrigen=(t.kg_origen!=null&&t.kg_origen!=="")?t.kg_origen:t.kg_a_tostar;const kgRest=kgOrigen-(t.kg_a_tostar||0);setEditId(null);setForm({fecha:today(),nombre_producto:t.nombre_producto||"",kg_origen:kgRest,kg_a_tostar:kgRest,valor_unitario:t.valor_unitario||"",valor_total:Math.round(kgRest*(t.valor_unitario||0))||"",temperatura:"",tiempo:"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:t.codigo_lote_origen||t.codigo,fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||""});setModal(true);};
+  const poolHistorico=useMemo(()=>{const items=[];(blendsFino||[]).forEach(b=>{(b.salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{const consumido=blendsTostado.reduce((sum,t)=>{if((t.fuentes||[]).length>0){const f=t.fuentes.find(x=>x.salidaId===s.id);return sum+(f?numVal(f.kg_tomados):0);}if(t.codigo_lote_origen===b.codigo){return sum+((t.kg_origen!=null&&t.kg_origen!=="")?+t.kg_origen:+t.kg_a_tostar||0);}return sum;},0);const kgDisp=(s.peso_salida||0)-consumido;if(kgDisp>0.5){items.push({salidaId:s.id,blendCodigo:b.codigo,nombre_producto:b.producto_comercial||b.nombre||b.codigo,kg_a_tostar:Math.round(kgDisp*100)/100,valor_unitario:s.valor_kg||Math.round(b.costo_kg)||0,valor_total:Math.round(kgDisp*(s.valor_kg||b.costo_kg||0)),fecha:s.fecha,lotes_blend:(b.items||[]).map(it=>it.codigo),codigo_lote_origen:b.codigo});}});});return items;},[blendsFino,blendsTostado]);
+  const abrirHistorico=(item)=>{const vt0=Math.round(item.kg_a_tostar*(item.valor_unitario||0));const fuenteInicial=[{salidaId:item.salidaId,blendCodigo:item.blendCodigo,nombre_producto:item.nombre_producto,kg_tomados:item.kg_a_tostar,valor_unitario:item.valor_unitario,valor_total_fuente:vt0,lotes_blend:item.lotes_blend||[]}];setEditId(null);setForm({fecha:item.fecha||today(),nombre_producto:item.nombre_producto,kg_origen:item.kg_a_tostar,kg_a_tostar:item.kg_a_tostar,valor_unitario:item.valor_unitario,valor_total:vt0,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:item.codigo_lote_origen,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:fuenteInicial});setModal(true);};
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PROCESO DE TOSTACION</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>UBA Tostado</div></div><button style={{...S.btn,background:C.purple}} onClick={abrirNuevo}>+ Nueva Tostacion</button></div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PROCESO DE TUESTE</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>UBA Tostado</div></div><button style={{...S.btn,background:C.orange}} onClick={abrirNuevo}>+ Nuevo Lote Tostado</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Tostaciones" value={blendsTostado.length} col={C.navy}/>
-      <KPI label="kg a Tostar" value={fmt(totalKgTostar)+" kg"} col={C.accent}/>
-      <KPI label="kg Cafe Tostado" value={fmt(totalKgTostado)+" kg"} col={C.green}/>
+      <KPI label="Tuestes" value={blendsTostado.length} col={C.navy}/>
+      <KPI label="Pendientes Tostar" value={pendientes.length+parciales.length+poolHistorico.length} col={C.orange}/>
+      <KPI label="kg Cafe Tostado" value={fmt(totalKgTostado,1)+" kg"} col={C.green}/>
       <KPI label="Rendimiento Prom." value={rendProm+"%"} col={C.gold}/>
     </div>
-    <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Registros de Tostacion</div><TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Rend.","Stock kg","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{blendsTostado.map(t=>{const stock=stockTostado(t);return(<tr key={t.id}>
+    {(pendientes.length>0||parciales.length>0||poolHistorico.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
+      <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+parciales.length+poolHistorico.length})</div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        {pendientes.map(t=>(<div key={t.id} style={{background:C.orangeBg,border:"1px solid "+C.orange+"40",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
+          <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{t.codigo}</div>
+          <div style={{color:C.navy,fontWeight:700,fontSize:14,marginTop:4}}>{t.nombre_producto||"—"}</div>
+          <div style={{marginTop:6,display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{color:C.accent,fontWeight:700,fontSize:13}}>{fmt(t.kg_a_tostar,1)} kg</span>
+            {t.valor_unitario>0&&<span style={{color:C.gold,fontSize:12}}>{fmtCOP(t.valor_unitario)}/kg</span>}
+          </div>
+          {(t.lotes_blend||[]).length>0&&<div style={{color:C.purple,fontSize:11,marginTop:4}}>Blend: {t.lotes_blend.join(", ")}</div>}
+          {t.codigo_lote_origen&&<div style={{color:C.textDim,fontSize:11,marginTop:2}}>Origen: {t.codigo_lote_origen}</div>}
+          <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirEditar(t)}>Registrar Tueste</button>
+        </div>))}
+        {parciales.map(t=>{const kgOrigen=(t.kg_origen!=null&&t.kg_origen!=="")?t.kg_origen:t.kg_a_tostar;const kgRest=kgOrigen-(t.kg_a_tostar||0);return(<div key={"p"+t.id} style={{background:C.orangeBg,border:"2px solid "+C.orange,borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
+            <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{t.codigo}</div>
+            <Bdg label="Parcial" col={C.orange} bg={C.orangeBg}/>
+          </div>
+          <div style={{color:C.navy,fontWeight:700,fontSize:14,marginTop:4}}>{t.nombre_producto||"—"}</div>
+          <div style={{marginTop:6,display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{color:C.green,fontWeight:700,fontSize:13}}>{fmt(kgRest,1)} kg disponibles</span>
+          </div>
+          <div style={{color:C.textDim,fontSize:11,marginTop:3}}>Este batch: {fmt(t.kg_a_tostar,1)} kg · Tostado: {fmt(t.kg_cafe_tostado,1)} kg</div>
+          {t.codigo_lote_origen&&<div style={{color:C.textDim,fontSize:11,marginTop:2}}>Origen: {t.codigo_lote_origen}</div>}
+          <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirNuevoBatch(t)}>Nuevo Batch de Tueste</button>
+        </div>);})}
+
+        {poolHistorico.map(item=>(<div key={item.salidaId} style={{background:C.orangeBg,border:"2px dashed "+C.orange+"80",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
+          <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{item.blendCodigo}</div>
+          <div style={{color:C.navy,fontWeight:700,fontSize:14,marginTop:4}}>{item.nombre_producto||"—"}</div>
+          <div style={{marginTop:6,display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{color:C.accent,fontWeight:700,fontSize:13}}>{fmt(item.kg_a_tostar,1)} kg</span>
+            {item.valor_unitario>0&&<span style={{color:C.gold,fontSize:12}}>{fmtCOP(item.valor_unitario)}/kg</span>}
+          </div>
+          {(item.lotes_blend||[]).length>0&&<div style={{color:C.purple,fontSize:11,marginTop:4}}>Blend: {item.lotes_blend.join(", ")}</div>}
+          <div style={{color:C.textDim,fontSize:10,marginTop:4,fontStyle:"italic"}}>Salida: {fmtFecha(item.fecha)}</div>
+          <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirHistorico(item)}>Iniciar Tueste</button>
+        </div>))}
+      </div>
+    </div>)}
+    <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Registros de Tueste</div><TablaScrollV minWidth={1600}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1600}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Por Tostar","Valor/kg Tostado","Rend.","Stock kg","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{blendsTostado.map(t=>{const stock=stockTostado(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha)}</td>
         <td style={{...S.td,fontWeight:600}}>{t.nombre_producto||"-"}</td>
         <td style={S.td}><div style={{display:"flex",flexDirection:"column",gap:2,fontSize:10}}>
-          {t.codigo_lote_origen&&<span style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>Lote: {t.codigo_lote_origen}</span>}
+          {(t.fuentes||[]).length>1?t.fuentes.map((f,i)=>(<span key={i} style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{f.blendCodigo}: {fmt(f.kg_tomados,1)} kg</span>)):(t.codigo_lote_origen&&<span style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>Lote: {t.codigo_lote_origen}</span>)}
           {t.fecha_proceso&&<span style={{color:C.textDim}}>Proceso: {fmtFecha(t.fecha_proceso)}</span>}
           {t.fecha_trilla&&<span style={{color:C.textDim}}>Trilla: {fmtFecha(t.fecha_trilla)}</span>}
           {t.fecha_secado&&<span style={{color:C.textDim}}>Secado: {fmtFecha(t.fecha_secado)}</span>}
           {(t.lotes_blend||[]).length>0&&<span style={{color:C.purple}}>Blend: {t.lotes_blend.join(", ")}</span>}
           {!t.codigo_lote_origen&&!t.fecha_proceso&&!t.fecha_trilla&&!t.fecha_secado&&!(t.lotes_blend||[]).length&&"-"}
         </div></td>
-        <td style={{...S.td,color:C.accent,fontWeight:600}}>{fmt(t.kg_a_tostar)} kg</td>
+        <td style={{...S.td,color:C.accent,fontWeight:600}}>{fmt(t.kg_a_tostar,1)} kg</td>
         <td style={{...S.td,color:C.gold}}>{fmtCOP(t.valor_unitario)}</td>
         <td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(t.valor_total)}</td>
         <td style={S.td}>{t.temperatura?t.temperatura+"°C":"-"}</td>
         <td style={S.td}>{t.tiempo||"-"}</td>
         <td style={S.td}><Bdg label={t.tipo_tostion||"-"} col={C.orange} bg={C.orangeBg}/></td>
-        <td style={{...S.td,color:C.green,fontWeight:700}}>{t.kg_cafe_tostado?fmt(t.kg_cafe_tostado)+" kg":"-"}</td>
+        <td style={{...S.td,color:C.green,fontWeight:700}}>{t.kg_cafe_tostado?fmt(t.kg_cafe_tostado,1)+" kg":<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>}</td>
+        <td style={S.td}>{(()=>{const kgO=(t.kg_origen!=null&&t.kg_origen!=="")?t.kg_origen:t.kg_a_tostar;const r=kgO-(t.kg_a_tostar||0);return r>0?<span style={{color:C.orange,fontWeight:700}}>{fmt(r,1)} kg</span>:<span style={{color:C.textFaint}}>—</span>;})()}</td>
+        <td style={{...S.td,color:C.purple,fontWeight:700}}>{vkgTostado?fmtCOP(vkgTostado):<span style={{color:C.textFaint}}>—</span>}</td>
         <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.kg_a_tostar&&t.kg_cafe_tostado?((t.kg_cafe_tostado/t.kg_a_tostar)*100).toFixed(1)+"%":"-"}</td>
-        <td style={S.td}><span style={{color:stock>0?C.green:C.textFaint,fontWeight:700}}>{fmt(stock)} kg</span></td>
+        <td style={S.td}><span style={{color:stock>0?C.green:C.textFaint,fontWeight:700}}>{fmt(stock,1)} kg</span></td>
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.catacion||"-"}</td>
         <td style={S.td}>{t.responsable||"-"}</td>
-        <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaUBA(t)}>+ Salida</button><button style={S.btnG} onClick={()=>abrirEditar(t)}>Editar</button></div></td>
+        <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{t.kg_cafe_tostado>0&&<button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaUBA(t)}>+ Salida</button>}<button style={{...S.btnG,fontSize:11,...(!t.kg_cafe_tostado?{color:C.orange,borderColor:C.orange+"60",fontWeight:700}:{})}} onClick={()=>abrirEditar(t)}>{t.kg_cafe_tostado?"Editar":"Completar"}</button><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(t)}>Eliminar</button></div></td>
       </tr>);})}</tbody></table></TablaScrollV>
-      {blendsTostado.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tostaciones registradas todavia.</div>}
+      {blendsTostado.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tuestes registrados todavia.</div>}
     </div>
 
     {modalSalidaUBA&&selTost&&(<Modal title={"Salida de Cafe Tostado - "+selTost.codigo} onClose={()=>{setModalSalidaUBA(false);setErrSalidaUBA("");}}>
       <div style={{background:C.purpleBg,border:"1px solid "+C.purple+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
         <div style={{color:C.purple,fontWeight:700}}>{selTost.codigo} - {selTost.nombre_producto}</div>
-        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Stock disponible: <b style={{color:C.green,fontSize:15}}>{fmt(stockTostado(selTost))} kg</b></div>
+        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Stock disponible: <b style={{color:C.green,fontSize:15}}>{fmt(stockTostado(selTost),1)} kg</b></div>
       </div>
       {errSalidaUBA&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errSalidaUBA}</div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
@@ -3055,25 +3555,52 @@ function UbaTostado({blendsTostado,setBlendsTostado}){
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>setModalSalidaUBA(false)}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaUBA}>Registrar Salida</button></div>
     </Modal>)}
-    {modal&&(<Modal title={editId?"Editar Tostacion":"Nueva Tostacion"} onClose={()=>setModal(false)} wide>
+    {modal&&(<Modal title={editId?"Completar / Editar Tueste":"Nuevo Lote Tostado"} onClose={()=>setModal(false)} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/></Fld>
         <Fld label="Nombre Producto Comercial" half><input style={S.input} value={form.nombre_producto} onChange={e=>setForm(p=>({...p,nombre_producto:e.target.value}))}/></Fld>
         <Fld label="Codigo de Lote Origen" half><input style={S.input} value={form.codigo_lote_origen} onChange={e=>setForm(p=>({...p,codigo_lote_origen:e.target.value}))}/></Fld>
-        <Fld label="Fecha de Proceso" third><input style={S.input} type="date" value={form.fecha_proceso} onChange={e=>setForm(p=>({...p,fecha_proceso:e.target.value}))}/></Fld>
-        <Fld label="Fecha de Trilla" third><input style={S.input} type="date" value={form.fecha_trilla} onChange={e=>setForm(p=>({...p,fecha_trilla:e.target.value}))}/></Fld>
-        <Fld label="Fecha de Secado" third><input style={S.input} type="date" value={form.fecha_secado} onChange={e=>setForm(p=>({...p,fecha_secado:e.target.value}))}/></Fld>
-        <Fld label="kg a Tostar" half><input style={S.input} type="number" value={form.kg_a_tostar} onChange={e=>setForm(p=>({...p,kg_a_tostar:e.target.value,valor_total:(+e.target.value||0)*(+p.valor_unitario||0)||""}))}/></Fld>
+        {(form.fecha_proceso||form.fecha_trilla||form.fecha_secado)&&(<div style={{width:"100%",background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:8,fontSize:12,display:"flex",gap:16,flexWrap:"wrap"}}>
+          <span style={{color:C.textDim,fontWeight:600}}>Trazabilidad:</span>
+          {form.fecha_proceso&&<span style={{color:C.textDim}}>Proceso: <b>{fmtFecha(form.fecha_proceso)}</b></span>}
+          {form.fecha_trilla&&<span style={{color:C.textDim}}>Trilla: <b>{fmtFecha(form.fecha_trilla)}</b></span>}
+          {form.fecha_secado&&<span style={{color:C.textDim}}>Secado: <b>{fmtFecha(form.fecha_secado)}</b></span>}
+        </div>)}
+        <div style={{width:"100%",background:C.panel,borderRadius:8,border:"1px solid "+C.border,padding:"12px 14px",marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:700,fontSize:13,color:C.navy}}>Lotes de Origen del Tueste</div>
+            {form.fuentes.length>1&&<div style={{color:C.green,fontWeight:700,fontSize:12}}>Total: {fmt(form.fuentes.reduce((s,f)=>s+(+f.kg_tomados||0),0),1)} kg · {fmtCOP(form.fuentes.reduce((s,f)=>s+(f.valor_total_fuente||0),0))}</div>}
+          </div>
+          {form.fuentes.map((f,i)=>(<div key={i} style={{display:"flex",gap:8,alignItems:"center",marginBottom:6,background:C.purpleBg,borderRadius:6,padding:"8px 10px",border:"1px solid "+C.purple+"30"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:C.purple,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{f.blendCodigo}</div>
+              <div style={{color:C.textDim,fontSize:10,marginTop:1}}>{f.nombre_producto}</div>
+            </div>
+            <input style={{...S.input,width:72,padding:"4px 6px",textAlign:"right"}} type="number" value={f.kg_tomados} onChange={e=>{const kg=e.target.value;const vt=Math.round((+kg||0)*(f.valor_unitario||0));setForm(p=>{const nf=[...p.fuentes];nf[i]={...f,kg_tomados:kg,valor_total_fuente:vt};const tk=nf.reduce((s,x)=>s+(+x.kg_tomados||0),0);const tv=nf.reduce((s,x)=>s+(x.valor_total_fuente||0),0);return{...p,fuentes:nf,kg_a_tostar:tk||"",kg_origen:tk||"",valor_total:tv||"",valor_unitario:tk>0?Math.round(tv/tk):p.valor_unitario,codigo_lote_origen:nf.map(x=>x.blendCodigo).join(", ")};});}}/>
+            <span style={{color:C.textDim,fontSize:11}}>kg</span>
+            <span style={{color:C.gold,fontSize:10,minWidth:70,textAlign:"right"}}>{fmtCOP(f.valor_unitario)}/kg</span>
+            <button style={{background:"none",border:"none",cursor:"pointer",color:C.red,fontWeight:900,fontSize:15,padding:"0 4px",lineHeight:1}} onClick={()=>setForm(p=>{const nf=p.fuentes.filter((_,j)=>j!==i);const tk=nf.reduce((s,x)=>s+(+x.kg_tomados||0),0);const tv=nf.reduce((s,x)=>s+(x.valor_total_fuente||0),0);return{...p,fuentes:nf,...(nf.length>0?{kg_a_tostar:tk,kg_origen:tk,valor_total:tv,valor_unitario:tk>0?Math.round(tv/tk):p.valor_unitario,codigo_lote_origen:nf.map(x=>x.blendCodigo).join(", ")}:{})};})}>×</button>
+          </div>))}
+          {poolHistorico.filter(p=>!form.fuentes.some(f=>f.salidaId===p.salidaId)).length>0&&(<div style={{marginTop:form.fuentes.length>0?8:0}}>
+            {form.fuentes.length===0&&<div style={{color:C.textDim,fontSize:11,marginBottom:6}}>Selecciona lotes para agregar al tueste:</div>}
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {poolHistorico.filter(p=>!form.fuentes.some(f=>f.salidaId===p.salidaId)).map(item=>(<button key={item.salidaId} style={{...S.btnG,fontSize:11,color:C.accent,borderColor:C.accent+"60",padding:"5px 10px"}} onClick={()=>setForm(p=>{const vt=Math.round(item.kg_a_tostar*(item.valor_unitario||0));const nf=[...p.fuentes,{salidaId:item.salidaId,blendCodigo:item.blendCodigo,nombre_producto:item.nombre_producto,kg_tomados:item.kg_a_tostar,valor_unitario:item.valor_unitario,valor_total_fuente:vt,lotes_blend:item.lotes_blend||[]}];const tk=nf.reduce((s,f)=>s+(+f.kg_tomados||0),0);const tv=nf.reduce((s,f)=>s+(f.valor_total_fuente||0),0);return{...p,fuentes:nf,kg_a_tostar:tk||"",kg_origen:tk||"",valor_total:tv||"",valor_unitario:tk>0?Math.round(tv/tk):p.valor_unitario,codigo_lote_origen:nf.map(f=>f.blendCodigo).join(", ")};})}>+ {item.blendCodigo} · {fmt(item.kg_a_tostar,1)} kg</button>))}
+            </div>
+          </div>)}
+          {poolHistorico.length===0&&form.fuentes.length===0&&<div style={{color:C.textFaint,fontSize:11,fontStyle:"italic"}}>Sin lotes en pool. Completa el código de lote de origen manualmente.</div>}
+        </div>
+        <Fld label="kg a Tostar (este batch)" half>{form.fuentes.length>0?<div style={{...S.input,background:C.panel2,color:C.accent,fontWeight:700,display:"flex",alignItems:"center"}}>{fmt(+form.kg_a_tostar||0,1)} kg<span style={{color:C.textFaint,fontSize:10,marginLeft:8}}>{form.fuentes.length} {form.fuentes.length===1?"lote":"lotes"}</span></div>:<input style={S.input} type="number" value={form.kg_a_tostar} onChange={e=>setForm(p=>({...p,kg_a_tostar:e.target.value,valor_total:(+e.target.value||0)*(+p.valor_unitario||0)||""}))}/>}{!form.fuentes.length&&form.kg_origen&&+form.kg_origen>0&&+form.kg_origen!=+form.kg_a_tostar&&<div style={{color:C.teal,fontSize:11,marginTop:4}}>Disponible del lote: <b>{fmt(+form.kg_origen,1)} kg</b></div>}</Fld>
         <Fld label="Valor Unitario ($/kg)" half><input style={S.input} type="number" value={form.valor_unitario} onChange={e=>setForm(p=>({...p,valor_unitario:e.target.value,valor_total:(+form.kg_a_tostar||0)*(+e.target.value||0)||""}))}/></Fld>
         <Fld label="Valor Total" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} type="number" value={form.valor_total} onChange={e=>setForm(p=>({...p,valor_total:e.target.value}))}/></Fld>
         <Fld label="Temperatura (°C)" half><input style={S.input} type="number" value={form.temperatura} onChange={e=>setForm(p=>({...p,temperatura:e.target.value}))}/></Fld>
         <Fld label="Tiempo (min)" half><input style={S.input} type="number" value={form.tiempo} onChange={e=>setForm(p=>({...p,tiempo:e.target.value}))}/></Fld>
-        <Fld label="Tipo de Tostión" half><select style={S.select} value={form.tipo_tostion} onChange={e=>setForm(p=>({...p,tipo_tostion:e.target.value}))}>{TIPOS_TOSTION.map(t=>(<option key={t}>{t}</option>))}</select></Fld>
+        <Fld label="Tipo de Tueste" half><select style={S.select} value={form.tipo_tostion} onChange={e=>setForm(p=>({...p,tipo_tostion:e.target.value}))}>{TIPOS_TOSTION.map(t=>(<option key={t}>{t}</option>))}</select></Fld>
         <Fld label="kg Cafe Tostado (resultado)" half><input style={S.input} type="number" value={form.kg_cafe_tostado} onChange={e=>setForm(p=>({...p,kg_cafe_tostado:e.target.value}))}/>{form.kg_cafe_tostado&&form.kg_a_tostar&&<div style={{color:C.teal,fontSize:11,marginTop:4}}>Rendimiento: {((+form.kg_cafe_tostado/+form.kg_a_tostar)*100).toFixed(1)}%</div>}</Fld>
         <Fld label="Responsable" half><input style={S.input} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/></Fld>
       </div>
       <Fld label="Catacion"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={form.catacion} onChange={e=>setForm(p=>({...p,catacion:e.target.value}))}/></Fld>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>setModal(false)}>Cancelar</button><button style={{...S.btn,background:C.purple}} onClick={reg}>{editId?"Guardar Cambios":"Registrar Tostacion"}</button></div>
+      {errReg&&<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:8,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errReg}</div>}
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModal(false);setErrReg("");}}>Cancelar</button><button style={{...S.btn,background:C.purple}} onClick={reg}>{editId?"Guardar Cambios":"Registrar Tueste"}</button></div>
     </Modal>)}
   </div>);
 }
@@ -3261,11 +3788,21 @@ function Costos({costos,setCostos}){
   </div>);
 }
 
-function Usuarios({usuarios,setUsuarios}){
-  const [modal,setModal]=useState(false);const [editId,setEditId]=useState(null);const [form,setForm]=useState({nombre:"",email:"",rol:"Operario Beneficio"});const [err,setErr]=useState("");
+const SECS_PERM=[
+  {k:"dashboard",l:"Dashboard"},{k:"procesamiento",l:"Procesamiento"},{k:"bodega",l:"Bodega Milan"},
+  {k:"trilla",l:"Trilla"},{k:"bodega_tri",l:"Bodega Trilladora"},{k:"blend",l:"Blend"},
+  {k:"bodega_fino",l:"Bodega Cafe Fino"},{k:"trilladora_fino",l:"Trilladora CF"},{k:"bodega_tri_fino",l:"Bodega Tri. CF"},
+  {k:"blend_fino",l:"Blend Cafe Fino"},{k:"maquila",l:"Maquila"},{k:"uba_tostado",l:"UBA Tostado"},
+  {k:"ventas",l:"Ventas"},{k:"trazabilidad",l:"Trazabilidad"},{k:"costos",l:"Reg. Costos"},
+  {k:"usuarios",l:"Usuarios"},{k:"carga_inicial",l:"Carga Inicial"},
+];
+const ROL_ABREV={"Gerente":"Gerente","Gerente Produccion":"G. Prod.","Gerente Financiero":"G. Fin.","Gerente Comercial":"G. Com.","Gerente Administrativo":"G. Admin.","Analista de Calidad":"A. Calidad","Analista Calidad + Trilla":"A.C.+Trilla","Operario Cafe Fino":"Op. CF","Coordinador Tostado":"Coord. Tost."};
+
+function Usuarios({usuarios,setUsuarios,permisosConfig,setPermisosConfig}){
+  const [modal,setModal]=useState(false);const [editId,setEditId]=useState(null);const [form,setForm]=useState({nombre:"",email:"",rol:ROLES_SISTEMA[0]});const [err,setErr]=useState("");
   const [invLoading,setInvLoading]=useState(null);const [invMsgs,setInvMsgs]=useState({});
-  const ROLES=["Gerente","Supervisor","Operario Beneficio","Trilladore","Analista Calidad","Conductor"];
-  const blankFormU=()=>({nombre:"",email:"",rol:"Operario Beneficio"});
+  const [tabU,setTabU]=useState("usuarios");
+  const blankFormU=()=>({nombre:"",email:"",rol:ROLES_SISTEMA[0]});
   const abrirNuevoU=()=>{setEditId(null);setForm(blankFormU());setErr("");setModal(true);};
   const abrirEditarU=(u)=>{setEditId(u.id);setForm({nombre:u.nombre,email:u.email,rol:u.rol});setErr("");setModal(true);};
   const agregar=()=>{
@@ -3304,10 +3841,80 @@ function Usuarios({usuarios,setUsuarios}){
     catch(e){setInvMsgs(p=>({...p,[u.id]:"Error: "+(e.message||e.code)}));}
     setInvLoading(null);
   };
+
+  const getEstado=(rol,sec)=>{
+    const p=permisosConfig.find(x=>x.id===rol);
+    if(!p||(p.views||[]).indexOf(sec)===-1)return 0;
+    if((p.readOnly||[]).indexOf(sec)!==-1)return 1;
+    return 2;
+  };
+  const ciclar=(rol,sec)=>{
+    const sig=(getEstado(rol,sec)+1)%3;
+    setPermisosConfig(prev=>prev.map(p=>{
+      if(p.id!==rol)return p;
+      let v=[...(p.views||[])],r=[...(p.readOnly||[])];
+      if(sig===0){v=v.filter(x=>x!==sec);r=r.filter(x=>x!==sec);}
+      else if(sig===1){if(!v.includes(sec))v=[...v,sec];if(!r.includes(sec))r=[...r,sec];}
+      else{if(!v.includes(sec))v=[...v,sec];r=r.filter(x=>x!==sec);}
+      return{...p,views:v,readOnly:r};
+    }));
+  };
+  const resetRolPerm=(rol)=>{
+    const def=PERMISOS_SEED.find(x=>x.id===rol);
+    if(!def)return;
+    setPermisosConfig(prev=>prev.map(p=>p.id===rol?{...p,views:[...def.views],readOnly:[...def.readOnly]}:p));
+  };
+  const ROLES_PERM=PERMISOS_SEED.map(p=>p.id);
+  const ESTADO_META=[
+    {label:"Sin acceso",bg:"transparent",border:C.border,color:C.textFaint,icon:"—"},
+    {label:"Solo ver",bg:C.goldBg,border:C.gold+"60",color:C.gold,icon:"👁"},
+    {label:"Acceso completo",bg:C.greenBg,border:C.green+"60",color:C.green,icon:"✓"},
+  ];
+
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.accent,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>GESTION DE ACCESO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Usuarios del Sistema</div></div><button style={S.btn} onClick={abrirNuevoU}>+ Nuevo Usuario</button></div>
-    <div style={S.card}><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["#","Nombre","Email","Rol","Estado","Acciones","Acceso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{usuarios.map(u=>(<tr key={u.id}><td style={{...S.td,color:C.textFaint,fontSize:11}}>{u.id}</td><td style={{...S.td,fontWeight:600,color:C.navy}}>{u.nombre}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{u.email}</td><td style={S.td}><Bdg label={u.rol} col={C.accent} bg={C.accentBg}/></td><td style={S.td}><Bdg label={u.activo?"Activo":"Inactivo"} col={u.activo?C.green:C.red} bg={u.activo?C.greenBg:C.redBg}/></td><td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={S.btnG} onClick={()=>setUsuarios(p=>p.map(x=>x.id===u.id?{...x,activo:!x.activo}:x))}>{u.activo?"Desactivar":"Activar"}</button><button style={S.btnG} onClick={()=>abrirEditarU(u)}>Editar</button><button style={S.btnG} onClick={()=>resetClave(u)} disabled={invLoading===u.id}>Reset Clave</button></div></td><td style={S.td}><div style={{display:"flex",flexDirection:"column",gap:4,minWidth:100}}><button style={{background:C.green,border:"none",borderRadius:6,color:C.white,cursor:"pointer",fontSize:11,fontWeight:600,padding:"5px 10px",opacity:invLoading===u.id?0.6:1}} onClick={()=>invitar(u)} disabled={invLoading===u.id}>{invLoading===u.id?"Enviando...":"Invitar"}</button>{invMsgs[u.id]&&<div style={{color:invMsgs[u.id].startsWith("✓")?C.green:C.red,fontSize:10,lineHeight:1.3}}>{invMsgs[u.id]}</div>}</div></td></tr>))}</tbody></table></TablaScrollV></div>
-    {modal&&(<Modal title={editId?"Editar Usuario":"Nuevo Usuario"} onClose={()=>{setModal(false);setErr("");}}><div style={{color:C.textDim,fontSize:12,marginBottom:14,padding:"8px 12px",background:C.accentBg,borderRadius:6}}>Despues de agregar el usuario usa el boton "Invitar" para enviarle el correo de acceso a la plataforma.</div><Fld label="Nombre Completo"><input style={S.input} value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></Fld><Fld label="Correo Electronico"><input style={S.input} type="email" placeholder="usuario@empresa.com" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value.toLowerCase()}))}/></Fld><Fld label="Rol"><select style={S.select} value={form.rol} onChange={e=>setForm(p=>({...p,rol:e.target.value}))}>{ROLES.map(r=>(<option key={r}>{r}</option>))}</select></Fld>{err&&<div style={{color:C.red,fontSize:12,marginBottom:10,padding:"8px 12px",background:C.redBg,borderRadius:4}}>{err}</div>}<div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModal(false);setErr("");}}>Cancelar</button><button style={S.btn} onClick={agregar}>{editId?"Guardar Cambios":"Agregar Usuario"}</button></div></Modal>)}
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18,flexWrap:"wrap",gap:12}}><div><div style={{color:C.accent,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>GESTION DE ACCESO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Usuarios del Sistema</div></div>{tabU==="usuarios"&&<button style={S.btn} onClick={abrirNuevoU}>+ Nuevo Usuario</button>}</div>
+    <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border}}>
+      {[["usuarios","Usuarios"],["permisos","Permisos por Rol"]].map(([k,v])=>(<button key={k} onClick={()=>setTabU(k)} style={{padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:tabU===k?700:400,color:tabU===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabU===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+    </div>
+
+    {tabU==="usuarios"&&(<>
+      <div style={S.card}><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["#","Nombre","Email","Rol","Estado","Acciones","Acceso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{usuarios.map(u=>(<tr key={u.id}><td style={{...S.td,color:C.textFaint,fontSize:11}}>{u.id}</td><td style={{...S.td,fontWeight:600,color:C.navy}}>{u.nombre}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{u.email}</td><td style={S.td}><Bdg label={u.rol} col={C.accent} bg={C.accentBg}/></td><td style={S.td}><Bdg label={u.activo?"Activo":"Inactivo"} col={u.activo?C.green:C.red} bg={u.activo?C.greenBg:C.redBg}/></td><td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={S.btnG} onClick={()=>setUsuarios(p=>p.map(x=>x.id===u.id?{...x,activo:!x.activo}:x))}>{u.activo?"Desactivar":"Activar"}</button><button style={S.btnG} onClick={()=>abrirEditarU(u)}>Editar</button><button style={S.btnG} onClick={()=>resetClave(u)} disabled={invLoading===u.id}>Reset Clave</button></div></td><td style={S.td}><div style={{display:"flex",flexDirection:"column",gap:4,minWidth:100}}><button style={{background:C.green,border:"none",borderRadius:6,color:C.white,cursor:"pointer",fontSize:11,fontWeight:600,padding:"5px 10px",opacity:invLoading===u.id?0.6:1}} onClick={()=>invitar(u)} disabled={invLoading===u.id}>{invLoading===u.id?"Enviando...":"Invitar"}</button>{invMsgs[u.id]&&<div style={{color:invMsgs[u.id].startsWith("✓")?C.green:C.red,fontSize:10,lineHeight:1.3}}>{invMsgs[u.id]}</div>}</div></td></tr>))}</tbody></table></TablaScrollV></div>
+    </>)}
+
+    {tabU==="permisos"&&(<>
+      <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{fontSize:12,color:C.navy,fontWeight:600}}>Leyenda — haz clic en cada celda para cambiar el acceso:</div>
+        {ESTADO_META.map(m=>(<div key={m.label} style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}><div style={{width:28,height:24,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:4,border:"1px solid "+m.border,background:m.bg,color:m.color,fontWeight:700,fontSize:12}}>{m.icon}</div><span style={{color:C.textDim}}>{m.label}</span></div>))}
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <table style={{borderCollapse:"collapse",minWidth:900,width:"100%"}}>
+          <thead>
+            <tr>
+              <th style={{...S.th,textAlign:"left",position:"sticky",left:0,background:C.panel2,minWidth:150,zIndex:2}}>Seccion</th>
+              {ROLES_PERM.map(rol=>(<th key={rol} style={{...S.th,minWidth:90,whiteSpace:"nowrap",padding:"6px 8px"}}><div title={rol} style={{fontSize:10,fontWeight:700,color:C.navy,textAlign:"center"}}>{ROL_ABREV[rol]||rol}</div></th>))}
+            </tr>
+          </thead>
+          <tbody>
+            {SECS_PERM.map((sec,si)=>(<tr key={sec.k} style={{background:si%2===0?C.panel2:C.panel}}>
+              <td style={{...S.td,fontWeight:600,color:C.navy,fontSize:12,position:"sticky",left:0,background:si%2===0?C.panel2:C.panel,zIndex:1}}>{sec.l}</td>
+              {ROLES_PERM.map(rol=>{
+                const est=getEstado(rol,sec.k);
+                const m=ESTADO_META[est];
+                return(<td key={rol} style={{...S.td,textAlign:"center",padding:"4px 6px"}}>
+                  <button onClick={()=>ciclar(rol,sec.k)} title={m.label} style={{width:32,height:28,display:"inline-flex",alignItems:"center",justifyContent:"center",borderRadius:5,border:"1px solid "+m.border,background:m.bg,color:m.color,fontWeight:700,fontSize:13,cursor:"pointer",transition:"all 0.15s"}}>{m.icon}</button>
+                </td>);
+              })}
+            </tr>))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{marginTop:14,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{fontSize:12,color:C.textDim}}>Restablecer rol a valores por defecto:</span>
+        {ROLES_PERM.map(rol=>(<button key={rol} style={{...S.btnG,fontSize:11,padding:"5px 10px"}} onClick={()=>{if(window.confirm("¿Restaurar permisos por defecto para "+rol+"?"))resetRolPerm(rol);}}>↺ {ROL_ABREV[rol]||rol}</button>))}
+      </div>
+    </>)}
+
+    {modal&&(<Modal title={editId?"Editar Usuario":"Nuevo Usuario"} onClose={()=>{setModal(false);setErr("");}}><div style={{color:C.textDim,fontSize:12,marginBottom:14,padding:"8px 12px",background:C.accentBg,borderRadius:6}}>Despues de agregar el usuario usa el boton "Invitar" para enviarle el correo de acceso a la plataforma.</div><Fld label="Nombre Completo"><input style={S.input} value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></Fld><Fld label="Correo Electronico"><input style={S.input} type="email" placeholder="usuario@empresa.com" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value.toLowerCase()}))}/></Fld><Fld label="Rol del Sistema"><select style={S.select} value={form.rol} onChange={e=>setForm(p=>({...p,rol:e.target.value}))}>{ROLES_SISTEMA.map(r=>(<option key={r}>{r}</option>))}</select></Fld>{err&&<div style={{color:C.red,fontSize:12,marginBottom:10,padding:"8px 12px",background:C.redBg,borderRadius:4}}>{err}</div>}<div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModal(false);setErr("");}}>Cancelar</button><button style={S.btn} onClick={agregar}>{editId?"Guardar Cambios":"Agregar Usuario"}</button></div></Modal>)}
   </div>);
 }
 
@@ -3346,9 +3953,14 @@ function LoginForm({notAuthorized}){
 function BulkLoader({lotes,setLotes,blends,setBlends,setCostos,lotesFino,setLotesFino,blendsFino,setBlendsFino,setMaquilas,setBlendsTostado,setUsuarios}){
   const [status,setStatus]=useState("idle");
   const [statusCF,setStatusCF]=useState("idle");
+  const [statusCostos,setStatusCostos]=useState("idle");
+  const [confirmCostos,setConfirmCostos]=useState(false);
   const [wipeStatus,setWipeStatus]=useState("idle");
+  const [statusDupli,setStatusDupli]=useState("idle");
   const [log,setLog]=useState([]);
   const [logCF,setLogCF]=useState([]);
+  const [logCostos,setLogCostos]=useState([]);
+  const [logDupli,setLogDupli]=useState([]);
   const INS0={jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0};
   const excF=d=>new Date((d-25569)*86400000).toISOString().slice(0,10);
   const rawMilan=[
@@ -3594,6 +4206,53 @@ function BulkLoader({lotes,setLotes,blends,setBlends,setCostos,lotesFino,setLote
     msgs.push("✓ Blend Café Fino: "+nuevosBF.length+" blends cargados");
     setLogCF(msgs);setStatusCF("done");
   };
+  const ejecutarActualizarCostos=()=>{
+    // Build cost lookup by codigo+kg (precise) with fallback to codigo only
+    const triEntries=rawTri.filter(r=>r.costo>0);
+    const triFEntries=rawTriFino.filter(r=>r.costo>0);
+    const getCostoTri=(l)=>{const byKg=triEntries.find(r=>r.codigo===l.codigo&&Math.abs(r.kg-(l.kg_producto||0))<1);return byKg?byKg.costo:(triEntries.find(r=>r.codigo===l.codigo)?.costo||0);};
+    const getCostoTriF=(l)=>{const byKg=triFEntries.find(r=>r.codigo===l.codigo&&Math.abs(r.kg-(l.kg_producto||0))<1);return byKg?byKg.costo:(triFEntries.find(r=>r.codigo===l.codigo)?.costo||0);};
+    let updT=0,updTF=0;
+    setLotes(prev=>prev.map(l=>{
+      const c=getCostoTri(l);
+      if(!c)return l;
+      updT++;
+      const cereza=(l.cereza||[]).length>0?(l.cereza).map((cx,i)=>i===0?{...cx,valor_kg:c}:cx):[{finca:"Externo",kg:l.kg_producto||0,valor_kg:c,flote:0,kg_proceso:l.kg_producto||0}];
+      const hasSalidaT=(l.salidas_bodega||[]).some(s=>s.destino_key==="trilla");
+      const salidas_bodega=hasSalidaT?(l.salidas_bodega||[]).map(s=>s.destino_key==="trilla"?{...s,valor_kg:c,valor_total:(s.peso_salida||0)*c}:s):[...(l.salidas_bodega||[]),{id:genId(),fecha:l.fecha_proceso||"",factura:"MANUAL",remision:"",cliente:"Trilla",destino_key:"trilla",peso_salida:l.kg_producto||0,valor_kg:c,valor_total:(l.kg_producto||0)*c}];
+      const kgEx=l.trilla?.kg_excelso||l.kg_producto||0;
+      const trilla=l.trilla?{...l.trilla,costo_kg_excelso:c,valor_total:kgEx*c}:{kg_excelso:kgEx,costo_kg_excelso:c,valor_total:kgEx*c};
+      return{...l,cereza,salidas_bodega,trilla,costo_directo_kg:c,origen_lote:"trilla_directa"};
+    }));
+    setLotesFino(prev=>prev.map(l=>{
+      const c=getCostoTriF(l);
+      if(!c)return l;
+      updTF++;
+      const kgEx=l.trilla?.kg_excelso||l.kg_producto||0;
+      const trilla=l.trilla?{...l.trilla,costo_kg_excelso:c,valor_total:kgEx*c}:l.trilla;
+      return{...l,costo_compra_kg:c,trilla};
+    }));
+    setLogCostos(["✓ Bodega Trilladora: "+updT+" lotes actualizados","✓ Trilladora CF: "+updTF+" lotes actualizados"]);
+    setStatusCostos("done");
+    setConfirmCostos(false);
+  };
+  const limpiarDuplicados=()=>{
+    const porCodigo={};
+    lotes.forEach(l=>{if(!porCodigo[l.codigo])porCodigo[l.codigo]=[];porCodigo[l.codigo].push(l);});
+    const grupos=Object.entries(porCodigo).filter(([,arr])=>arr.length>1);
+    if(!grupos.length){setLogDupli(["Sin duplicados encontrados en Bodega Milan / Procesamiento."]);setStatusDupli("done");return;}
+    const idsElim=new Set();
+    const msgs=[];
+    grupos.forEach(([cod,arr])=>{
+      arr.sort((a,b)=>(b.kg_producto||0)-(a.kg_producto||0)||(b.cereza?.length||0)-(a.cereza?.length||0));
+      const eliminar=arr.slice(1);
+      eliminar.forEach(l=>idsElim.add(l.id));
+      msgs.push("ELIMINADO — Código: "+cod+" ("+arr.length+" copias → se elimina "+(arr.length-1)+", se conserva el más completo)");
+    });
+    setLotes(p=>p.filter(l=>!idsElim.has(l.id)));
+    setLogDupli(msgs);
+    setStatusDupli("done");
+  };
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>ADMINISTRACION</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Carga Inicial de Datos</div></div>
     <div style={{...S.card,maxWidth:600,borderTop:"3px solid "+C.red,marginBottom:20}}>
@@ -3626,10 +4285,408 @@ function BulkLoader({lotes,setLotes,blends,setBlends,setCostos,lotesFino,setLote
         <div style={{color:C.green,fontWeight:700,fontSize:13}}>✓ Café Fino cargado en Firestore.</div>
       </>)}
     </div>
+    <div style={{...S.card,maxWidth:600,marginTop:16,borderTop:"3px solid "+C.orange}}>
+      <div style={{color:C.orange,fontWeight:700,fontSize:14,marginBottom:6}}>Actualizar Costos/kg — Trilladora y CF</div>
+      <div style={{color:C.textDim,fontSize:12,marginBottom:16}}>Aplica los costos del Excel a Bodega Trilladora y Trilladora CF. Solo actualiza el costo/kg — no toca salidas ni stock.</div>
+      {!confirmCostos&&statusCostos!=="done"&&(<button style={{...S.btn,background:C.orange}} onClick={()=>setConfirmCostos(true)}>Actualizar Costos</button>)}
+      {confirmCostos&&(<div style={{background:C.orangeBg,border:"1px solid "+C.orange+"40",borderRadius:8,padding:"14px 16px",marginBottom:8}}>
+        <div style={{color:C.orange,fontWeight:600,fontSize:13,marginBottom:10}}>¿Confirmar actualización de costos/kg?</div>
+        <div style={{display:"flex",gap:10}}>
+          <button style={{...S.btn,background:C.orange,flex:1}} onClick={ejecutarActualizarCostos}>Sí, actualizar ahora</button>
+          <button style={{...S.btnG,flex:1}} onClick={()=>setConfirmCostos(false)}>Cancelar</button>
+        </div>
+      </div>)}
+      {statusCostos==="done"&&(<>
+        <div style={{marginBottom:12,marginTop:12}}>{logCostos.map((m,i)=>(<div key={i} style={{padding:"8px 12px",background:C.orangeBg,borderRadius:6,marginBottom:6,fontSize:13,color:C.navy,fontWeight:600}}>{m}</div>))}</div>
+        <div style={{color:C.green,fontWeight:700,fontSize:13,marginBottom:10}}>✓ Costos sincronizados con Firestore.</div>
+        <button style={{...S.btnG,fontSize:12}} onClick={()=>{setStatusCostos("idle");setLogCostos([]);}}>Ejecutar de nuevo</button>
+      </>)}
+    </div>
+    <div style={{...S.card,maxWidth:600,marginTop:16,borderTop:"3px solid "+C.purple}}>
+      <div style={{color:C.purple,fontWeight:700,fontSize:14,marginBottom:6}}>Limpiar Lotes Duplicados</div>
+      <div style={{color:C.textDim,fontSize:12,marginBottom:16}}>Detecta lotes con el mismo código en Bodega Milan / Procesamiento. Para cada duplicado, conserva el más completo (mayor kg_producto) y elimina los demás. Reporta los códigos afectados.</div>
+      {statusDupli!=="done"&&(<button style={{...S.btn,background:C.purple}} onClick={limpiarDuplicados}>Detectar y Limpiar Duplicados</button>)}
+      {statusDupli==="done"&&(<>
+        <div style={{marginBottom:12}}>{logDupli.map((m,i)=>(<div key={i} style={{padding:"10px 12px",background:C.purpleBg||"#f3e8ff",borderRadius:6,marginBottom:6,fontSize:12,color:C.navy,fontWeight:600,borderLeft:"3px solid "+C.purple}}>{m}</div>))}</div>
+        <div style={{color:C.green,fontWeight:700,fontSize:13,marginBottom:10}}>✓ Operación completada. Cambios guardados en Firestore.</div>
+        <button style={{...S.btnG,fontSize:12}} onClick={()=>{setStatusDupli("idle");setLogDupli([]);}}>Escanear de nuevo</button>
+      </>)}
+    </div>
   </div>);
 }
 
-const NAV=[{k:"dashboard",l:"Dashboard",icon:"&#9647;"},{k:"sep1",sep:true},{k:"procesamiento",l:"Procesamiento",icon:"&#8857;"},{k:"bodega",l:"Bodega Milan",icon:"&#127968;"},{k:"trilla",l:"Trilla",icon:"&#9881;"},{k:"bodega_tri",l:"Bodega Trilladora",icon:"&#9733;"},{k:"blend",l:"Blend",icon:"&#9737;"},{k:"sep2",sep:true},{k:"bodega_fino",l:"Bodega Cafe Fino",icon:"&#127968;"},{k:"trilladora_fino",l:"Trilladora Cafe Fino",icon:"&#9881;"},{k:"blend_fino",l:"Blend Cafe Fino",icon:"&#9737;"},{k:"sep4",sep:true},{k:"maquila",l:"Maquila",icon:"&#9874;"},{k:"uba_tostado",l:"UBA Tostado",icon:"&#9745;"},{k:"sep2b",sep:true},{k:"trazabilidad",l:"Trazabilidad",icon:"&#128202;"},{k:"costos",l:"Reg. Costos",icon:"$"},{k:"sep3",sep:true},{k:"usuarios",l:"Usuarios",icon:"&#8853;"},{k:"sep5",sep:true},{k:"carga_inicial",l:"Carga Inicial",icon:"&#8659;"}];
+const ROLES_SISTEMA=["Gerente Produccion","Gerente Financiero","Gerente Comercial","Gerente Administrativo","Analista de Calidad","Analista Calidad + Trilla","Operario Cafe Fino","Coordinador Tostado"];
+const PERMISOS={
+  "Gerente":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios","carga_inicial"],readOnly:[]},
+  "Gerente Produccion":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios","carga_inicial"],readOnly:[]},
+  "Gerente Financiero":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos"],readOnly:["procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado"]},
+  "Gerente Comercial":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos"],readOnly:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","costos"]},
+  "Gerente Administrativo":{views:["dashboard","bodega","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios"],readOnly:["dashboard","bodega","bodega_tri","blend","trilladora_fino","blend_fino"]},
+  "Analista de Calidad":{views:["bodega","bodega_tri","blend","bodega_fino","trazabilidad"],readOnly:["bodega","bodega_tri","blend"]},
+  "Analista Calidad + Trilla":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","trazabilidad"],readOnly:["dashboard","procesamiento","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino"]},
+  "Operario Cafe Fino":{views:["bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","trazabilidad"],readOnly:["uba_tostado","trazabilidad"]},
+  "Coordinador Tostado":{views:["dashboard","bodega_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad"],readOnly:["dashboard","bodega_fino","blend_fino","ventas"]},
+};
+const PERMISOS_SEED=Object.entries(PERMISOS).map(([rol,p])=>({id:rol,views:[...p.views],readOnly:[...p.readOnly]}));
+const NAV=[{k:"dashboard",l:"Dashboard",icon:"&#9647;"},{k:"sep1",sep:true},{k:"procesamiento",l:"Procesamiento",icon:"&#8857;"},{k:"bodega",l:"Bodega Milan",icon:"&#127968;"},{k:"trilla",l:"Trilla",icon:"&#9881;"},{k:"bodega_tri",l:"Bodega Trilladora",icon:"&#9733;"},{k:"blend",l:"Blend",icon:"&#9737;"},{k:"sep2",sep:true},{k:"bodega_fino",l:"Bodega Cafe Fino",icon:"&#127968;"},{k:"trilladora_fino",l:"Trilladora Cafe Fino",icon:"&#9881;"},{k:"bodega_tri_fino",l:"Bodega Trilladora Fino",icon:"&#9733;"},{k:"blend_fino",l:"Blend Cafe Fino",icon:"&#9737;"},{k:"sep4",sep:true},{k:"maquila",l:"Maquila",icon:"&#9874;"},{k:"uba_tostado",l:"UBA Tostado",icon:"&#9745;"},{k:"sep6",sep:true},{k:"ventas",l:"Ventas",icon:"&#128200;"},{k:"sep2b",sep:true},{k:"trazabilidad",l:"Trazabilidad",icon:"&#128202;"},{k:"costos",l:"Reg. Costos",icon:"$"},{k:"sep3",sep:true},{k:"usuarios",l:"Usuarios",icon:"&#8853;"},{k:"sep5",sep:true},{k:"carga_inicial",l:"Carga Inicial",icon:"&#8659;"}];
+
+function Ventas({lotes,lotesFino,blends,blendsFino}){
+  const [tab,setTab]=useState("consolidado");
+  const [filtroMes,setFiltroMes]=useState("todos");
+  const [filtroTipo,setFiltroTipo]=useState("todos");
+  const [busqueda,setBusqueda]=useState("");
+  const [clienteSel,setClienteSel]=useState(null);
+
+  const esExterno=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro")&&!s.auto_blend;
+
+  const todasVentas=useMemo(()=>[
+    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
+    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Café Fino",tipoKey:"cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
+    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
+    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
+  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino]);
+
+  const mesesDisp=MESES.filter(m=>todasVentas.some(v=>v.mes===m));
+  const tiposDisp=[...new Set(todasVentas.map(v=>v.tipo))];
+
+  const ventasFilt=todasVentas.filter(v=>{
+    if(filtroMes!=="todos"&&v.mes!==filtroMes)return false;
+    if(filtroTipo!=="todos"&&v.tipo!==filtroTipo)return false;
+    if(busqueda){const q=busqueda.toLowerCase();if(!v.cliente.toLowerCase().includes(q)&&!v.producto.toLowerCase().includes(q)&&!v.factura.toLowerCase().includes(q)&&!v.remision.toLowerCase().includes(q))return false;}
+    return true;
+  });
+
+  const totalKg=ventasFilt.reduce((s,v)=>s+v.kg,0);
+  const totalValor=ventasFilt.reduce((s,v)=>s+v.valor_total,0);
+  const promKg=totalKg>0?totalValor/totalKg:0;
+  const clientesUnicos=[...new Set(ventasFilt.map(v=>v.cliente).filter(c=>c&&c!=="Sin Cliente"))];
+
+  const porCliente={};
+  todasVentas.forEach(v=>{const c=v.cliente||"Sin Cliente";if(!porCliente[c])porCliente[c]={kg:0,valor:0,tx:0,meses:new Set(),tipos:new Set()};porCliente[c].kg+=v.kg;porCliente[c].valor+=v.valor_total;porCliente[c].tx++;porCliente[c].meses.add(v.mes);porCliente[c].tipos.add(v.tipo);});
+  const clienteData=Object.entries(porCliente).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,d])=>({cliente,kg:d.kg,valor:d.valor,tx:d.tx,promKg:d.kg>0?d.valor/d.kg:0,meses:[...d.meses].filter(Boolean).length,tipos:[...d.tipos].join(", ")}));
+  const maxValCliente=clienteData.length>0?clienteData[0].valor:1;
+
+  const porMesGraf={};MESES.forEach(m=>{if(todasVentas.some(v=>v.mes===m))porMesGraf[m]={kg:0,valor:0};});
+  todasVentas.forEach(v=>{if(v.mes&&porMesGraf[v.mes]){porMesGraf[v.mes].kg+=v.kg;porMesGraf[v.mes].valor+=v.valor_total;}});
+  const mesesGraf=Object.entries(porMesGraf);
+  const maxValMes=mesesGraf.reduce((m,[,d])=>Math.max(m,d.valor),1);
+
+  const TIPO_COL={"Pergamino":C.teal,"Café Fino":C.green,"Blend":C.purple,"Blend CF":C.accent};
+  const TIPO_BG={"Pergamino":C.tealBg,"Café Fino":C.greenBg,"Blend":C.purpleBg,"Blend CF":C.accentBg};
+  const DCOL={trilla:C.teal,blend:C.purple,bodega_cf:C.green,trilla_cf:C.orange,blend_cf:C.accent,uba_tostado:C.gold};
+  const DLABEL={trilla:"Trilla",blend:"Blend",bodega_cf:"Bodega CF",trilla_cf:"Trilladora CF",blend_cf:"Blend CF",uba_tostado:"UBA Tostado"};
+  const OCOL={bodega_milan:C.navy,bodega_cf_src:"#0d9488",blend_src:C.purple,blend_cf_src:C.accent};
+  const traslados=useMemo(()=>[
+    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(s=>s.destino_key&&s.destino_key!==""&&s.destino_key!=="otro").map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",origenKey:"bodega_milan",origen:"Bodega Milan",destinoKey:s.destino_key,destino:DLABEL[s.destino_key]||s.destino_key,producto:l.producto||"Sin Producto",ref:l.codigo||"",kg:s.peso_salida||0}))),
+    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(s=>s.destino_key&&s.destino_key!==""&&s.destino_key!=="otro").map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",origenKey:"bodega_cf_src",origen:"Bodega CF",destinoKey:s.destino_key,destino:DLABEL[s.destino_key]||s.destino_key,producto:l.producto||"Sin Producto",ref:l.codigo||"",kg:s.peso_salida||0}))),
+    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(s=>s.destino_key&&s.destino_key!==""&&s.destino_key!=="otro").map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",origenKey:"blend_src",origen:"Blend",destinoKey:s.destino_key,destino:DLABEL[s.destino_key]||s.destino_key,producto:b.producto_comercial||b.nombre||"Sin Nombre",ref:b.codigo||"",kg:s.peso_salida||0}))),
+    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(s=>s.destino_key&&s.destino_key!==""&&s.destino_key!=="otro").map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",origenKey:"blend_cf_src",origen:"Blend CF",destinoKey:s.destino_key,destino:DLABEL[s.destino_key]||s.destino_key,producto:b.producto_comercial||b.nombre||"Sin Nombre",ref:b.codigo||"",kg:s.peso_salida||0}))),
+  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino]);
+
+  const histCliente=clienteSel?todasVentas.filter(v=>v.cliente===clienteSel).sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")):[];
+
+  return(<div>
+    {/* Header */}
+    <div style={{marginBottom:20}}>
+      <div style={{color:C.textDim,fontSize:11,fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PLAN MILAN</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+        <div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Ventas</div><div style={{color:C.textDim,fontSize:12,marginTop:3}}>{todasVentas.length} transacciones · {[...new Set(todasVentas.map(v=>v.cliente).filter(c=>c&&c!=="Sin Cliente"))].length} clientes</div></div>
+        <div style={{display:"flex",gap:6}}>
+          {[["consolidado","Consolidado"],["clientes","Por Cliente"],["tendencia","Tendencia"],["traslados","Flujo Interno"]].map(([k,v])=>(<button key={k} onClick={()=>{setTab(k);setClienteSel(null);}} style={{padding:"8px 18px",cursor:"pointer",fontSize:12,fontWeight:tab===k?700:400,color:tab===k?C.navy:C.textDim,background:tab===k?C.accentBg:"transparent",border:"1px solid "+(tab===k?C.accent:C.border),borderRadius:8,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+        </div>
+      </div>
+    </div>
+
+    {/* Filtros globales */}
+    <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center",padding:"12px 16px",background:C.panel,borderRadius:10,border:"1px solid "+C.border}}>
+      <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5}}>Filtros</span>
+      <select value={filtroMes} onChange={e=>setFiltroMes(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
+        <option value="todos">Todos los meses</option>
+        {mesesDisp.map(m=>(<option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+      </select>
+      <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{...S.select,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}}>
+        <option value="todos">Todos los productos</option>
+        {tiposDisp.map(t=>(<option key={t} value={t}>{t}</option>))}
+      </select>
+      <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar cliente, producto, factura..." style={{...S.input,width:"auto",flex:1,minWidth:200,fontSize:12,padding:"6px 10px"}}/>
+      {(filtroMes!=="todos"||filtroTipo!=="todos"||busqueda)&&<button style={{...S.btnG,fontSize:11,padding:"6px 12px",color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("todos");setFiltroTipo("todos");setBusqueda("");}}>✕ Limpiar</button>}
+      <span style={{fontSize:11,color:C.textFaint,marginLeft:"auto"}}>{ventasFilt.length} resultados</span>
+    </div>
+
+    {/* KPI Cards */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:20}}>
+      {[{label:"Total Facturado",value:fmtCOP(totalValor),sub:ventasFilt.length+" transacciones",col:C.navy,icon:"💵",big:true},{label:"kg Vendidos",value:fmt(totalKg)+" kg",sub:"peso neto despachado",col:C.teal,icon:"⚖️"},{label:"Precio Prom. / kg",value:promKg>0?fmtCOP(promKg):"—",sub:"valor promedio ponderado",col:C.gold,icon:"📈"},{label:"Clientes Activos",value:clientesUnicos.length,sub:"en periodo seleccionado",col:C.accent,icon:"🤝"}].map(k=>(
+        <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px",borderTop:"3px solid "+k.col,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1}}>{k.label}</span>
+            <span style={{fontSize:18,opacity:0.6}}>{k.icon}</span>
+          </div>
+          <div style={{fontSize:k.big?20:24,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:4,fontVariantNumeric:"tabular-nums"}}>{k.value}</div>
+          <div style={{fontSize:11,color:C.textFaint}}>{k.sub}</div>
+        </div>
+      ))}
+    </div>
+
+    {/* ── Tab: Consolidado ── */}
+    {tab==="consolidado"&&(<>
+      <div style={S.card}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Transacciones de Venta</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>Salidas externas de todos los productos</div></div>
+          <div style={{display:"flex",gap:10,fontSize:11,color:C.textDim}}>
+            <span>Total: <strong style={{color:C.navy}}>{fmtCOP(totalValor)}</strong></span>
+            <span>·</span>
+            <span><strong style={{color:C.teal}}>{fmt(totalKg)} kg</strong></span>
+          </div>
+        </div>
+        {ventasFilt.length===0?(<div style={{textAlign:"center",padding:"40px 0",color:C.textFaint}}><div style={{fontSize:32,marginBottom:10}}>📭</div><div style={{fontSize:13}}>Sin ventas para el filtro aplicado</div></div>):(
+          <TablaScrollV>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}>
+              <thead><tr>{["Fecha","Factura / Remisión","Cliente","Producto","Tipo","kg","Valor/kg","Valor Total"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+              <tbody>
+                {ventasFilt.map((v,i)=>(<tr key={v.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
+                  <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.fecha||"—"}</td>
+                  <td style={{...S.td}}>
+                    {v.factura&&<div style={{fontSize:12,fontWeight:600,color:C.navy}}>F: {v.factura}</div>}
+                    {v.remision&&<div style={{fontSize:11,color:C.textDim}}>R: {v.remision}</div>}
+                    {!v.factura&&!v.remision&&<span style={{color:C.textFaint}}>—</span>}
+                  </td>
+                  <td style={{...S.td,fontWeight:600,color:C.navy}}>{v.cliente}</td>
+                  <td style={S.td}><Bdg label={v.producto} col={TIPO_COL[v.tipo]||C.navy} bg={TIPO_BG[v.tipo]||C.accentBg}/></td>
+                  <td style={S.td}><span style={{...tg(TIPO_COL[v.tipo]||C.navy,TIPO_BG[v.tipo]),fontSize:10}}>{v.tipo}</span></td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(v.kg)} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:C.textDim,fontVariantNumeric:"tabular-nums"}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
+                </tr>))}
+                <tr style={{background:C.navy}}>
+                  <td colSpan={5} style={{...S.td,fontWeight:800,color:"#fff",fontSize:12}}>TOTAL ({ventasFilt.length} transacciones)</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(totalKg)} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(totalValor)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </TablaScrollV>
+        )}
+      </div>
+    </>)}
+
+    {/* ── Tab: Por Cliente ── */}
+    {tab==="clientes"&&(<>
+      {clienteSel?(
+        <div style={S.card}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div>
+              <button onClick={()=>setClienteSel(null)} style={{...S.btnG,fontSize:11,padding:"4px 10px",marginBottom:8}}>← Volver</button>
+              <div style={{fontWeight:700,fontSize:16,color:C.navy}}>{clienteSel}</div>
+              <div style={{fontSize:11,color:C.textDim,marginTop:2}}>{histCliente.length} transacciones · {fmt(histCliente.reduce((s,v)=>s+v.kg,0))} kg · {fmtCOP(histCliente.reduce((s,v)=>s+v.valor_total,0))}</div>
+            </div>
+            <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+              {[...new Set(histCliente.map(v=>v.tipo))].map(t=>(<Bdg key={t} label={t} col={TIPO_COL[t]||C.navy} bg={TIPO_BG[t]}/>))}
+            </div>
+          </div>
+          <TablaScrollV>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+              <thead><tr>{["Fecha","Factura / Remisión","Producto","Tipo","kg","Valor/kg","Valor Total"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+              <tbody>
+                {histCliente.map((v,i)=>(<tr key={v.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
+                  <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.fecha||"—"}</td>
+                  <td style={S.td}>{v.factura&&<div style={{fontSize:12,fontWeight:600,color:C.navy}}>F: {v.factura}</div>}{v.remision&&<div style={{fontSize:11,color:C.textDim}}>R: {v.remision}</div>}{!v.factura&&!v.remision&&"—"}</td>
+                  <td style={S.td}><Bdg label={v.producto} col={TIPO_COL[v.tipo]||C.navy} bg={TIPO_BG[v.tipo]}/></td>
+                  <td style={S.td}><span style={{...tg(TIPO_COL[v.tipo]||C.navy,TIPO_BG[v.tipo]),fontSize:10}}>{v.tipo}</span></td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(v.kg)} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:C.textDim,fontVariantNumeric:"tabular-nums"}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
+                </tr>))}
+                <tr style={{background:C.navy}}>
+                  <td colSpan={4} style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(histCliente.reduce((s,v)=>s+v.kg,0))} kg</td>
+                  <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(histCliente.reduce((s,v)=>s+v.valor_total,0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </TablaScrollV>
+        </div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          <div style={S.card}>
+            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Ranking de Clientes</div>
+            <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>{clienteData.length} clientes · ordenado por valor total</div>
+            {clienteData.length===0?(<div style={{textAlign:"center",padding:"30px 0",color:C.textFaint}}>Sin datos</div>):(
+              <div>{clienteData.map((d,i)=>(
+                <div key={d.cliente} onClick={()=>setClienteSel(d.cliente)} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 12px",marginBottom:6,borderRadius:8,border:"1px solid "+C.border,cursor:"pointer",background:i===0?C.accentBg:C.panel,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background=C.accentBg} onMouseLeave={e=>e.currentTarget.style.background=i===0?C.accentBg:C.panel}>
+                  <div style={{width:24,height:24,borderRadius:"50%",background:i<3?C.navy:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:i<3?"#fff":C.textDim,flexShrink:0}}>{i+1}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:13,color:C.navy,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.cliente}</div>
+                    <div style={{fontSize:10,color:C.textDim,marginTop:2}}>{d.tx} tx · {fmt(d.kg)} kg · {d.tipos}</div>
+                    <div style={{marginTop:6,background:C.bg,borderRadius:4,height:5,overflow:"hidden"}}><div style={{background:C.accent,width:((d.valor/maxValCliente)*100)+"%",height:"100%",borderRadius:4}}/></div>
+                  </div>
+                  <div style={{textAlign:"right",flexShrink:0}}>
+                    <div style={{fontSize:13,fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(d.valor)}</div>
+                    <div style={{fontSize:10,color:C.gold}}>{fmtCOP(d.promKg)}/kg</div>
+                  </div>
+                </div>
+              ))}</div>
+            )}
+          </div>
+          <div style={S.card}>
+            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Mix de Productos Vendidos</div>
+            <div style={{fontSize:11,color:C.textDim,marginBottom:20}}>Participación por tipo · kg totales</div>
+            {(()=>{
+              const PCOLS2=[C.teal,C.green,C.purple,C.accent,C.gold,C.orange];
+              const porTipoArr=tiposDisp.map((t,i)=>{const kgt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.kg,0);const valt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.valor_total,0);return{tipo:t,kg:kgt,valor:valt,col:PCOLS2[i%PCOLS2.length]};}).sort((a,b)=>b.kg-a.kg);
+              const totalKgT=porTipoArr.reduce((s,d)=>s+d.kg,0)||1;
+              const cx=90,cy=90,ro=70,ri=36;
+              if(porTipoArr.length===0)return<div style={{color:C.textFaint,textAlign:"center",padding:"40px 0"}}>Sin datos</div>;
+              if(porTipoArr.length===1){const d=porTipoArr[0];return(<div><div style={{display:"flex",flexDirection:"column",gap:10}}><div style={{background:d.col+"15",border:"1px solid "+d.col+"30",borderRadius:10,padding:"16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontWeight:700,color:d.col}}>{d.tipo}</div><div style={{fontSize:12,color:C.textDim,marginTop:4}}>{fmt(d.kg)} kg</div></div><div style={{fontSize:20,fontWeight:800,color:d.col}}>100%</div></div></div></div>);}
+              let cum=0;
+              const slices=porTipoArr.map(d=>{const frac=d.kg/totalKgT;const s0=cum*2*Math.PI;cum+=frac;const s1=cum*2*Math.PI;const x1=cx+ro*Math.cos(s0-Math.PI/2),y1=cy+ro*Math.sin(s0-Math.PI/2);const x2=cx+ro*Math.cos(s1-Math.PI/2),y2=cy+ro*Math.sin(s1-Math.PI/2);const xi1=cx+ri*Math.cos(s1-Math.PI/2),yi1=cy+ri*Math.sin(s1-Math.PI/2);const xi2=cx+ri*Math.cos(s0-Math.PI/2),yi2=cy+ri*Math.sin(s0-Math.PI/2);const path=`M${x1.toFixed(2)},${y1.toFixed(2)} A${ro},${ro} 0 ${(s1-s0)>Math.PI?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi1.toFixed(2)},${yi1.toFixed(2)} A${ri},${ri} 0 ${(s1-s0)>Math.PI?1:0} 0 ${xi2.toFixed(2)},${yi2.toFixed(2)} Z`;const mid=(s0+s1)/2-Math.PI/2;return{...d,path,frac,mid,pct:((frac)*100).toFixed(1)};});
+              const vH=Math.max(195,40+porTipoArr.length*26);
+              return(<svg viewBox={`0 0 340 ${vH}`} width="100%" style={{display:"block"}}>
+                <circle cx={cx} cy={cy} r={ro+2} fill={C.bg} stroke={C.border} strokeWidth="1"/>
+                {slices.map(s=>(<path key={s.tipo} d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2" opacity="0.92"/>))}
+                {slices.map(s=>s.frac>0.06&&(<text key={s.tipo+"t"} x={(cx+(ro*0.64)*Math.cos(s.mid)).toFixed(2)} y={(cy+(ro*0.64)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">{s.pct}%</text>))}
+                <text x={cx} y={cy-5} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(totalKgT)}</text>
+                <text x={cx} y={cy+7} textAnchor="middle" fontSize="8" fill={C.textFaint} fontFamily="Inter,sans-serif">kg total</text>
+                {slices.map((s,i)=>{const ry=22+i*26;return(<g key={s.tipo+"l"}><rect x="195" y={ry-10} width="13" height="13" fill={s.col} rx="2" opacity="0.9"/><text x="213" y={ry} fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">{s.tipo}</text><text x="280" y={ry} textAnchor="end" fontSize="10" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text><text x="336" y={ry} textAnchor="end" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(s.kg)} kg</text></g>);})}
+              </svg>);
+            })()}
+          </div>
+        </div>
+      )}
+    </>)}
+
+    {/* ── Tab: Tendencia ── */}
+    {tab==="tendencia"&&(<>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+        <div style={S.card}>
+          <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Ventas por Mes</div>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Valor total facturado</div>
+          {mesesGraf.length===0?(<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>):(()=>{
+            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8);
+            return(<svg viewBox="0 0 340 220" width="100%" style={{display:"block"}}>
+              {mesesGraf.map(([mes,d],i)=>{const x=i*(barW+6)+10;const h=maxValMes>0?(d.valor/maxValMes)*(barH-10):0;const y=barH-h+20;const activo=filtroMes===mes;return(<g key={mes}>
+                <rect x={x} y={y} width={barW} height={h} fill={activo?C.navy:C.accent} rx="3" opacity={activo?1:0.75}/>
+                <text x={x+barW/2} y={y-5} textAnchor="middle" fontSize="7.5" fill={C.accent} fontWeight="700" fontFamily="Inter,sans-serif">{d.valor>0?("$"+Math.round(d.valor/1000000)+"M"):"—"}</text>
+                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{mes.slice(0,3)}</text>
+              </g>);})}
+              <line x1="10" y1={barH+20} x2="330" y2={barH+20} stroke={C.border} strokeWidth="1"/>
+            </svg>);
+          })()}
+        </div>
+        <div style={S.card}>
+          <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>kg Despachados por Mes</div>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Volumen físico vendido</div>
+          {mesesGraf.length===0?(<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>):(()=>{
+            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8);
+            const maxKgMes=mesesGraf.reduce((m,[,d])=>Math.max(m,d.kg),1);
+            return(<svg viewBox="0 0 340 220" width="100%" style={{display:"block"}}>
+              {mesesGraf.map(([mes,d],i)=>{const x=i*(barW+6)+10;const h=maxKgMes>0?(d.kg/maxKgMes)*(barH-10):0;const y=barH-h+20;const activo=filtroMes===mes;return(<g key={mes}>
+                <rect x={x} y={y} width={barW} height={h} fill={activo?C.navy:C.teal} rx="3" opacity={activo?1:0.78}/>
+                <text x={x+barW/2} y={y-5} textAnchor="middle" fontSize="7.5" fill={C.teal} fontWeight="700" fontFamily="Inter,sans-serif">{d.kg>0?fmt(Math.round(d.kg)):"—"}</text>
+                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{mes.slice(0,3)}</text>
+              </g>);})}
+              <line x1="10" y1={barH+20} x2="330" y2={barH+20} stroke={C.border} strokeWidth="1"/>
+            </svg>);
+          })()}
+        </div>
+      </div>
+      <div style={S.card}>
+        <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:14}}>Resumen Mensual</div>
+        {mesesGraf.length===0?(<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>):(
+          <TablaScrollV>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>{["Mes","Transacciones","kg Vendidos","Valor Total","Precio Prom./kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+              <tbody>
+                {mesesGraf.map(([mes,d],i)=>{const txMes=todasVentas.filter(v=>v.mes===mes).length;const promM=d.kg>0?d.valor/d.kg:0;return(<tr key={mes} style={{background:filtroMes===mes?C.accentBg:i%2===0?C.panel:C.panel2,cursor:"pointer"}} onClick={()=>setFiltroMes(filtroMes===mes?"todos":mes)}>
+                  <td style={{...S.td,fontWeight:600,textTransform:"capitalize"}}>{mes}</td>
+                  <td style={{...S.td,textAlign:"center",color:C.textDim}}>{txMes}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kg)} kg</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(d.valor)}</td>
+                  <td style={{...S.td,textAlign:"right",color:C.gold,fontVariantNumeric:"tabular-nums"}}>{promM>0?fmtCOP(promM):"—"}</td>
+                </tr>);})}
+                <tr style={{background:C.navy}}>
+                  <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                  <td style={{...S.td,textAlign:"center",fontWeight:800,color:"rgba(255,255,255,0.7)"}}>{todasVentas.length}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(todasVentas.reduce((s,v)=>s+v.kg,0))} kg</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(todasVentas.reduce((s,v)=>s+v.valor_total,0))}</td>
+                  <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </TablaScrollV>
+        )}
+      </div>
+    </>)}
+
+    {/* ── Tab: Flujo Interno ── */}
+    {tab==="traslados"&&(<>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:20}}>
+        {[{label:"Traslados Internos",value:traslados.length,sub:"movimientos entre etapas",col:C.navy,icon:"🔁"},{label:"kg Transferidos",value:fmt(traslados.reduce((s,t)=>s+t.kg,0))+" kg",sub:"volumen total interno",col:C.teal,icon:"⚖️"},{label:"Rutas Activas",value:[...new Set(traslados.map(t=>t.origenKey+"→"+t.destinoKey))].length,sub:"pares origen → destino",col:C.purple,icon:"🔀"},{label:"Etapas Involucradas",value:[...new Set([...traslados.map(t=>t.origenKey),...traslados.map(t=>t.destinoKey)])].length,sub:"procesos conectados",col:C.accent,icon:"🏭"}].map(k=>(<div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px",borderTop:"3px solid "+k.col,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}><span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1}}>{k.label}</span><span style={{fontSize:18,opacity:0.6}}>{k.icon}</span></div>
+          <div style={{fontSize:24,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:4,fontVariantNumeric:"tabular-nums"}}>{k.value}</div>
+          <div style={{fontSize:11,color:C.textFaint}}>{k.sub}</div>
+        </div>))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1.6fr 1fr",gap:16,marginBottom:16}}>
+        <div style={S.card}>
+          <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Flujo de Materiales entre Etapas</div>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>kg transferidos — ancho proporcional al volumen</div>
+          {traslados.length===0?<div style={{color:C.textFaint,textAlign:"center",padding:"40px 0"}}>Sin traslados registrados</div>:(()=>{
+            const nodeW=14,pad=20,gap=12,W=460,cpRatio=0.42;
+            const srcMap={};traslados.forEach(t=>{if(!srcMap[t.origenKey])srcMap[t.origenKey]={key:t.origenKey,label:t.origen,col:OCOL[t.origenKey]||C.navy,kg:0,flows:{}};srcMap[t.origenKey].kg+=t.kg;srcMap[t.origenKey].flows[t.destinoKey]=(srcMap[t.origenKey].flows[t.destinoKey]||0)+t.kg;});
+            const dstMap={};traslados.forEach(t=>{if(!dstMap[t.destinoKey])dstMap[t.destinoKey]={key:t.destinoKey,label:t.destino,col:DCOL[t.destinoKey]||C.accent,kg:0,flows:{}};dstMap[t.destinoKey].kg+=t.kg;dstMap[t.destinoKey].flows[t.origenKey]=(dstMap[t.destinoKey].flows[t.origenKey]||0)+t.kg;});
+            const srcs=Object.values(srcMap).sort((a,b)=>b.kg-a.kg);
+            const dsts=Object.values(dstMap).sort((a,b)=>b.kg-a.kg);
+            const totalKgS=srcs.reduce((s,n)=>s+n.kg,0)||1;
+            const svgH=Math.max(200,pad*2+Math.max(srcs.length,dsts.length)*50+(Math.max(srcs.length,dsts.length)-1)*gap);
+            const usableH=svgH-2*pad;
+            let sy=pad;const srcNodes=srcs.map(n=>{const h=Math.max(12,(n.kg/totalKgS)*(usableH-gap*(srcs.length-1)));const node={...n,x:10,y:sy,h};sy+=h+gap;return node;});
+            let dy=pad;const dstNodes=dsts.map(n=>{const h=Math.max(12,(n.kg/totalKgS)*(usableH-gap*(dsts.length-1)));const node={...n,x:W-nodeW-10,y:dy,h};dy+=h+gap;return node;});
+            const dstOff={};dstNodes.forEach(dn=>{let off=0;dstOff[dn.key]={};srcNodes.forEach(sn=>{if(dn.flows[sn.key]){dstOff[dn.key][sn.key]=off;off+=Math.max(2,(dn.flows[sn.key]/dn.kg)*dn.h);}});});
+            const paths=[];srcNodes.forEach(sn=>{let srcOff=0;Object.entries(sn.flows).sort((a,b)=>b[1]-a[1]).forEach(([dk,fKg])=>{const dn=dstNodes.find(d=>d.key===dk);if(!dn)return;const fhS=Math.max(2,(fKg/sn.kg)*sn.h),fhD=Math.max(2,(fKg/dn.kg)*dn.h);const syt=sn.y+srcOff,syb=syt+fhS,dyt=dn.y+(dstOff[dn.key][sn.key]||0),dyb=dyt+fhD;const sx=sn.x+nodeW,dx=dn.x,cp=sx+(dx-sx)*cpRatio;paths.push({d:`M${sx},${syt} C${cp},${syt} ${cp},${dyt} ${dx},${dyt} L${dx},${dyb} C${cp},${dyb} ${cp},${syb} ${sx},${syb} Z`,col:dn.col,kg:fKg});srcOff+=fhS;});});
+            return(<svg viewBox={`0 0 ${W} ${svgH}`} width="100%" style={{display:"block"}}>
+              {paths.map((p,i)=>(<path key={i} d={p.d} fill={p.col} opacity="0.32" stroke={p.col} strokeWidth="0.3" strokeOpacity="0.4"/>))}
+              {srcNodes.map(n=>(<g key={n.key}><rect x={n.x} y={n.y} width={nodeW} height={n.h} fill={n.col} rx="2"/><text x={n.x+nodeW+6} y={n.y+n.h/2+(n.h>=22?-4:4)} fontSize="9" fill={C.navy} fontWeight="700" fontFamily="Inter,sans-serif">{n.label}</text>{n.h>=22&&<text x={n.x+nodeW+6} y={n.y+n.h/2+8} fontSize="7.5" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(n.kg)} kg</text>}</g>))}
+              {dstNodes.map(n=>(<g key={n.key}><rect x={n.x} y={n.y} width={nodeW} height={n.h} fill={n.col} rx="2"/><text x={n.x-6} y={n.y+n.h/2+(n.h>=22?-4:4)} textAnchor="end" fontSize="9" fill={C.navy} fontWeight="700" fontFamily="Inter,sans-serif">{n.label}</text>{n.h>=22&&<text x={n.x-6} y={n.y+n.h/2+8} textAnchor="end" fontSize="7.5" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(n.kg)} kg</text>}</g>))}
+            </svg>);
+          })()}
+        </div>
+        <div style={S.card}>
+          <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>kg por Destino</div>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:20}}>volumen recibido por cada etapa</div>
+          {(()=>{const byDest={};traslados.forEach(t=>{if(!byDest[t.destinoKey])byDest[t.destinoKey]={label:t.destino,col:DCOL[t.destinoKey]||C.accent,kg:0,count:0};byDest[t.destinoKey].kg+=t.kg;byDest[t.destinoKey].count++;});const destArr=Object.values(byDest).sort((a,b)=>b.kg-a.kg);const maxKg=destArr.length>0?destArr[0].kg:1;if(destArr.length===0)return<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>;return(<div>{destArr.map(d=>(<div key={d.label} style={{marginBottom:16}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><Bdg label={d.label} col={d.col} bg={d.col+"18"}/><div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kg)} kg</span><span style={{fontSize:10,color:C.textDim,marginLeft:8}}>{d.count} mov.</span></div></div><div style={{background:C.bg,borderRadius:6,height:10,border:"1px solid "+C.border,overflow:"hidden"}}><div style={{background:d.col,width:((d.kg/maxKg)*100)+"%",height:"100%",borderRadius:6}}/></div></div>))}</div>);})()}
+          {traslados.length>0&&<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid "+C.border,display:"flex",justifyContent:"space-between",fontSize:11,color:C.textDim}}><span>Total transferido</span><strong style={{color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(traslados.reduce((s,t)=>s+t.kg,0))} kg</strong></div>}
+        </div>
+      </div>
+      <div style={S.card}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Detalle de Traslados</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>{traslados.length} movimientos internos</div></div>
+          <strong style={{color:C.teal,fontSize:12,fontVariantNumeric:"tabular-nums"}}>{fmt(traslados.reduce((s,t)=>s+t.kg,0))} kg total</strong>
+        </div>
+        {traslados.length===0?<div style={{textAlign:"center",padding:"40px 0",color:C.textFaint}}><div style={{fontSize:36,marginBottom:10}}>🔁</div><div style={{fontSize:13}}>Sin traslados internos registrados</div></div>
+        :<TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:680}}>
+          <thead><tr>{["Fecha","Origen","→","Destino","Producto","Ref.","kg"].map(h=>(<th key={h} style={{...S.th,textAlign:h==="kg"?"right":"left"}}>{h}</th>))}</tr></thead>
+          <tbody>
+            {traslados.map((t,i)=>(<tr key={t.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
+              <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.fecha||"—"}</td>
+              <td style={S.td}><Bdg label={t.origen} col={OCOL[t.origenKey]||C.navy} bg={(OCOL[t.origenKey]||C.navy)+"18"}/></td>
+              <td style={{...S.td,color:C.textFaint,fontSize:16,padding:"0 4px"}}>→</td>
+              <td style={S.td}><Bdg label={t.destino} col={DCOL[t.destinoKey]||C.accent} bg={(DCOL[t.destinoKey]||C.accent)+"18"}/></td>
+              <td style={{...S.td,color:C.navy,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis"}}>{t.producto}</td>
+              <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.textDim}}>{t.ref||"—"}</td>
+              <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(t.kg)} kg</td>
+            </tr>))}
+            <tr style={{background:C.navy}}>
+              <td colSpan={6} style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL ({traslados.length} movimientos)</td>
+              <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(traslados.reduce((s,t)=>s+t.kg,0))} kg</td>
+            </tr>
+          </tbody>
+        </table></TablaScrollV>}
+      </div>
+    </>)}
+  </div>);
+}
 
 const exportarTodoExcel=(lotes,costos,blends,lotesFino,blendsFino,maquilas,blendsTostado)=>{
   const wb=XLSX.utils.book_new();
@@ -3685,6 +4742,7 @@ export default function App(){
   const [blendsTostado,setBlendsTostado]=useFirestoreList("blendsTostado",[]);
   const [subprodVerde,setSubprodVerde]=useFirestoreList("subprodVerde",[]);
   const [subprodPerg,setSubprodPerg]=useFirestoreList("subprodPerg",[]);
+  const [permisosConfig,setPermisosConfig]=useFirestoreList("permisosConfig",PERMISOS_SEED);
   useEffect(()=>{return onAuthStateChanged(auth,fu=>{setFbUser(fu);setAuthReady(true);if(!fu){setLoggedIn(false);setUser(null);setNotAuthorized(false);}});},[]);
   useEffect(()=>{
     if(!authReady||!fbUser||!usuariosReady)return;
@@ -3696,8 +4754,13 @@ export default function App(){
   },[fbUser,usuarios,authReady,usuariosReady]);
   if(!authReady||(fbUser&&!usuariosReady))return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:C.bg,flexDirection:"column",gap:16}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><div style={{width:40,height:40,border:"4px solid "+C.border,borderTop:"4px solid "+C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><div style={{color:C.textDim,fontSize:13}}>Cargando plataforma...</div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>);
   if(!loggedIn)return(<><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><LoginForm notAuthorized={notAuthorized}/></>);
-  const VIEWS={dashboard:()=><Dashboard lotes={lotes} costos={costos} lotesFino={lotesFino} maquilas={maquilas} blendsTostado={blendsTostado}/>,procesamiento:()=><Procesamiento lotes={lotes} setLotes={setLotes} costos={costos} lotesFino={lotesFino} setLotesFino={setLotesFino}/>,bodega:()=><Bodega lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg}/>,trilla:()=><Trilla lotes={lotes} setLotes={setLotes} costos={costos} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde}/>,bodega_tri:()=><BodegaTrilladora lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino}/>,blend:()=><Blend lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} costos={costos} setLotesFino={setLotesFino}/>,bodega_fino:()=><BodegaFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} lotes={lotes}/>,trilladora_fino:()=><TrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino}/>,blend_fino:()=><BlendFino lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino}/>,maquila:()=><Maquila maquilas={maquilas} setMaquilas={setMaquilas} setLotesFino={setLotesFino}/>,uba_tostado:()=><UbaTostado blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado}/>,trazabilidad:()=><Trazabilidad lotes={lotes} costos={costos} blends={blends}/>,costos:()=><Costos costos={costos} setCostos={setCostos}/>,usuarios:()=><Usuarios usuarios={usuarios} setUsuarios={setUsuarios}/>,carga_inicial:()=><BulkLoader lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} setCostos={setCostos} lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setMaquilas={setMaquilas} setBlendsTostado={setBlendsTostado} setUsuarios={setUsuarios}/>};
-  const View=VIEWS[view]||VIEWS.dashboard;
+  const VIEWS={dashboard:()=><Dashboard lotes={lotes} costos={costos} lotesFino={lotesFino} maquilas={maquilas} blendsTostado={blendsTostado} blends={blends} blendsFino={blendsFino}/>,procesamiento:()=><Procesamiento lotes={lotes} setLotes={setLotes} costos={costos} lotesFino={lotesFino} setLotesFino={setLotesFino}/>,bodega:()=><Bodega lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg}/>,trilla:()=><Trilla lotes={lotes} setLotes={setLotes} costos={costos} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde}/>,bodega_tri:()=><BodegaTrilladora lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino}/>,blend:()=><Blend lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} costos={costos} setLotesFino={setLotesFino}/>,bodega_fino:()=><BodegaFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} lotes={lotes}/>,trilladora_fino:()=><TrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} lotes={lotes} costos={costos}/>,bodega_tri_fino:()=><BodegaTrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino}/>,blend_fino:()=><BlendFino lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado}/>,maquila:()=><Maquila maquilas={maquilas} setMaquilas={setMaquilas} setLotesFino={setLotesFino}/>,uba_tostado:()=><UbaTostado blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino}/>,ventas:()=><Ventas lotes={lotes} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino}/>,trazabilidad:()=><Trazabilidad lotes={lotes} costos={costos} blends={blends}/>,costos:()=><Costos costos={costos} setCostos={setCostos}/>,usuarios:()=><Usuarios usuarios={usuarios} setUsuarios={setUsuarios} permisosConfig={permisosConfig} setPermisosConfig={setPermisosConfig}/>,carga_inicial:()=><BulkLoader lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} setCostos={setCostos} lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setMaquilas={setMaquilas} setBlendsTostado={setBlendsTostado} setUsuarios={setUsuarios}/>};
+  const permisosMapE=Object.fromEntries((permisosConfig.length?permisosConfig:PERMISOS_SEED).map(p=>[p.id,{views:p.views||[],readOnly:p.readOnly||[]}]));
+  const permiso=permisosMapE[user?.rol]||permisosMapE["Gerente"]||{views:["dashboard"],readOnly:[]};
+  const navFiltrado=NAV.filter(item=>item.sep||permiso.views.includes(item.k));
+  const viewEfectiva=permiso.views.includes(view)?view:(permiso.views[0]||"dashboard");
+  const esReadOnly=permiso.readOnly.includes(viewEfectiva);
+  const View=VIEWS[viewEfectiva]||VIEWS.dashboard;
   return(<><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <div style={S.app}>
       <div style={S.topbar}>
@@ -3706,10 +4769,10 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:14}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:"50%",background:"#4ADE80"}}/><span style={{color:"rgba(255,255,255,0.7)",fontSize:11,fontWeight:500}}>EN VIVO</span></div><div style={{color:"rgba(255,255,255,0.6)",fontSize:11}}>{new Date().toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"})}</div><button onClick={()=>exportarTodoExcel(lotes,costos,blends,lotesFino,blendsFino,maquilas,blendsTostado)} style={{background:"#166534",border:"1px solid #22c55e55",borderRadius:6,color:"#4ADE80",fontSize:11,fontWeight:700,padding:"5px 12px",cursor:"pointer",letterSpacing:0.5}}>⬇ Excel</button></div>
       </div>
       <div style={S.sidebar}>
-        <nav style={{flex:1,padding:"14px 10px",overflowY:"auto"}}>{NAV.map((item)=>item.sep?(<div key={item.k} style={{height:1,background:C.border,margin:"6px 6px"}}/>):(<div key={item.k} onClick={()=>setView(item.k)} style={{padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,borderRadius:6,marginBottom:2,background:view===item.k?C.accentBg:"transparent",color:view===item.k?C.navy:C.textDim,fontSize:13,fontWeight:view===item.k?600:400,borderLeft:view===item.k?"3px solid "+C.accent:"3px solid transparent"}}><span dangerouslySetInnerHTML={{__html:item.icon}} style={{fontSize:14,width:18,textAlign:"center"}}/>{item.l}</div>))}</nav>
+        <nav style={{flex:1,padding:"14px 10px",overflowY:"auto"}}>{navFiltrado.map((item)=>item.sep?(<div key={item.k} style={{height:1,background:C.border,margin:"6px 6px"}}/>):(<div key={item.k} onClick={()=>setView(item.k)} style={{padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,borderRadius:6,marginBottom:2,background:viewEfectiva===item.k?C.accentBg:"transparent",color:viewEfectiva===item.k?C.navy:C.textDim,fontSize:13,fontWeight:viewEfectiva===item.k?600:400,borderLeft:viewEfectiva===item.k?"3px solid "+C.accent:"3px solid transparent"}}><span dangerouslySetInnerHTML={{__html:item.icon}} style={{fontSize:14,width:18,textAlign:"center"}}/>{item.l}</div>))}</nav>
         <div style={{padding:"12px 14px",borderTop:"1px solid "+C.border}}><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><div style={{width:34,height:34,borderRadius:"50%",background:C.navy,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:C.white,flexShrink:0}}>{user?.nombre?.charAt(0)}</div><div style={{overflow:"hidden"}}><div style={{color:C.navy,fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.nombre}</div><div style={{color:C.textDim,fontSize:10}}>{user?.rol}</div></div></div><button style={{...S.btnG,width:"100%",textAlign:"center",fontSize:12}} onClick={()=>{fbSignOut(auth);setLoggedIn(false);setUser(null);}}>Cerrar Sesion</button></div>
       </div>
-      <div style={S.main}><View/></div>
+      <div style={S.main}>{esReadOnly&&(<div style={{background:C.goldBg,border:"1px solid "+C.gold+"50",borderRadius:8,padding:"9px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:15}}>&#128065;</span><span style={{color:C.gold,fontWeight:700,fontSize:13}}>Solo lectura</span><span style={{color:C.gold,fontSize:12,opacity:0.85}}> — Puedes consultar este módulo pero no tienes permisos para modificar datos.</span></div>)}<View/></div>
     </div>
   </>);
 }
