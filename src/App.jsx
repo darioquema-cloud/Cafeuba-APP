@@ -1,79 +1,21 @@
-﻿import{useState,useMemo,useEffect,useRef,useLayoutEffect}from"react";
+import{useState,useMemo,useEffect,useRef,useLayoutEffect}from"react";
 import*as XLSX from"xlsx";
 import{auth}from"./firebase";
 import{signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut as fbSignOut,signInWithEmailAndPassword,sendPasswordResetEmail,createUserWithEmailAndPassword,getAuth as fbGetAuth}from"firebase/auth";
 import{initializeApp as fbInitApp,deleteApp as fbDeleteApp}from"firebase/app";
 import{cfg}from"./firebase";
 import{useFirestoreList}from"./useFirestoreList";
+import{C,S,tg}from"./theme";
+import{FINCAS,VARIEDADES,TIPOS,ABREV,NORMAS,MESES,EQUIPOS_FERM,EQUIPOS_SECADO,TIPOS_COSTO,CENTROS,CENTRO_COL,CENTRO_BG,ECOL,EBG,USERS_SEED,seedL,seedC,SEED_COSTOS_TRI,PERMISOS,PERMISOS_SEED,NAV}from"./data/constants";
+import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"./lib/format";
+import{semanaISO,mesDe,diasEntre}from"./lib/dates";
+import{getSeedCostoTri,calcCosto,calcCostoTri}from"./lib/costing";
+import{pesoATrilladora,pesoATrilladoraCafeFino,pesoOtrosBodega}from"./lib/stock";
 
 /* ─── EXCEL DATA (pre-processed) ─────────────────────────────────────────── */
 const XD={lotes:[],bodega:[],salidas:[],trilla:[],ventas_v:[],ventas_m:[],cb_mes:{},kg_mes:{},c_mes:{}};
 
 
-/* ─── PALETA ──────────────────────────────────────────────────────────────── */
-const C={bg:"#F4F6F9",panel:"#FFFFFF",panel2:"#F8FAFC",border:"#E2E8F0",border2:"#CBD5E1",navy:"#1E3A5F",accent:"#2563EB",accentBg:"#EFF6FF",gold:"#B45309",goldBg:"#FFFBEB",green:"#15803D",greenBg:"#F0FDF4",red:"#DC2626",redBg:"#FEF2F2",orange:"#C2410C",orangeBg:"#FFF7ED",teal:"#0E7490",tealBg:"#ECFEFF",purple:"#7C3AED",purpleBg:"#F5F3FF",text:"#0F172A",textDim:"#64748B",textFaint:"#94A3B8",white:"#FFFFFF"};
-const fmtCOP=n=>(n==null||n===""||isNaN(n))?"":"$ "+Number(n).toLocaleString("es-CO",{minimumFractionDigits:1,maximumFractionDigits:1});
-const fmt=(n,d=0)=>(n==null||isNaN(n))?"":Number(n).toLocaleString("es-CO",{minimumFractionDigits:d,maximumFractionDigits:d});
-const numVal=(v,fallback=0)=>{const n=+v;return isFinite(n)&&!isNaN(n)?n:fallback;};
-const today=()=>new Date().toISOString().slice(0,10);
-const genId=()=>Math.random().toString(36).slice(2,8).toUpperCase();
-const semanaISO=(d)=>{if(!d)return"";const dt=new Date(d+"T00:00:00");dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+3-((dt.getDay()+6)%7));const w1=new Date(dt.getFullYear(),0,4);return 1+Math.round(((dt-w1)/86400000-3+((w1.getDay()+6)%7))/7);};
-const mesDe=(d)=>d?MESES[new Date(d+"T00:00:00").getMonth()]:"";
-const diasEntre=(a,b)=>a&&b?Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000):null;
-const dateToCode=(d)=>{if(!d)return"";const[y,m,dd]=d.split("-");return dd+m+y;};
-const fmtFecha=(d)=>{if(!d||typeof d!=="string")return"—";const p=d.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:d;};
-const pesoATrilladora=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key==="trilla").reduce((s,x)=>s+x.peso_salida,0);
-const SEED_COSTOS_TRI=[{codigo:"PARA CAPITAN MARK 151025",kg:487,costo:37209.35},{codigo:"BOURBON SUAZA 130125",kg:760,costo:32350.93},{codigo:"AGRAZ 2611",kg:470,costo:37052.83},{codigo:"MB 1501",kg:521,costo:41101.73},{codigo:"PARA CAPITAN MARK 151025",kg:1122.3,costo:36916.12},{codigo:"M 491-ESTATE CAPRI Y RIVIERA-2502",kg:593,costo:25923.84},{codigo:"M 494-DESCARTE CON OLOR -0203",kg:697,costo:29412.238},{codigo:"M 497-AR-0603",kg:296,costo:50325.159},{codigo:"M 504-GESHA TAMBO-1803",kg:209,costo:52492.652},{codigo:"M 492-DESCARTE SIN OLOR -2702",kg:1519,costo:35071.96},{codigo:"M 515-DR-2304",kg:499,costo:78620.582},{codigo:"M 526-SD-2505",kg:245,costo:73245.452},{codigo:"M 525-CONSUMO#1-2105",kg:1296,costo:960.877},{codigo:"M 528-MR-0206",kg:170,costo:76991.085},{codigo:"M 530-REGIONAL 1-0406",kg:1000,costo:26195.725},{codigo:"M 531-NR-0806",kg:56,costo:78389.204},{codigo:"M 532-MR-1106",kg:99,costo:62023.978},{codigo:"M 533-LYCHE-1106",kg:92,costo:62921.728},{codigo:"M 534-AGRAZ-1206",kg:47,costo:48926.989},{codigo:"M 537-CC-1806",kg:218,costo:47215.575},{codigo:"M 538-REGIONAL-1906",kg:7692,costo:25259.453},{codigo:"M 540-SD-2406",kg:76,costo:70906.021},{codigo:"M 541-BB-3006",kg:250,costo:41676.702},{codigo:"M 542-AGRAZ-3006",kg:1067,costo:67820.986},{codigo:"M 543-NR-0207",kg:439,costo:47177.156}];
-const getSeedCostoTri=(codigo,kgProducto)=>{const byKg=SEED_COSTOS_TRI.find(r=>r.codigo===codigo&&Math.abs(r.kg-(kgProducto||0))<1);return byKg?.costo||(SEED_COSTOS_TRI.find(r=>r.codigo===codigo)?.costo||0);};
-const pesoATrilladoraCafeFino=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key==="trilla_cf").reduce((s,x)=>s+x.peso_salida,0);
-const pesoOtrosBodega=(l)=>(l.salidas_bodega||[]).filter(s=>s.destino_key!=="trilla"&&s.destino_key!=="trilla_cf").reduce((s,x)=>s+x.peso_salida,0);
-const FINCAS=["Milan","Buenos Aires","Capri","Riviera","Bascula","Palermo","Marsella","Sta Maria Huila","Externo Huila"];
-const VARIEDADES=["Castillo","Caturra","Colombia","Cenicafe","San Isidro","Gesha","L13","SIDRA","Tabi","Bourbon"];
-const TIPOS=["Culturing","Lavado","Natural","Honey","Ultrastate","Biomaster","Double Roast","Marco Rojo","Purple Peak","Cherry Candy","None Required","SD","LVD"];
-const ABREV={"Culturing":"CTG","Lavado":"LVD","Natural":"NAT","Honey":"HNY","Ultrastate":"UST","Biomaster":"BIOMASTER","Double Roast":"DR","Marco Rojo":"MR","Purple Peak":"PP","Cherry Candy":"CC","None Required":"NR","SD":"SD","LVD":"LVD"};
-const NORMAS=["Norma FNC","European Prep","Specialty 80+","Specialty 85+","Micro Lot","Privado"];
-const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-const EQUIPOS_FERM=["Reactor 1","Reactor 2","Reactor 3","Canecas","Biomaster"];
-const EQUIPOS_SECADO=["Silo Redondo","Silo Cuadrado","Guardiola","Marquesina","Dry Pro"];
-const TIPOS_COSTO=["Mano de Obra","Energia","Agua","Logistica","Empaques","Mantenimiento Maquinaria","Mantenimiento Infraestructura","Seguridad Social","Horas Extras","Administracion","Herramientas","Equipos","Papeleria","Internet","Servicios Generales","Apoyo Cargue Descargue"];
-const CENTROS=["Central de Beneficio","Trilladora","Tostado","Maquila","Bodega Cafe Fino"];
-const CENTRO_COL={"Central de Beneficio":C.teal,"Trilladora":C.purple,"Tostado":C.orange,"Maquila":C.gold,"Bodega Cafe Fino":C.green};
-const CENTRO_BG={"Central de Beneficio":C.tealBg,"Trilladora":C.purpleBg,"Tostado":C.orangeBg,"Maquila":C.goldBg,"Bodega Cafe Fino":C.greenBg};
-const ECOL={"Recepcion":C.teal,"Proceso":C.orange,"Secado":C.gold,"Bodega":C.accent,"Finalizado":C.green,"Cerrado":C.purple};
-const EBG={"Recepcion":C.tealBg,"Proceso":C.orangeBg,"Secado":C.goldBg,"Bodega":C.accentBg,"Finalizado":C.greenBg,"Cerrado":C.purpleBg};
-const USERS_SEED=[{id:"u1",nombre:"Dario Quema",email:"dario.quema@cafeuba.com.co",rol:"Gerente",activo:true},{id:"u2",nombre:"Liliana Gomez",email:"l.gomez@cafeuba.com.co",rol:"Operario Beneficio",activo:true},{id:"u3",nombre:"Andres Perez",email:"a.perez@cafeuba.com.co",rol:"Trilladore",activo:true},{id:"u4",nombre:"Maria Torres",email:"m.torres@cafeuba.com.co",rol:"Analista Calidad",activo:true}];
-const seedL=()=>[];
-const seedC=()=>[];
-
-// Calculo costo lote (a + b + c)
-const calcCosto=(lote,costos,lotes)=>{
-  if(!lote.kg_producto||lote.kg_producto===0)return null;
-  if(lote.origen_lote==="carga_directa"){const dk=lote.costo_directo_kg||0;return{totalCereza:0,totalIns:0,a:dk,b:0,c:0,total:dk};}
-  const totalCereza=(lote.cereza||[]).reduce((s,c)=>s+c.kg*c.valor_kg,0);
-  const ins=lote.insumos||{};
-  const totalIns=(ins.jugo||0)*(ins.vr_jugo||0)+(ins.panela||0)*(ins.vr_panela||0)+(ins.harina||0)*(ins.vr_harina||0)+(ins.levadura||0)*(ins.vr_levadura||0);
-  // Fallback for direct trilla loads where cereza.valor_kg was not set at import time
-  const a=totalCereza>0?totalCereza/lote.kg_producto:(lote.trilla?.costo_kg_excelso||lote.costo_directo_kg||0);
-  const b=totalIns/lote.kg_producto;
-  // c: solo aplica a lotes que pasaron por CB (no a lotes manuales de trilla externa)
-  let c_val=0;
-  if(lote.origen_lote!=="trilla_directa"){
-    const costosCBMes=(costos||[]).filter(c=>c.centro==="Central de Beneficio"&&c.mes===lote.mes).reduce((s,c)=>s+c.valor,0);
-    const kgPergaminoMes=(lotes||[lote]).filter(l=>l.mes===lote.mes&&l.kg_producto>0&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual"&&l.origen_lote!=="carga_directa").reduce((s,l)=>s+l.kg_producto,0);
-    c_val=kgPergaminoMes>0?costosCBMes/kgPergaminoMes:0;
-  }
-  return{totalCereza,totalIns,a,b,c:c_val,total:a+b+c_val};
-};
-
-// Costo trilladora por kg excelso del mes
-const calcCostoTri=(mes,costos,lotes)=>{
-  const costosTri=(costos||[]).filter(c=>c.centro==="Trilladora"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
-  const kgEx=lotes.filter(l=>l.mes===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
-  return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
-};
-
-const S={app:{fontFamily:"'Inter','Segoe UI',sans-serif",background:C.bg,minHeight:"100vh",color:C.text,fontSize:14},topbar:{height:56,background:C.navy,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 28px",position:"fixed",top:0,left:0,right:0,zIndex:200,boxShadow:"0 2px 12px rgba(0,0,0,0.2)"},sidebar:{width:224,background:C.panel,borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",position:"fixed",top:56,left:0,height:"calc(100vh - 56px)",zIndex:100,boxShadow:"2px 0 8px rgba(0,0,0,0.05)"},main:{marginLeft:224,marginTop:56,padding:"28px 32px",minHeight:"calc(100vh - 56px)"},card:{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"20px 24px",marginBottom:16,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"},card2:{background:C.panel2,border:"1px solid "+C.border,borderRadius:8,padding:"14px 16px"},input:{background:C.white,border:"1px solid "+C.border2,borderRadius:6,color:C.text,fontFamily:"'Inter',sans-serif",fontSize:13,padding:"9px 12px",width:"100%",outline:"none",boxSizing:"border-box"},select:{background:C.white,border:"1px solid "+C.border2,borderRadius:6,color:C.text,fontFamily:"'Inter',sans-serif",fontSize:13,padding:"9px 12px",width:"100%",outline:"none"},btn:{background:C.navy,border:"none",borderRadius:6,color:C.white,cursor:"pointer",fontFamily:"'Inter',sans-serif",fontSize:13,fontWeight:600,padding:"9px 20px"},btnG:{background:"transparent",border:"1px solid "+C.border2,borderRadius:6,color:C.textDim,cursor:"pointer",fontFamily:"'Inter',sans-serif",fontSize:12,padding:"7px 14px"},th:{color:C.textDim,fontSize:11,fontWeight:600,letterSpacing:.5,textTransform:"uppercase",padding:"10px 14px",textAlign:"left",borderBottom:"2px solid "+C.border,background:C.panel2,whiteSpace:"nowrap"},td:{padding:"11px 14px",borderBottom:"1px solid "+C.border,fontSize:13,verticalAlign:"middle",whiteSpace:"nowrap"},lbl:{color:C.textDim,fontSize:11,fontWeight:500,letterSpacing:.4,textTransform:"uppercase",marginBottom:5,display:"block"}};
-const tg=(col,bg)=>({background:bg||col+"15",border:"1px solid "+col+"30",borderRadius:4,color:col,fontSize:11,fontWeight:600,padding:"3px 8px",display:"inline-block",whiteSpace:"nowrap"});
 const Bdg=({label,col,bg})=><span style={tg(col||C.accent,bg)}>{label||"?"}</span>;
 const Fld=({label,children,half,third})=>{const w=third?"calc(33.3% - 8px)":half?"calc(50% - 6px)":"100%";return(<div style={{marginBottom:13,width:w,display:"inline-block",verticalAlign:"top",marginRight:half||third?"12px":"0"}}><label style={S.lbl}>{label}</label>{children}</div>);};
 // Claves fijas de destino (no dependen de texto/tildes) — usar SIEMPRE destino_key para logica de traslados, "cliente" solo es texto para mostrar
@@ -4316,19 +4258,6 @@ function BulkLoader({lotes,setLotes,blends,setBlends,setCostos,lotesFino,setLote
 }
 
 const ROLES_SISTEMA=["Gerente Produccion","Gerente Financiero","Gerente Comercial","Gerente Administrativo","Analista de Calidad","Analista Calidad + Trilla","Operario Cafe Fino","Coordinador Tostado"];
-const PERMISOS={
-  "Gerente":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios","carga_inicial"],readOnly:[]},
-  "Gerente Produccion":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios","carga_inicial"],readOnly:[]},
-  "Gerente Financiero":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos"],readOnly:["procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado"]},
-  "Gerente Comercial":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos"],readOnly:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","costos"]},
-  "Gerente Administrativo":{views:["dashboard","bodega","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad","costos","usuarios"],readOnly:["dashboard","bodega","bodega_tri","blend","trilladora_fino","blend_fino"]},
-  "Analista de Calidad":{views:["bodega","bodega_tri","blend","bodega_fino","trazabilidad"],readOnly:["bodega","bodega_tri","blend"]},
-  "Analista Calidad + Trilla":{views:["dashboard","procesamiento","bodega","trilla","bodega_tri","blend","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","trazabilidad"],readOnly:["dashboard","procesamiento","bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino"]},
-  "Operario Cafe Fino":{views:["bodega_fino","trilladora_fino","bodega_tri_fino","blend_fino","maquila","uba_tostado","trazabilidad"],readOnly:["uba_tostado","trazabilidad"]},
-  "Coordinador Tostado":{views:["dashboard","bodega_fino","blend_fino","maquila","uba_tostado","ventas","trazabilidad"],readOnly:["dashboard","bodega_fino","blend_fino","ventas"]},
-};
-const PERMISOS_SEED=Object.entries(PERMISOS).map(([rol,p])=>({id:rol,views:[...p.views],readOnly:[...p.readOnly]}));
-const NAV=[{k:"dashboard",l:"Dashboard",icon:"&#9647;"},{k:"sep1",sep:true},{k:"procesamiento",l:"Procesamiento",icon:"&#8857;"},{k:"bodega",l:"Bodega Milan",icon:"&#127968;"},{k:"trilla",l:"Trilla",icon:"&#9881;"},{k:"bodega_tri",l:"Bodega Trilladora",icon:"&#9733;"},{k:"blend",l:"Blend",icon:"&#9737;"},{k:"sep2",sep:true},{k:"bodega_fino",l:"Bodega Cafe Fino",icon:"&#127968;"},{k:"trilladora_fino",l:"Trilladora Cafe Fino",icon:"&#9881;"},{k:"bodega_tri_fino",l:"Bodega Trilladora Fino",icon:"&#9733;"},{k:"blend_fino",l:"Blend Cafe Fino",icon:"&#9737;"},{k:"sep4",sep:true},{k:"maquila",l:"Maquila",icon:"&#9874;"},{k:"uba_tostado",l:"UBA Tostado",icon:"&#9745;"},{k:"sep6",sep:true},{k:"ventas",l:"Ventas",icon:"&#128200;"},{k:"sep2b",sep:true},{k:"trazabilidad",l:"Trazabilidad",icon:"&#128202;"},{k:"costos",l:"Reg. Costos",icon:"$"},{k:"sep3",sep:true},{k:"usuarios",l:"Usuarios",icon:"&#8853;"},{k:"sep5",sep:true},{k:"carga_inicial",l:"Carga Inicial",icon:"&#8659;"}];
 
 function Ventas({lotes,lotesFino,blends,blendsFino}){
   const [tab,setTab]=useState("consolidado");
