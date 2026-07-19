@@ -1590,22 +1590,21 @@ function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBlendsTos
   const regSalidaB=()=>{
     const peso=numVal(formSalidaB.peso_salida);
     if(!selBlend||!(peso>0)){setErrB("Ingresa un peso de salida válido (mayor a 0).");return;}
-    if(formSalidaB.destino_key==="uba_tostado"&&!formSalidaB.nombre_producto_tostado){setErrB("Para UBA Tostado debes ingresar el Nombre de Producto Tostado.");return;}
-
     const stockBase=stockBlend(selBlend)+(editSalidaBId?(selBlend.salidas||[]).find(x=>x.id===editSalidaBId)?.peso_salida||0:0);
     if(peso>stockBase){setErrB("ERROR: El peso de salida ("+fmt(peso)+" kg) supera el stock disponible ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalidaB.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalidaB.valor_total||0);
+    const nuevaSalidaBId=editSalidaBId||genId();
     setBlendsFino(p=>p.map(b=>{
       if(b.id!==selBlend.id)return b;
       let sal;
       if(editSalidaBId){sal=(b.salidas||[]).map(s=>s.id===editSalidaBId?{...s,fecha:formSalidaB.fecha,factura:formSalidaB.factura,remision:formSalidaB.remision,cliente:formSalidaB.cliente,destino_key:formSalidaB.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalidaB.observaciones}:s);}
-      else{sal=[...(b.salidas||[]),{id:genId(),fecha:formSalidaB.fecha,factura:formSalidaB.factura,remision:formSalidaB.remision,cliente:formSalidaB.cliente,destino_key:formSalidaB.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalidaB.observaciones}];}
+      else{sal=[...(b.salidas||[]),{id:nuevaSalidaBId,fecha:formSalidaB.fecha,factura:formSalidaB.factura,remision:formSalidaB.remision,cliente:formSalidaB.cliente,destino_key:formSalidaB.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalidaB.observaciones}];}
       return{...b,salidas:sal};
     }));
     if(formSalidaB.destino_key==="uba_tostado"&&setBlendsTostado&&!editSalidaBId){
       const nomProd=formSalidaB.nombre_producto_tostado||selBlend.nombre||selBlend.codigo;
       const codUBA="UBA-"+nomProd.replace(/\s+/g,"")+"-"+dateToCode(formSalidaB.fecha);
-      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:formSalidaB.fecha,mes:mesDe(formSalidaB.fecha),nombre_producto:nomProd,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:selBlend.codigo,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend.items||[]).map(it=>it.codigo)},...p]);
+      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:formSalidaB.fecha,mes:mesDe(formSalidaB.fecha),nombre_producto:nomProd,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:selBlend.codigo,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend.items||[]).map(it=>it.codigo),origen_tipo:"blend_fino",origen_salida_id:nuevaSalidaBId},...p]);
     }
     setModalSalidaB(false);setEditSalidaBId(null);setErrB("");
   };
@@ -2013,7 +2012,7 @@ function Maquila({maquilas,setMaquilas,setLotesFino}){
 
 const TIPOS_TOSTION=["Ligero","Medio","Oscuro","Especialidad","Otro"];
 
-function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
+function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
   const blankForm=()=>({fecha:today(),nombre_producto:"",kg_origen:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[]});
@@ -2039,6 +2038,7 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
     setModalSalidaUBA(false);setErrSalidaUBA("");
   };
   const reg=()=>{
+    if(!form.nombre_producto){setErrReg("El Nombre Producto Comercial es obligatorio.");return;}
     if(!form.kg_a_tostar||!form.fecha)return;
     if(!editId&&form.fuentes.length>0){
       for(const f of form.fuentes){if(!(numVal(f.kg_tomados)>0)){setErrReg("Ingresa kg válidos (>0) en cada lote de origen.");return;}const pool=poolHistorico.find(p=>p.salidaId===f.salidaId);if(pool&&numVal(f.kg_tomados)>pool.kg_a_tostar+0.01){setErrReg("El lote "+f.blendCodigo+" solo tiene "+fmt(pool.kg_a_tostar)+" kg disponibles.");return;}}
@@ -2063,6 +2063,11 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
   const eliminarTueste=(t)=>{
     if((t.salidas||[]).length>0){alert("Este tueste tiene "+t.salidas.length+" salida(s) registrada(s). Elimina primero las salidas para poder borrar el tueste.");return;}
     if(!window.confirm("¿Eliminar el tueste "+t.codigo+"? El lote volverá a 'Lotes Listos para Tostar'."))return;
+    if(t.origen_tipo&&t.origen_salida_id){
+      if(t.origen_tipo==="bodega_fino"){setLotesFino(p=>p.map(l=>({...l,salidas_bodega:(l.salidas_bodega||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+      else if(t.origen_tipo==="bodega_tri_fino"){setLotesFino(p=>p.map(l=>({...l,salidas_trilladora:(l.salidas_trilladora||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+      else if(t.origen_tipo==="blend_fino"){setBlendsFino(p=>p.map(b=>({...b,salidas:(b.salidas||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+    }
     setBlendsTostado(p=>p.filter(x=>x.id!==t.id));
   };
   const totalKgTostar=blendsTostado.reduce((s,t)=>s+(t.kg_a_tostar||0),0);
@@ -2073,6 +2078,25 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
   const abrirNuevoBatch=(t)=>{const kgOrigen=(t.kg_origen!=null&&t.kg_origen!=="")?t.kg_origen:t.kg_a_tostar;const kgRest=kgOrigen-(t.kg_a_tostar||0);setEditId(null);setForm({fecha:today(),nombre_producto:t.nombre_producto||"",kg_origen:kgRest,kg_a_tostar:kgRest,valor_unitario:t.valor_unitario||"",valor_total:Math.round(kgRest*(t.valor_unitario||0))||"",temperatura:"",tiempo:"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:t.codigo_lote_origen||t.codigo,fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||""});setModal(true);};
   const poolHistorico=useMemo(()=>{const items=[];(blendsFino||[]).forEach(b=>{(b.salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{const consumido=blendsTostado.reduce((sum,t)=>{if((t.fuentes||[]).length>0){const f=t.fuentes.find(x=>x.salidaId===s.id);return sum+(f?numVal(f.kg_tomados):0);}if(t.codigo_lote_origen===b.codigo){return sum+((t.kg_origen!=null&&t.kg_origen!=="")?+t.kg_origen:+t.kg_a_tostar||0);}return sum;},0);const kgDisp=(s.peso_salida||0)-consumido;if(kgDisp>0.5){items.push({salidaId:s.id,blendCodigo:b.codigo,nombre_producto:b.producto_comercial||b.nombre||b.codigo,kg_a_tostar:Math.round(kgDisp*100)/100,valor_unitario:s.valor_kg||Math.round(b.costo_kg)||0,valor_total:Math.round(kgDisp*(s.valor_kg||b.costo_kg||0)),fecha:s.fecha,lotes_blend:(b.items||[]).map(it=>it.codigo),codigo_lote_origen:b.codigo});}});});return items;},[blendsFino,blendsTostado]);
   const abrirHistorico=(item)=>{const vt0=Math.round(item.kg_a_tostar*(item.valor_unitario||0));const fuenteInicial=[{salidaId:item.salidaId,blendCodigo:item.blendCodigo,nombre_producto:item.nombre_producto,kg_tomados:item.kg_a_tostar,valor_unitario:item.valor_unitario,valor_total_fuente:vt0,lotes_blend:item.lotes_blend||[]}];setEditId(null);setForm({fecha:item.fecha||today(),nombre_producto:item.nombre_producto,kg_origen:item.kg_a_tostar,kg_a_tostar:item.kg_a_tostar,valor_unitario:item.valor_unitario,valor_total:vt0,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:item.codigo_lote_origen,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:fuenteInicial});setModal(true);};
+  const _salidaIdsOk=new Set(blendsTostado.filter(t=>t.origen_salida_id).map(t=>t.origen_salida_id));
+  const _codigosOk=new Set(blendsTostado.map(t=>t.codigo_lote_origen).filter(Boolean));
+  const salidasHuerfanas=[];
+  (lotesFino||[]).forEach(lote=>{
+    (lote.salidas_bodega||[]).forEach(s=>{if(s.destino_key==="uba_tostado"&&!_salidaIdsOk.has(s.id)&&!_codigosOk.has(lote.codigo)){salidasHuerfanas.push({...s,lote_codigo:lote.codigo,lote_id:lote.id,tipo_salida:"bodega"});}});
+    (lote.salidas_trilladora||[]).forEach(s=>{if(s.destino_key==="uba_tostado"&&!_salidaIdsOk.has(s.id)&&!_codigosOk.has(lote.codigo)){salidasHuerfanas.push({...s,lote_codigo:lote.codigo,lote_id:lote.id,tipo_salida:"trilladora"});}});
+  });
+  const revertirPendiente=(t)=>{
+    if(!window.confirm("¿Revertir el lote pendiente '"+t.nombre_producto+"'? Los kg volverán al módulo de origen."))return;
+    if(t.origen_tipo==="bodega_fino"){setLotesFino(p=>p.map(l=>({...l,salidas_bodega:(l.salidas_bodega||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+    else if(t.origen_tipo==="bodega_tri_fino"){setLotesFino(p=>p.map(l=>({...l,salidas_trilladora:(l.salidas_trilladora||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+    else if(t.origen_tipo==="blend_fino"){setBlendsFino(p=>p.map(b=>({...b,salidas:(b.salidas||[]).filter(s=>s.id!==t.origen_salida_id)})));}
+    setBlendsTostado(p=>p.filter(x=>x.id!==t.id));
+  };
+  const revertirSalidaHuerfana=(s)=>{
+    if(!window.confirm("¿Revertir los "+s.peso_salida+" kg del lote "+s.lote_codigo+"? Los kg volverán a Bodega Café Fino."))return;
+    if(s.tipo_salida==="bodega"){setLotesFino(p=>p.map(l=>l.id!==s.lote_id?l:{...l,salidas_bodega:(l.salidas_bodega||[]).filter(x=>x.id!==s.id)}));}
+    else{setLotesFino(p=>p.map(l=>l.id!==s.lote_id?l:{...l,salidas_trilladora:(l.salidas_trilladora||[]).filter(x=>x.id!==s.id)}));}
+  };
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PROCESO DE TUESTE</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>UBA Tostado</div></div><button style={{...S.btn,background:C.orange}} onClick={abrirNuevo}>+ Nuevo Lote Tostado</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
@@ -2081,8 +2105,8 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
       <KPI label="kg Cafe Tostado" value={fmt(totalKgTostado,1)+" kg"} col={C.green}/>
       <KPI label="Rendimiento Prom." value={rendProm+"%"} col={C.gold}/>
     </div>
-    {(pendientes.length>0||parciales.length>0||poolHistorico.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
-      <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+parciales.length+poolHistorico.length})</div>
+    {(pendientes.length>0||parciales.length>0||poolHistorico.length>0||salidasHuerfanas.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
+      <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+parciales.length+poolHistorico.length+salidasHuerfanas.length})</div>
       <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
         {pendientes.map(t=>(<div key={t.id} style={{background:C.orangeBg,border:"1px solid "+C.orange+"40",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
           <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{t.codigo}</div>
@@ -2094,6 +2118,7 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
           {(t.lotes_blend||[]).length>0&&<div style={{color:C.purple,fontSize:11,marginTop:4}}>Blend: {t.lotes_blend.join(", ")}</div>}
           {t.codigo_lote_origen&&<div style={{color:C.textDim,fontSize:11,marginTop:2}}>Origen: {t.codigo_lote_origen}</div>}
           <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirEditar(t)}>Registrar Tueste</button>
+          {t.origen_tipo&&t.origen_salida_id&&<button style={{...S.btnG,fontSize:11,padding:"7px 12px",marginTop:4,width:"100%",color:C.red,borderColor:C.red+"60"}} onClick={()=>revertirPendiente(t)}>Revertir salida</button>}
         </div>))}
         {parciales.map(t=>{const kgOrigen=(t.kg_origen!=null&&t.kg_origen!=="")?t.kg_origen:t.kg_a_tostar;const kgRest=kgOrigen-(t.kg_a_tostar||0);return(<div key={"p"+t.id} style={{background:C.orangeBg,border:"2px solid "+C.orange,borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
@@ -2120,10 +2145,17 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
           <div style={{color:C.textDim,fontSize:10,marginTop:4,fontStyle:"italic"}}>Salida: {fmtFecha(item.fecha)}</div>
           <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirHistorico(item)}>Iniciar Tueste</button>
         </div>))}
+        {salidasHuerfanas.map(s=>(<div key={"orph_"+s.id} style={{background:"#fff8e1",border:"2px dashed #f59e0b",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
+          <div style={{color:"#92400e",fontWeight:700,fontSize:10,fontFamily:"monospace",marginBottom:2}}>&#9888; SIN REGISTRO DE TUESTE</div>
+          <div style={{color:C.navy,fontWeight:700,fontSize:14}}>{s.lote_codigo}</div>
+          <div style={{marginTop:6}}><span style={{color:C.accent,fontWeight:700,fontSize:13}}>{fmt(s.peso_salida,1)} kg</span></div>
+          <div style={{color:C.textDim,fontSize:11,marginTop:3}}>Salida hacia UBA Tostado sin lote asignado · {s.tipo_salida==="bodega"?"Bodega":"Trilladora"}</div>
+          <button style={{...S.btnG,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%",color:C.red,borderColor:C.red+"60"}} onClick={()=>revertirSalidaHuerfana(s)}>Revertir salida</button>
+        </div>))}
       </div>
     </div>)}
     <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Registros de Tueste</div><TablaScrollV minWidth={1600}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1600}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Por Tostar","Valor/kg Tostado","Rend.","Stock kg","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{blendsTostado.map(t=>{const stock=stockTostado(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
+      <tbody>{blendsTostado.filter(t=>t.kg_cafe_tostado>0).map(t=>{const stock=stockTostado(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha)}</td>
@@ -2151,7 +2183,7 @@ function UbaTostado({blendsTostado,setBlendsTostado,blendsFino}){
         <td style={S.td}>{t.responsable||"-"}</td>
         <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{t.kg_cafe_tostado>0&&<button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaUBA(t)}>+ Salida</button>}<button style={{...S.btnG,fontSize:11,...(!t.kg_cafe_tostado?{color:C.orange,borderColor:C.orange+"60",fontWeight:700}:{})}} onClick={()=>abrirEditar(t)}>{t.kg_cafe_tostado?"Editar":"Completar"}</button><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(t)}>Eliminar</button></div></td>
       </tr>);})}</tbody></table></TablaScrollV>
-      {blendsTostado.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tuestes registrados todavia.</div>}
+      {blendsTostado.filter(t=>t.kg_cafe_tostado>0).length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tuestes registrados todavia.</div>}
     </div>
 
     {modalSalidaUBA&&selTost&&(<Modal title={"Salida de Cafe Tostado - "+selTost.codigo} onClose={()=>{setModalSalidaUBA(false);setErrSalidaUBA("");}}>
@@ -3009,7 +3041,7 @@ export default function App(){
   },[fbUser,usuarios,authReady,usuariosReady]);
   if(!authReady||(fbUser&&!usuariosReady))return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:C.bg,flexDirection:"column",gap:16}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><div style={{width:40,height:40,border:"4px solid "+C.border,borderTop:"4px solid "+C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><div style={{color:C.textDim,fontSize:13}}>Cargando plataforma...</div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>);
   if(!loggedIn)return(<><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><LoginForm notAuthorized={notAuthorized}/></>);
-  const VIEWS={dashboard:()=><Dashboard lotes={lotes} costos={costos} lotesFino={lotesFino} maquilas={maquilas} blendsTostado={blendsTostado} blends={blends} blendsFino={blendsFino}/>,procesamiento:()=><Procesamiento lotes={lotes} setLotes={setLotes} costos={costos} lotesFino={lotesFino} setLotesFino={setLotesFino}/>,bodega:()=><Bodega lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg}/>,trilla:()=><Trilla lotes={lotes} setLotes={setLotes} costos={costos} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde}/>,bodega_tri:()=><BodegaTrilladora lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino}/>,blend:()=><Blend lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} costos={costos} setLotesFino={setLotesFino}/>,bodega_fino:()=><BodegaFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} lotes={lotes}/>,trilladora_fino:()=><TrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} lotes={lotes} costos={costos}/>,bodega_tri_fino:()=><BodegaTrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino}/>,blend_fino:()=><BlendFino lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado}/>,maquila:()=><Maquila maquilas={maquilas} setMaquilas={setMaquilas} setLotesFino={setLotesFino}/>,uba_tostado:()=><UbaTostado blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino}/>,ventas:()=><Ventas lotes={lotes} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino}/>,trazabilidad:()=><Trazabilidad lotes={lotes} costos={costos} blends={blends}/>,costos:()=><Costos costos={costos} setCostos={setCostos}/>,usuarios:()=><Usuarios usuarios={usuarios} setUsuarios={setUsuarios} permisosConfig={permisosConfig} setPermisosConfig={setPermisosConfig}/>,carga_inicial:()=><BulkLoader lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} setCostos={setCostos} lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setMaquilas={setMaquilas} setBlendsTostado={setBlendsTostado} setUsuarios={setUsuarios}/>};
+  const VIEWS={dashboard:()=><Dashboard lotes={lotes} costos={costos} lotesFino={lotesFino} maquilas={maquilas} blendsTostado={blendsTostado} blends={blends} blendsFino={blendsFino}/>,procesamiento:()=><Procesamiento lotes={lotes} setLotes={setLotes} costos={costos} lotesFino={lotesFino} setLotesFino={setLotesFino}/>,bodega:()=><Bodega lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg}/>,trilla:()=><Trilla lotes={lotes} setLotes={setLotes} costos={costos} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde}/>,bodega_tri:()=><BodegaTrilladora lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino}/>,blend:()=><Blend lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} costos={costos} setLotesFino={setLotesFino}/>,bodega_fino:()=><BodegaFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} lotes={lotes}/>,trilladora_fino:()=><TrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} lotes={lotes} costos={costos}/>,bodega_tri_fino:()=><BodegaTrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsTostado={setBlendsTostado}/>,blend_fino:()=><BlendFino lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado}/>,maquila:()=><Maquila maquilas={maquilas} setMaquilas={setMaquilas} setLotesFino={setLotesFino}/>,uba_tostado:()=><UbaTostado blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino} lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino}/>,ventas:()=><Ventas lotes={lotes} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino}/>,trazabilidad:()=><Trazabilidad lotes={lotes} costos={costos} blends={blends}/>,costos:()=><Costos costos={costos} setCostos={setCostos}/>,usuarios:()=><Usuarios usuarios={usuarios} setUsuarios={setUsuarios} permisosConfig={permisosConfig} setPermisosConfig={setPermisosConfig}/>,carga_inicial:()=><BulkLoader lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} setCostos={setCostos} lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setMaquilas={setMaquilas} setBlendsTostado={setBlendsTostado} setUsuarios={setUsuarios}/>};
   const permisosMapE=Object.fromEntries((permisosConfig.length?permisosConfig:PERMISOS_SEED).map(p=>[p.id,{views:p.views||[],readOnly:p.readOnly||[]}]));
   const permiso=permisosMapE[user?.rol]||permisosMapE["Gerente"]||{views:["dashboard"],readOnly:[]};
   const navFiltrado=NAV.filter(item=>item.sep||permiso.views.includes(item.k));

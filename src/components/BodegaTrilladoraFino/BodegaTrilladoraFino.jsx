@@ -1,9 +1,9 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
-import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
+import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
-export function BodegaTrilladoraFino({lotesFino,setLotesFino}){
+export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado}){
   const [selGrupo,setSelGrupo]=useState(null);
   const [modalSalida,setModalSalida]=useState(false);
   const [formSalida,setFormSalida]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",observaciones:""});
@@ -61,13 +61,20 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino}){
     const stockBase=stockGrupoBTF(selGrupo)+(editSalidaId?(selGrupo[0].salidas_trilladora||[]).find(x=>x.id===editSalidaId)?.peso_salida||0:0);
     if(peso>stockBase){setErrSalida("ERROR: El peso ("+fmt(peso)+" kg) supera el stock ("+fmt(stockBase)+" kg).");return;}
     const vkg=+formSalida.valor_kg||0;const vtotal=vkg>0?peso*vkg:(+formSalida.valor_total||0);
+    const nuevaSalidaId=editSalidaId||genId();
     setLotesFino(p=>p.map(l=>{
       if(l.id!==reprId)return l;
       let sal;
       if(editSalidaId){sal=(l.salidas_trilladora||[]).map(s=>s.id===editSalidaId?{...s,fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalida.observaciones}:s);}
-      else{sal=[...(l.salidas_trilladora||[]),{id:genId(),fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalida.observaciones}];}
+      else{sal=[...(l.salidas_trilladora||[]),{id:nuevaSalidaId,fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalida.observaciones}];}
       return{...l,salidas_trilladora:sal};
     }));
+    if(formSalida.destino_key==="uba_tostado"&&setBlendsTostado&&!editSalidaId){
+      const repr=selGrupo[0];
+      const nomPlaceholder=repr.trilla?.nombre_trillado||repr.codigo;
+      const codUBA="UBA-"+nomPlaceholder.replace(/\s+/g,"")+"-"+dateToCode(formSalida.fecha);
+      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),nombre_producto:nomPlaceholder,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:"Ligero",kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:repr.trilla?.nombre_trillado||repr.codigo,fecha_proceso:"",fecha_trilla:repr.trilla?.fecha_trilla||"",fecha_secado:"",lotes_blend:[],origen_tipo:"bodega_tri_fino",origen_salida_id:nuevaSalidaId},...p]);
+    }
     setModalSalida(false);setEditSalidaId(null);setErrSalida("");
   };
 
@@ -161,6 +168,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino}){
         <Fld label="Observaciones"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={formSalida.observaciones} onChange={e=>setFormSalida(p=>({...p,observaciones:e.target.value}))}/></Fld>
       </div>
       {formSalida.destino_key==="blend_cf"&&(<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.accent,fontWeight:600,marginBottom:10}}>&#8505; Este excelso quedara disponible en Blend Cafe Fino.</div>)}
+      {formSalida.destino_key==="uba_tostado"&&(<div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Se creara automaticamente un registro en UBA Tostado con los kg y valor ingresados.</div>)}
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModalSalida(false);setEditSalidaId(null);setErrSalida("");}}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaBTF}>{editSalidaId?"Guardar Cambios":"Registrar Salida"}</button></div>
     </Modal>)}
   </div>);
