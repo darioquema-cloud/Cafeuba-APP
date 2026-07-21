@@ -3,7 +3,7 @@ import{C,S,tg}from"../../theme";
 import{MESES}from"../../data/constants";
 import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
-import{Bdg,TablaScrollV}from"../ui";
+import{Bdg,TablaScrollV,DonutChart}from"../ui";
 export function Ventas({lotes,lotesFino,blends,blendsFino}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
@@ -204,21 +204,7 @@ export function Ventas({lotes,lotesFino,blends,blendsFino}){
             {(()=>{
               const PCOLS2=[C.teal,C.green,C.purple,C.accent,C.gold,C.orange];
               const porTipoArr=tiposDisp.map((t,i)=>{const kgt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.kg,0);const valt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.valor_total,0);return{tipo:t,kg:kgt,valor:valt,col:PCOLS2[i%PCOLS2.length]};}).sort((a,b)=>b.kg-a.kg);
-              const totalKgT=porTipoArr.reduce((s,d)=>s+d.kg,0)||1;
-              const cx=90,cy=90,ro=70,ri=36;
-              if(porTipoArr.length===0)return<div style={{color:C.textFaint,textAlign:"center",padding:"40px 0"}}>Sin datos</div>;
-              if(porTipoArr.length===1){const d=porTipoArr[0];return(<div><div style={{display:"flex",flexDirection:"column",gap:10}}><div style={{background:d.col+"15",border:"1px solid "+d.col+"30",borderRadius:10,padding:"16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontWeight:700,color:d.col}}>{d.tipo}</div><div style={{fontSize:12,color:C.textDim,marginTop:4}}>{fmt(d.kg)} kg</div></div><div style={{fontSize:20,fontWeight:800,color:d.col}}>100%</div></div></div></div>);}
-              let cum=0;
-              const slices=porTipoArr.map(d=>{const frac=d.kg/totalKgT;const s0=cum*2*Math.PI;cum+=frac;const s1=cum*2*Math.PI;const x1=cx+ro*Math.cos(s0-Math.PI/2),y1=cy+ro*Math.sin(s0-Math.PI/2);const x2=cx+ro*Math.cos(s1-Math.PI/2),y2=cy+ro*Math.sin(s1-Math.PI/2);const xi1=cx+ri*Math.cos(s1-Math.PI/2),yi1=cy+ri*Math.sin(s1-Math.PI/2);const xi2=cx+ri*Math.cos(s0-Math.PI/2),yi2=cy+ri*Math.sin(s0-Math.PI/2);const path=`M${x1.toFixed(2)},${y1.toFixed(2)} A${ro},${ro} 0 ${(s1-s0)>Math.PI?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi1.toFixed(2)},${yi1.toFixed(2)} A${ri},${ri} 0 ${(s1-s0)>Math.PI?1:0} 0 ${xi2.toFixed(2)},${yi2.toFixed(2)} Z`;const mid=(s0+s1)/2-Math.PI/2;return{...d,path,frac,mid,pct:((frac)*100).toFixed(1)};});
-              const vH=Math.max(195,40+porTipoArr.length*26);
-              return(<svg viewBox={`0 0 340 ${vH}`} width="100%" style={{display:"block"}}>
-                <circle cx={cx} cy={cy} r={ro+2} fill={C.bg} stroke={C.border} strokeWidth="1"/>
-                {slices.map(s=>(<path key={s.tipo} d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2" opacity="0.92"/>))}
-                {slices.map(s=>s.frac>0.06&&(<text key={s.tipo+"t"} x={(cx+(ro*0.64)*Math.cos(s.mid)).toFixed(2)} y={(cy+(ro*0.64)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">{s.pct}%</text>))}
-                <text x={cx} y={cy-5} textAnchor="middle" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(totalKgT)}</text>
-                <text x={cx} y={cy+7} textAnchor="middle" fontSize="8" fill={C.textFaint} fontFamily="Inter,sans-serif">kg total</text>
-                {slices.map((s,i)=>{const ry=22+i*26;return(<g key={s.tipo+"l"}><rect x="195" y={ry-10} width="13" height="13" fill={s.col} rx="2" opacity="0.9"/><text x="213" y={ry} fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">{s.tipo}</text><text x="280" y={ry} textAnchor="end" fontSize="10" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text><text x="336" y={ry} textAnchor="end" fontSize="9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmt(s.kg)} kg</text></g>);})}
-              </svg>);
+              return <DonutChart data={porTipoArr} labelKey="tipo" valueKey="kg" colorKey="col" ro={70} ri={36} fmtSecondary={d=>fmt(d.kg)+" kg"} legendRowH={26}/>;
             })()}
           </div>
         </div>
