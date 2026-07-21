@@ -31,3 +31,21 @@ export const PERMISOS={
 export const PERMISOS_SEED=Object.entries(PERMISOS).map(([rol,p])=>({id:rol,views:[...p.views],readOnly:[...p.readOnly]}));
 export const NAV=[{k:"dashboard",l:"Dashboard",icon:"&#9647;"},{k:"sep1",sep:true},{k:"procesamiento",l:"Procesamiento",icon:"&#8857;"},{k:"bodega",l:"Bodega Milan",icon:"&#127968;"},{k:"trilla",l:"Trilla",icon:"&#9881;"},{k:"bodega_tri",l:"Bodega Trilladora",icon:"&#9733;"},{k:"blend",l:"Blend",icon:"&#9737;"},{k:"sep2",sep:true},{k:"bodega_fino",l:"Bodega Cafe Fino",icon:"&#127968;"},{k:"trilladora_fino",l:"Trilladora Cafe Fino",icon:"&#9881;"},{k:"bodega_tri_fino",l:"Bodega Trilladora Fino",icon:"&#9733;"},{k:"blend_fino",l:"Blend Cafe Fino",icon:"&#9737;"},{k:"sep4",sep:true},{k:"maquila",l:"Maquila",icon:"&#9874;"},{k:"uba_tostado",l:"UBA Tostado",icon:"&#9745;"},{k:"sep6",sep:true},{k:"ventas",l:"Ventas",icon:"&#128200;"},{k:"sep2b",sep:true},{k:"trazabilidad",l:"Trazabilidad",icon:"&#128202;"},{k:"costos",l:"Reg. Costos",icon:"$"},{k:"sep3",sep:true},{k:"usuarios",l:"Usuarios",icon:"&#8853;"},{k:"sep5",sep:true},{k:"carga_inicial",l:"Carga Inicial",icon:"&#8659;"}];
 export const TIPOS_TOSTION=["Ligero","Medio","Oscuro","Especialidad","Otro"];
+export const PRESENTACIONES_TOSTADO=[
+  {key:"grano-340",   label:"Grano · 340g",           formato:"Grano",          peso_g:340,  kg_cafe:0.340},
+  {key:"grano-454",   label:"Grano · 454g",           formato:"Grano",          peso_g:454,  kg_cafe:0.454},
+  {key:"grano-1000",  label:"Grano · 1kg",            formato:"Grano",          peso_g:1000, kg_cafe:1.000},
+  {key:"fina-340",    label:"Molido Fino · 340g",     formato:"Molido (Fina)",  peso_g:340,  kg_cafe:0.340},
+  {key:"fina-454",    label:"Molido Fino · 454g",     formato:"Molido (Fina)",  peso_g:454,  kg_cafe:0.454},
+  {key:"fina-1000",   label:"Molido Fino · 1kg",      formato:"Molido (Fina)",  peso_g:1000, kg_cafe:1.000},
+  {key:"media-340",   label:"Molido Medio · 340g",    formato:"Molido (Media)", peso_g:340,  kg_cafe:0.340},
+  {key:"media-454",   label:"Molido Medio · 454g",    formato:"Molido (Media)", peso_g:454,  kg_cafe:0.454},
+  {key:"media-1000",  label:"Molido Medio · 1kg",     formato:"Molido (Media)", peso_g:1000, kg_cafe:1.000},
+  {key:"gruesa-340",  label:"Molido Grueso · 340g",   formato:"Molido (Gruesa)",peso_g:340,  kg_cafe:0.340},
+  {key:"gruesa-454",  label:"Molido Grueso · 454g",   formato:"Molido (Gruesa)",peso_g:454,  kg_cafe:0.454},
+  {key:"gruesa-1000", label:"Molido Grueso · 1kg",    formato:"Molido (Gruesa)",peso_g:1000, kg_cafe:1.000},
+  {key:"drip-10u",    label:"Drip Bags × 10 (130g)",  formato:"Drip bags",      peso_g:130,  kg_cafe:0.130,unidades_internas:10,peso_g_unidad:13},
+  {key:"brew-10u",    label:"Brew Bags × 10 (130g)",  formato:"Brew bags",      peso_g:130,  kg_cafe:0.130,unidades_internas:10,peso_g_unidad:13},
+];
+export const CANALES_VENTA_TOSTADO=["Shopify","WhatsApp Business","Venta en Persona (Eventos/Ferias)"];
+export const SEED_CONFIG_EMPAQUE=PRESENTACIONES_TOSTADO.map(p=>({id:p.key,sku_key:p.key,costo_empaque:0,precio_lista:0,activo:true}));
