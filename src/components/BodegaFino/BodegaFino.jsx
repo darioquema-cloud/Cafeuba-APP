@@ -13,7 +13,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
   const fincasDeOrigen=(l)=>{if(!lotes||!l.trazabilidad?.codigo_lote_origen)return[];const orig=lotes.find(x=>x.codigo===l.trazabilidad.codigo_lote_origen);return orig?[...new Set(orig.cereza.map(c=>c.finca))]:[];};
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
-  const blankForm=()=>({fecha:today(),producto:"",proveedor:"",kg_producto:"",costo_compra_kg:"",notas:""});
+  const blankForm=()=>({fecha:today(),producto:"",tipo_ingreso:"Pergamino",proveedor:"",kg_producto:"",costo_compra_kg:"",notas:""});
   const [form,setForm]=useState(blankForm());
   const [selLote,setSelLote]=useState(null);
   const [modalSalida,setModalSalida]=useState(false);
@@ -45,15 +45,16 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
   const esUbaTostado=formSalida.destino_key==="uba_tostado";
   const esBlendFino=formSalida.destino_key==="blend_cf";
   const esTrilladoraFino=formSalida.destino_key==="trilla_cf";
+  const alertaTipoIngreso=(esUbaTostado||esBlendFino)&&selLote?.tipo_ingreso&&selLote.tipo_ingreso!=="Excelso";
   const genCod=()=>{const[y,m,d]=form.fecha.split("-");return "CF-"+(form.producto||"GEN")+"-"+d+m+y;};
   const abrirNuevo=()=>{setEditId(null);setForm(blankForm());setModal(true);};
-  const abrirEditar=(l)=>{setEditId(l.id);setForm({fecha:l.fecha,producto:l.producto,proveedor:l.proveedor||"",kg_producto:l.kg_producto,costo_compra_kg:l.costo_compra_kg,notas:l.notas||""});setModal(true);};
+  const abrirEditar=(l)=>{setEditId(l.id);setForm({fecha:l.fecha,producto:l.producto,tipo_ingreso:l.tipo_ingreso||"Pergamino",proveedor:l.proveedor||"",kg_producto:l.kg_producto,costo_compra_kg:l.costo_compra_kg,notas:l.notas||""});setModal(true);};
   const reg=()=>{
     if(!form.kg_producto||!form.costo_compra_kg)return;
     if(editId){
-      setLotesFino(p=>p.map(l=>l.id===editId?{...l,fecha:form.fecha,producto:form.producto,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas}:l));
+      setLotesFino(p=>p.map(l=>l.id===editId?{...l,fecha:form.fecha,producto:form.producto,tipo_ingreso:form.tipo_ingreso,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas}:l));
     }else{
-      setLotesFino(p=>[{id:genId(),codigo:genCod(),fecha:form.fecha,mes:mesDe(form.fecha),semana:semanaISO(form.fecha),producto:form.producto,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas,salidas_bodega:[],trilla:null,salidas_trilladora:[]},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:genCod(),fecha:form.fecha,mes:mesDe(form.fecha),semana:semanaISO(form.fecha),producto:form.producto,tipo_ingreso:form.tipo_ingreso,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas,salidas_bodega:[],trilla:null,salidas_trilladora:[]},...p]);
     }
     setModal(false);
   };
@@ -132,12 +133,13 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
         <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumBKgSal)} kg</div></div>
         <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR SALIDAS</div><div style={{color:"#bbf7d0",fontWeight:700,fontSize:13}}>{fmtCOP(sumBValSal)}</div></div>
       </div>)}
-      <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Inventario por Lote</div><TablaScrollV minWidth={1150}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1150}}><thead><tr>{["Codigo","Mes","Finca","Producto","Proveedor","Fecha","Entrada kg","Salidas kg","Stock kg","Costo Compra/kg","Valor Stock","Pre-Trilla","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Inventario por Lote</div><TablaScrollV minWidth={1280}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1280}}><thead><tr>{["Codigo","Mes","Finca","Producto","Tipo","Proveedor","Fecha","Entrada kg","Salidas kg","Stock kg","Costo Compra/kg","Valor Stock","Pre-Trilla","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
       <tbody>{lotesFiltradosB.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0);const stock=stockDe(l);const fi=fincasDeOrigen(l);return(<tr key={l.id}>
         <td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{l.codigo}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td>
         <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{fi.length>0?fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>)):<span style={{color:C.textFaint,fontSize:11}}>—</span>}</div></td>
         <td style={S.td}><Bdg label={l.producto||"-"} col={C.teal} bg={C.tealBg}/></td>
+        <td style={S.td}>{(()=>{const ti=l.tipo_ingreso||"Pergamino";const cols={Excelso:C.accent,Natural:C.green,Pergamino:C.gold};const bgs={Excelso:C.accentBg,Natural:C.greenBg,Pergamino:C.goldBg};return<Bdg label={ti} col={cols[ti]||C.gold} bg={bgs[ti]||C.goldBg}/>;})()}</td>
         <td style={{...S.td,color:C.textDim}}>{l.proveedor||"-"}</td>
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(l.fecha)}</td>
         <td style={{...S.td,fontWeight:600}}>{fmt(l.kg_producto)}</td>
@@ -156,8 +158,9 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/></Fld>
         <Fld label="Producto" half><input style={S.input} value={form.producto} onChange={e=>setForm(p=>({...p,producto:e.target.value}))}/></Fld>
+        <Fld label="Tipo de Ingreso" half><select style={S.select} value={form.tipo_ingreso} onChange={e=>setForm(p=>({...p,tipo_ingreso:e.target.value}))}><option>Pergamino</option><option>Natural</option><option>Excelso</option></select></Fld>
         <Fld label="Proveedor / Origen" half><input style={S.input} value={form.proveedor} onChange={e=>setForm(p=>({...p,proveedor:e.target.value}))}/></Fld>
-        <Fld label="kg Pergamino Recibido" half><input style={S.input} type="number" value={form.kg_producto} onChange={e=>setForm(p=>({...p,kg_producto:e.target.value}))}/></Fld>
+        <Fld label="kg Recibidos" half><input style={S.input} type="number" value={form.kg_producto} onChange={e=>setForm(p=>({...p,kg_producto:e.target.value}))}/></Fld>
         <Fld label="Costo de Compra / kg COP"><input style={S.input} type="number" value={form.costo_compra_kg} onChange={e=>setForm(p=>({...p,costo_compra_kg:e.target.value}))}/></Fld>
       </div>
       {!editId&&<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:14}}><span style={{color:C.textDim,fontSize:12}}>Codigo generado: </span><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:14}}>{genCod()}</span></div>}
@@ -171,6 +174,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
         <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Stock disponible: <b style={{color:C.green,fontSize:15}}>{fmt(stockDe(selLote))} kg</b></div>
       </div>
       {errSalida&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errSalida}</div>)}
+      {alertaTipoIngreso&&(<div style={{background:C.goldBg,border:"2px solid "+C.gold,borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.navy,fontWeight:600,fontSize:13}}>&#9888; Este lote es <b>{selLote.tipo_ingreso}</b> (no Excelso). Los lotes {esBlendFino?"para Blend Café Fino":"para UBA Tostado"} deberían ser Excelso — normalmente este tipo pasa primero por Trilladora Café Fino. Puedes continuar si es un caso excepcional.</div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha de Salida" half><input style={S.input} type="date" value={formSalida.fecha} onChange={e=>setFormSalida(p=>({...p,fecha:e.target.value}))}/></Fld>
         <Fld label="Peso de Salida (kg)" half><input style={{...S.input,borderColor:errSalida?C.red:C.border2}} type="number" value={formSalida.peso_salida} onChange={e=>{setFormSalida(p=>({...p,peso_salida:e.target.value,valor_total:+e.target.value*(+formSalida.valor_kg||0)||""}));setErrSalida("");}}/></Fld>
