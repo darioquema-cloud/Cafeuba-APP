@@ -316,7 +316,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
     </>}
 
     {tabTrilla==="subproductos"&&(<>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
         <KPI label="Registros" value={subprodVerde.length} col={C.green}/>
         <KPI label="Total Pasilla Elec" value={fmt(subprodVerde.reduce((s,sp)=>s+sp.pasilla_elec,0))+" kg"} col={C.orange}/>
         <KPI label="Total Cat. Densim." value={fmt(subprodVerde.reduce((s,sp)=>s+sp.catadora_dens,0))+" kg"} col={C.purple}/>

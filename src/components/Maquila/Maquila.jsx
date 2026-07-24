@@ -72,7 +72,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
   const tStyle=(k)=>({padding:"8px 16px",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:tab===k?C.orange:C.panel,color:tab===k?C.white:C.textDim,borderBottom:tab===k?"3px solid "+C.orange:"3px solid transparent"});
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,flexWrap:"wrap",gap:12}}><div><div style={{color:C.orange,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>SERVICIOS A TERCEROS</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Maquila</div></div>{tab==="registros"&&<button style={{...S.btn,background:C.orange}} onClick={()=>{setEditId(null);setForm(blankA());setModal(true);}}>+ Nuevo Registro</button>}</div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:16}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Registros" value={maquilas.length} col={C.navy}/>
       <KPI label="kg Recibidos" value={fmt(totalKg)+" kg"} col={C.accent}/>
       <KPI label="En Trilla" value={maquilas.filter(m=>m.estado_pipeline==="en_trilla").length} col={C.orange}/>
