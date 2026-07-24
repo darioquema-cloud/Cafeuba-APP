@@ -72,12 +72,6 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
       else{sal=[...(l.salidas_bodega||[]),{id:nuevaSalidaId,fecha:formSalida.fecha,factura:formSalida.factura,remision:formSalida.remision,cliente:formSalida.cliente,destino_key:formSalida.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal}];}
       return{...l,salidas_bodega:sal};
     }));
-    if(esUbaTostado){
-      const nombreTostado=formSalida.nombre_producto_tostado||selLote?.codigo||"";
-      const codUBA="UBA-"+nombreTostado.replace(/\s+/g,"")+"-"+dateToCode(today());
-      const tz=selLote?.trazabilidad||{};
-      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:today(),mes:mesDe(today()),nombre_producto:nombreTostado,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:"Ligero",kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:tz.codigo_lote_origen||selLote?.codigo||"",fecha_proceso:tz.fecha_proceso||"",fecha_trilla:selLote?.trilla?.fecha_trilla||tz.fecha_trilla||"",fecha_secado:tz.fecha_secado||"",lotes_blend:tz.lotes_blend||[],origen_tipo:"bodega_fino",origen_salida_id:nuevaSalidaId},...p]);
-    }
     if(esTrilladoraFino){
       setLotesFino(p=>[{id:genId(),codigo:selLote.codigo,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),semana:semanaISO(formSalida.fecha),producto:selLote.producto||"",proveedor:"Bodega Café Fino",kg_producto:peso,costo_compra_kg:vkg||selLote.costo_compra_kg||0,notas:"Trasladado desde Bodega CF — "+selLote.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:[]},para_trilladora:true},...p]);
     }
@@ -187,7 +181,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
       </div>
       {esTrilladoraFino&&<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.accent,fontWeight:600,marginBottom:10}}>&#8505; Este lote quedara disponible en Trilladora Cafe Fino para ser procesado.</div>}
       {esBlendFino&&<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.accent,fontWeight:600,marginBottom:10}}>&#8505; Se creara automaticamente un lote disponible en Blend Cafe Fino.</div>}
-      {esUbaTostado&&<div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Se creara automaticamente un registro en UBA Tostado con los kg y valor ingresados.</div>}
+      {esUbaTostado&&<div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Este lote quedara disponible en UBA Tostado para tostarse en uno o varios batches.</div>}
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModalSalida(false);setEditSalidaId(null);setErrSalida("");setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:"",valor_kg:"",valor_total:"",nombre_producto_tostado:""});}}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalida}>{editSalidaId?"Guardar Cambios":"Registrar Salida"}</button></div>
     </Modal>)}
 

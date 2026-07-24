@@ -129,11 +129,6 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
       else{sal=[...(b.salidas||[]),{id:nuevaSalidaBId,fecha:formSalidaB.fecha,factura:formSalidaB.factura,remision:formSalidaB.remision,cliente:formSalidaB.cliente,destino_key:formSalidaB.destino_key,peso_salida:peso,valor_kg:vkg,valor_total:vtotal,observaciones:formSalidaB.observaciones}];}
       return{...b,salidas:sal};
     }));
-    if(formSalidaB.destino_key==="uba_tostado"&&setBlendsTostado&&!editSalidaBId){
-      const nomProd=formSalidaB.nombre_producto_tostado||selBlend.nombre||selBlend.codigo;
-      const codUBA="UBA-"+nomProd.replace(/\s+/g,"")+"-"+dateToCode(formSalidaB.fecha);
-      setBlendsTostado(p=>[{id:genId(),codigo:codUBA,fecha:formSalidaB.fecha,mes:mesDe(formSalidaB.fecha),nombre_producto:nomProd,kg_a_tostar:peso,valor_unitario:vkg,valor_total:vtotal,temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:0,catacion:"",responsable:"",codigo_lote_origen:selBlend.codigo,fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend.items||[]).map(it=>it.codigo),origen_tipo:"blend_fino",origen_salida_id:nuevaSalidaBId},...p]);
-    }
     setModalSalidaB(false);setEditSalidaBId(null);setErrB("");
   };
 
@@ -269,7 +264,7 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
         <Fld label="Observaciones"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={formSalidaB.observaciones} onChange={e=>setFormSalidaB(p=>({...p,observaciones:e.target.value}))}/></Fld>
       </div>
       {formSalidaB.destino_key==="uba_tostado"&&(<>
-        <div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Se creara automaticamente un registro en UBA Tostado con la informacion de este blend (ingredientes, kg y valor).</div>
+        <div style={{background:C.orangeBg,border:"1px solid "+C.orange+"30",borderRadius:6,padding:"8px 12px",fontSize:12,color:C.orange,fontWeight:600,marginBottom:10}}>&#8505; Este lote quedara disponible en UBA Tostado para tostarse en uno o varios batches.</div>
         <Fld label="Nombre de Producto Tostado (opcional)"><input style={S.input} placeholder="Ej: Espresso Milan" value={formSalidaB.nombre_producto_tostado} onChange={e=>setFormSalidaB(p=>({...p,nombre_producto_tostado:e.target.value}))}/></Fld>
       </>)}
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModalSalidaB(false);setEditSalidaBId(null);setErrB("");}}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={regSalidaB}>{editSalidaBId?"Guardar Cambios":"Registrar Salida"}</button></div>
