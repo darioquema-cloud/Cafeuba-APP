@@ -18,7 +18,7 @@ export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,
     </div>
     {tabDash==="central"&&<DashboardCentral lotes={lotes} costos={costos}/>}
     {tabDash==="bodega_milan"&&<DashboardBodegaMilan lotes={lotes} costos={costos}/>}
-    {tabDash==="trilla"&&<DashboardTrilla lotes={lotes}/>}
+    {tabDash==="trilla"&&<DashboardTrilla lotes={lotes} costos={costos}/>}
     {tabDash==="bodega_cf"&&<DashboardBodegaCF lotesFino={lotesFino}/>}
     {tabDash==="trilladora_cf"&&<DashboardTrilladoraCF lotesFino={lotesFino}/>}
     {tabDash==="blends"&&<DashboardBlends blends={blends} blendsFino={blendsFino}/>}
