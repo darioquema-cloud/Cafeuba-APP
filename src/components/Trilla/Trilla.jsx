@@ -20,6 +20,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
   const [filtroCorte,setFiltroCorte]=useState("");
   const [busqueda,setBusqueda]=useState("");
   const [tabTrilla,setTabTrilla]=useState("registro");
+  const [auditBusq,setAuditBusq]=useState("");
   const disp=lotes.filter(l=>pesoATrilladora(l)>0&&!l.trilla?.kg_excelso);
   const tril=lotes.filter(l=>l.trilla?.kg_excelso>0);
   // FIX A: opciones de mes/producto incluyen tanto lotes pendientes (l.mes) como ya trillados (mes real de trilla), para que el filtro sirva en ambos paneles
@@ -177,6 +178,11 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
     return true;
   });
 
+  // Auditoria de Datos (solo lectura): lotes ya trillados (kg_excelso>0) cuya salida hacia trilla
+  // (pesoATrilladora) quedo en 0 — no cuentan en la tarjeta "Kg Trillados" pero si en "Excelso Total".
+  // Candidatos a revisar/depurar manualmente; esta vista no borra ni modifica nada.
+  const candidatosBasura=tril.filter(l=>pesoATrilladora(l)===0);
+
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>OPERACION 04</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilla - Excelso / Merma / Pasillas</div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
@@ -187,7 +193,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
       <KPI label="Pendientes" value={disp.length} col={C.gold}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
-      {[["registro","Registro"],["subproductos","Subproductos Verde"]].map(([k,v])=>(<button key={k} onClick={()=>setTabTrilla(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tabTrilla===k?600:400,color:tabTrilla===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabTrilla===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+      {[["registro","Registro"],["subproductos","Subproductos Verde"],["auditoria","Auditoria de Datos"]].map(([k,v])=>(<button key={k} onClick={()=>setTabTrilla(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tabTrilla===k?600:400,color:tabTrilla===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabTrilla===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
     </div>
 
     {tabTrilla==="registro"&&<>
@@ -330,6 +336,37 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
       </div>
     </Modal>)}
     </>}
+
+    {tabTrilla==="auditoria"&&(<>
+      <div style={{...S.card,marginBottom:16}}>
+        <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:6}}>Candidatos a datos huerfanos (solo lectura)</div>
+        <div style={{color:C.textFaint,fontSize:12,marginBottom:12}}>Lotes con Excelso registrado (cuentan en "Excelso Total") pero sin salida hacia Trilla registrada (no cuentan en "Kg Trillados"). Esta tabla no borra ni modifica nada — es para identificar y revisar manualmente antes de decidir si depurar algun registro.</div>
+        {candidatosBasura.length===0?(<div style={{color:C.textFaint,fontSize:13}}>No se encontraron lotes en este estado.</div>):(
+        <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["ID Documento (Firestore)","Coleccion","Codigo","Origen Lote","Tipo","Corte","Fecha Trilla","kg Excelso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>{candidatosBasura.map(l=>(<tr key={l.id}>
+          <td style={{...S.td,fontFamily:"monospace",fontSize:11}}>{l.id}</td>
+          <td style={S.td}><Bdg label="lotes" col={C.navy}/></td>
+          <td style={{...S.td,fontWeight:700,color:C.accent,fontFamily:"monospace"}}>{l.codigo}</td>
+          <td style={S.td}>{l.origen_lote||"—"}</td>
+          <td style={S.td}>{l.tipo||"—"}</td>
+          <td style={S.td}><Bdg label={l.trilla?.codigo_corte||"—"} col={C.accent}/></td>
+          <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(l.trilla?.fecha_trilla)}</td>
+          <td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(l.trilla?.kg_excelso||0)} kg</td>
+        </tr>))}</tbody></table></TablaScrollV>)}
+      </div>
+
+      <div style={S.card}>
+        <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:6}}>Buscar lote por codigo (coleccion "lotes")</div>
+        <input style={{...S.input,marginBottom:12}} placeholder="Ej: LAVADO L4,L5,L6 061225" value={auditBusq} onChange={e=>setAuditBusq(e.target.value)}/>
+        {auditBusq&&lotes.filter(l=>l.codigo?.toLowerCase().includes(auditBusq.toLowerCase())).map(l=>(
+          <div key={l.id} style={{background:C.panel2,border:"1px solid "+C.border,borderRadius:6,padding:12,marginBottom:10}}>
+            <div style={{color:C.navy,fontWeight:700,marginBottom:4}}>{l.codigo} <span style={{color:C.textFaint,fontWeight:400,fontSize:11}}>— coleccion "lotes", id documento:</span> <span style={{fontFamily:"monospace",color:C.accent}}>{l.id}</span></div>
+            <pre style={{whiteSpace:"pre-wrap",fontSize:11,color:C.textDim,background:C.panel,border:"1px solid "+C.border,borderRadius:4,padding:10,overflowX:"auto"}}>{JSON.stringify(l,null,2)}</pre>
+          </div>
+        ))}
+        {auditBusq&&lotes.filter(l=>l.codigo?.toLowerCase().includes(auditBusq.toLowerCase())).length===0&&<div style={{color:C.textFaint,fontSize:13}}>Sin coincidencias en la coleccion "lotes" (Bodega Milan / Trilla / Bodega Trilladora).</div>}
+      </div>
+    </>)}
 
     {tabTrilla==="subproductos"&&(<>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
