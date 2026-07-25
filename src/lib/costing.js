@@ -1,4 +1,5 @@
 import{SEED_COSTOS_TRI}from"../data/constants";
+import{mesDe}from"./dates";
 export const getSeedCostoTri=(codigo,kgProducto)=>{const byKg=SEED_COSTOS_TRI.find(r=>r.codigo===codigo&&Math.abs(r.kg-(kgProducto||0))<1);return byKg?.costo||(SEED_COSTOS_TRI.find(r=>r.codigo===codigo)?.costo||0);};
 export const calcCosto=(lote,costos,lotes)=>{
   if(!lote.kg_producto||lote.kg_producto===0)return null;
@@ -18,6 +19,6 @@ export const calcCosto=(lote,costos,lotes)=>{
 };
 export const calcCostoTri=(mes,costos,lotes)=>{
   const costosTri=(costos||[]).filter(c=>c.centro==="Trilladora"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
-  const kgEx=lotes.filter(l=>l.mes===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
+  const kgEx=lotes.filter(l=>mesDe(l.trilla?.fecha_trilla)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
 };

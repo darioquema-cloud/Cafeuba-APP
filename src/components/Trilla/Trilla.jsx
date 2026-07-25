@@ -17,18 +17,21 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
   const [errTrilla,setErrTrilla]=useState("");
   const [filtroMes,setFiltroMes]=useState("");
   const [filtroProducto,setFiltroProducto]=useState("");
+  const [filtroCorte,setFiltroCorte]=useState("");
   const [busqueda,setBusqueda]=useState("");
   const [tabTrilla,setTabTrilla]=useState("registro");
   const disp=lotes.filter(l=>pesoATrilladora(l)>0&&!l.trilla?.kg_excelso);
-  const mesesD=[...new Set(disp.map(l=>l.mes).filter(Boolean))].sort();
-  const productosD=[...new Set(disp.map(l=>l.producto).filter(Boolean))].sort();
+  const tril=lotes.filter(l=>l.trilla?.kg_excelso>0);
+  // FIX A: opciones de mes/producto incluyen tanto lotes pendientes (l.mes) como ya trillados (mes real de trilla), para que el filtro sirva en ambos paneles
+  const mesesD=[...new Set([...disp.map(l=>l.mes),...tril.map(l=>mesDe(l.trilla?.fecha_trilla))].filter(Boolean))].sort();
+  const productosD=[...new Set([...disp.map(l=>l.producto),...tril.map(l=>l.producto)].filter(Boolean))].sort();
+  const cortesD=[...new Set(tril.map(l=>l.trilla?.codigo_corte).filter(Boolean))].sort();
   const dispFiltrados=disp.filter(l=>{
     if(filtroMes&&l.mes!==filtroMes)return false;
     if(filtroProducto&&l.producto!==filtroProducto)return false;
     if(busqueda&&!l.codigo.toLowerCase().includes(busqueda.toLowerCase()))return false;
     return true;
   });
-  const tril=lotes.filter(l=>l.trilla?.kg_excelso>0);
 
   const MAX_LOTES_TRILLA=8;
   const toggleSel=(l)=>{
@@ -152,20 +155,32 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
   const mesTri=selArr[0]?.mes||"";
   const {costosTri,kgEx,costoTriKg}=useMemo(()=>calcCostoTri(mesTri,costos,lotes),[mesTri,costos,lotes]);
   const totalKgExcelso=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
+  const totalKgTrillados=tril.reduce((s,l)=>s+pesoATrilladora(l),0);
 
   // FIX 10: consolidar el historico en una sola fila por grupo de lotes trillados juntos
   const gruposVistos=new Set();
-  const gruposHistorico=[];
+  const gruposHistoricoAll=[];
   tril.forEach(l=>{
     if(gruposVistos.has(l.id))return;
     const grupo=[l,...lotes.filter(x=>(l.trilla.lotes_combinados||[]).includes(x.id))];
     grupo.forEach(x=>gruposVistos.add(x.id));
-    gruposHistorico.push(grupo);
+    gruposHistoricoAll.push(grupo);
+  });
+  // FIX A: filtro de mes/producto/busqueda/corte conectado al Historico (antes solo aplicaba al panel de lotes disponibles).
+  // El mes se deriva de la fecha real de trilla (mesDe(trilla.fecha_trilla)), no del mes de ingreso del lote (l.mes).
+  const gruposHistorico=gruposHistoricoAll.filter(grupo=>{
+    const repr=grupo[0];
+    if(filtroMes&&mesDe(repr.trilla.fecha_trilla)!==filtroMes)return false;
+    if(filtroProducto&&!grupo.some(x=>x.producto===filtroProducto))return false;
+    if(filtroCorte&&repr.trilla.codigo_corte!==filtroCorte)return false;
+    if(busqueda&&!grupo.some(x=>x.codigo.toLowerCase().includes(busqueda.toLowerCase())))return false;
+    return true;
   });
 
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>OPERACION 04</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilla - Excelso / Merma / Pasillas</div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
+      <KPI label="Kg Trillados" value={fmt(totalKgTrillados)+" kg"} col={C.navy}/>
       <KPI label="Excelso Total" value={fmt(totalKgExcelso)+" kg"} col={C.green}/>
       <KPI label="Merma Total" value={fmt(tril.reduce((s,l)=>s+(l.trilla?.kg_merma||0),0))+" kg"} col={C.red}/>
       <KPI label="Pasillas" value={fmt(tril.reduce((s,l)=>s+(l.trilla?.kg_pasillas||0),0))+" kg"} col={C.orange}/>
@@ -191,6 +206,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
       <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesD.map(m=>(<option key={m}>{m}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosD.map(p=>(<option key={p}>{p}</option>))}</select>
+      <select style={{...S.select,width:160}} value={filtroCorte} onChange={e=>setFiltroCorte(e.target.value)}><option value="">Todos los cortes</option>{cortesD.map(c=>(<option key={c}>{c}</option>))}</select>
       <button style={{...S.btn,background:C.orange,borderColor:C.orange,whiteSpace:"nowrap"}} onClick={()=>{setFormManual(blankManual());setModalManual(true);}}>+ Lote Manual</button>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
@@ -275,7 +291,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
       const dif=(t.factor_industrial!=null&&t.factor_pretrilla_ponderado!=null)?(t.factor_industrial-t.factor_pretrilla_ponderado):null;
       return(<tr key={repr.id}>
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha_trilla)}</td>
-        <td style={{...S.td,textTransform:"capitalize"}}>{repr.mes}</td>
+        <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha_trilla)}</td>
         <td style={S.td}><Bdg label={t.codigo_corte||"—"} col={C.accent}/></td>
         <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
         <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{[...new Set(grupo.map(x=>x.producto))].map(p=>(<Bdg key={p} label={p} col={C.navy} bg={C.accentBg}/>))}</div></td>
