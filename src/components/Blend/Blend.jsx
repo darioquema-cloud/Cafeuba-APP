@@ -1,9 +1,12 @@
-import{useState}from"react";
+import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
 import{NORMAS}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe,semanaISO}from"../../lib/dates";
 import{Bdg,Fld,KPI,Modal,TablaScrollV,SelectDestino}from"../ui";
+import*as XLSX from"xlsx";
+import{jsPDF}from"jspdf";
+import autoTable from"jspdf-autotable";
 const poolBlend=(lotes,costos)=>{
   const pool=[];
   lotes.forEach(l=>(l.salidas_trilladora||[]).forEach(s=>{
@@ -13,7 +16,7 @@ const poolBlend=(lotes,costos)=>{
   }));
   return pool;
 };
-export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
+export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inventariosMensuales,setInventariosMensuales}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
   const [nombre,setNombre]=useState("");
@@ -40,6 +43,152 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
   const [filtroDestinoBH,setFiltroDestinoBH]=useState("");
 
   const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
+
+  // ═══ Inventario Mensual (mismo patron de Bodega Milan / Bodega Trilladora) ═══
+  // La entidad del arqueo es el BLEND (1:1, sin agrupacion), identificada por lote_codigo=b.codigo.
+  // Al cerrar el inventario se genera una salida sintetica en b.salidas del blend contado
+  // (destino_key:"ajuste_inventario"), misma logica de signo: peso_salida=-diferencia_kg.
+  const [modalNuevoInv,setModalNuevoInv]=useState(false);
+  const [formNuevoInv,setFormNuevoInv]=useState({fecha_conteo:today(),usuario_conteo:""});
+  const [selInvId,setSelInvId]=useState(null);
+  const semaforoDe=(pct)=>{const a=Math.abs(pct);if(a<=2)return"verde";if(a<=5)return"amarillo";return"rojo";};
+  const SEM_COL={verde:C.green,amarillo:C.gold,rojo:C.red};
+  const SEM_BG={verde:C.greenBg,amarillo:C.goldBg,rojo:C.redBg};
+  const SEM_LABEL={verde:"OK",amarillo:"Revisar",rojo:"Critico"};
+  const inventariosBlend=(inventariosMensuales||[]).filter(i=>i.modulo==="blend");
+  const invActivo=inventariosBlend.find(i=>i.id===selInvId)||null;
+  const [detalleLocal,setDetalleLocal]=useState(null);
+  const [busquedaInv,setBusquedaInv]=useState("");
+  useEffect(()=>{setDetalleLocal(invActivo?invActivo.detalle:null);setBusquedaInv("");},[invActivo?.id]);
+  const guardarDetalle=()=>{
+    if(!invActivo||!detalleLocal)return;
+    setInventariosMensuales(p=>p.map(x=>x.id===invActivo.id?{...x,detalle:detalleLocal}:x));
+  };
+  const crearInventario=()=>{
+    if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
+    const detalle=blends.map(b=>({lote_id:b.id,lote_codigo:b.codigo,producto:b.producto_comercial||b.nombre||"",stock_teorico:stockBlend(b),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
+    const nuevo={id:genId(),modulo:"blend",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"blend",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    setInventariosMensuales(p=>[nuevo,...(p||[])]);
+    setSelInvId(nuevo.id);
+    setModalNuevoInv(false);
+    setFormNuevoInv({fecha_conteo:today(),usuario_conteo:""});
+  };
+  const actualizarDetalleInv=(loteId,campo,valor)=>{
+    setDetalleLocal(prev=>(prev||[]).map(d=>{
+      if(d.lote_id!==loteId)return d;
+      if(campo==="stock_fisico"){
+        const sf=valor===""?null:+valor;
+        const dif=sf!=null?sf-d.stock_teorico:0;
+        const pct=sf!=null&&d.stock_teorico>0?(dif/d.stock_teorico)*100:0;
+        return{...d,stock_fisico:sf,diferencia_kg:dif,diferencia_pct:pct,estado_semaforo:sf!=null?semaforoDe(pct):null};
+      }
+      return{...d,[campo]:valor};
+    }));
+  };
+  const cerrarInventario=(inv)=>{
+    const pendientes=inv.detalle.filter(d=>d.stock_fisico==null);
+    if(pendientes.length>0){alert("Faltan "+pendientes.length+" blend(s) por contar antes de cerrar.");return;}
+    const sinJustificar=inv.detalle.filter(d=>d.estado_semaforo!=="verde"&&!d.nota_justificacion?.trim());
+    if(sinJustificar.length>0){alert("Hay "+sinJustificar.length+" blend(s) con diferencia significativa (amarillo/rojo) sin nota de justificacion. Agrega la nota antes de cerrar.");return;}
+    if(!window.confirm("¿Cerrar este inventario? Se generara un ajuste de stock en Blend para cada blend con diferencia, y ya no se podra editar salvo que lo reabras."))return;
+    const fechaCierre=today();
+    const mesNum=String(new Date(inv.fecha_conteo+"T00:00:00").getMonth()+1).padStart(2,"0");
+    const factura="AJUSTE-INV-"+mesNum+"-"+inv.anio;
+    const ajustesPorBlend={};
+    inv.detalle.forEach(d=>{if(d.diferencia_kg!==0)ajustesPorBlend[d.lote_id]=d.diferencia_kg;});
+    setBlends(p=>p.map(b=>{
+      if(!(b.id in ajustesPorBlend))return b;
+      const pesoAjuste=-ajustesPorBlend[b.id];
+      const nuevaSalida={id:genId(),fecha:fechaCierre,factura,remision:"",cliente:"Ajuste de Inventario",destino_key:"ajuste_inventario",peso_salida:pesoAjuste,valor_kg:0,valor_total:0};
+      return{...b,salidas:[...(b.salidas||[]),nuevaSalida]};
+    }));
+    setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,detalle:inv.detalle,estado:"cerrado",fecha_cierre:fechaCierre}:x));
+  };
+  // Exporta la planilla de conteo en blanco (Excel) para diligenciar en campo
+  const exportarPlanillaExcel=(inv)=>{
+    const data=inv.detalle.map(d=>({"Codigo Blend":d.lote_codigo,"Producto":d.producto||"","Stock Teorico (kg)":+d.stock_teorico.toFixed(1),"Stock Fisico (kg)":""}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),"Planilla Conteo");
+    XLSX.writeFile(wb,"Planilla-Inventario-Blend-"+(inv.mes||"")+"-"+inv.anio+".xlsx");
+  };
+  // Exporta el Acta de Inventario (PDF) una vez cerrado. Valor unitario = b.costo_kg (el mismo
+  // Costo/kg que ya muestra la tabla principal de Blend), ponderado por blend.
+  const exportarActaPDF=(inv)=>{
+    const detalle=inv.detalle;
+    const kgFisicoTotal=detalle.reduce((s,d)=>s+(d.stock_fisico||0),0);
+    const kgTeoricoTotal=detalle.reduce((s,d)=>s+d.stock_teorico,0);
+    const difTotalKg=kgFisicoTotal-kgTeoricoTotal;
+    const valorTotal=detalle.reduce((s,d)=>{
+      const b=blends.find(x=>x.id===d.lote_id);
+      return s+((b?.costo_kg||0)*(d.stock_fisico||0));
+    },0);
+    const significativos=detalle.filter(d=>d.estado_semaforo&&d.estado_semaforo!=="verde");
+    const porProducto={};
+    detalle.forEach(d=>{const p=d.producto||"Sin Producto";porProducto[p]=(porProducto[p]||0)+(d.stock_fisico||0);});
+    const mesLabel=(inv.mes||"").charAt(0).toUpperCase()+(inv.mes||"").slice(1);
+
+    const doc=new jsPDF();
+    doc.setFont("helvetica","bold");doc.setFontSize(16);
+    doc.text("CafeUba — Blend",14,18);
+    doc.setFont("helvetica","normal");doc.setFontSize(12);
+    doc.text("Acta de Inventario Mensual",14,26);
+    doc.setFontSize(10);
+    doc.text("Periodo: "+mesLabel+" "+inv.anio,14,34);
+    doc.text("Fecha de cierre: "+fmtFecha(inv.fecha_cierre||inv.fecha_conteo),14,40);
+    doc.text("Responsable del conteo: "+(inv.usuario_conteo||"—"),14,46);
+
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Resumen Ejecutivo",14,56);
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    doc.text("Valor total del inventario (fisico, costo ponderado): "+fmtCOP(Math.round(valorTotal)),14,63);
+    doc.text("Kilos totales en stock fisico: "+fmt(kgFisicoTotal)+" kg",14,69);
+    doc.text("Total kg ajustados (neto): "+(difTotalKg>=0?"+":"")+fmt(difTotalKg)+" kg",14,75);
+
+    let y=85;
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Diferencias Significativas (Amarillo/Rojo)",14,y);
+    if(significativos.length===0){
+      doc.setFont("helvetica","normal");doc.setFontSize(10);
+      doc.text("Sin diferencias significativas — todos los blends dentro del margen aceptable (<=2%).",14,y+7);
+      y+=16;
+    }else{
+      autoTable(doc,{
+        startY:y+4,
+        head:[["Codigo Blend","Producto","Teorico kg","Fisico kg","Dif. kg","Dif. %","Nota"]],
+        body:significativos.map(d=>[d.lote_codigo,d.producto||"—",fmt(d.stock_teorico),fmt(d.stock_fisico),fmt(d.diferencia_kg),d.diferencia_pct.toFixed(1)+"%",d.nota_justificacion||"—"]),
+        styles:{fontSize:8},
+        headStyles:{fillColor:[30,58,95]},
+      });
+      y=doc.lastAutoTable.finalY+12;
+    }
+
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Desglose por Producto (kg fisico)",14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Producto","kg Fisico"]],
+      body:Object.entries(porProducto).map(([p,kg])=>[p,fmt(kg)]),
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+30;
+
+    if(y>260){doc.addPage();y=30;}
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    doc.text("_________________________________",14,y);
+    doc.text("Gerente de Produccion",14,y+6);
+    doc.text("_________________________________",120,y);
+    doc.text("Gerente Financiero",120,y+6);
+
+    doc.save("Acta-Inventario-Blend-"+(inv.mes||"")+"-"+inv.anio+".pdf");
+  };
+  // Reabrir NO revierte el ajuste de stock ya generado al cerrar — solo vuelve el documento a
+  // "borrador" para poder corregir datos. Si se vuelve a cerrar, se genera un ajuste ADICIONAL.
+  const reabrirInventario=(inv)=>{
+    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar generara un ajuste ADICIONAL, no un reemplazo. ¿Continuar?"))return;
+    setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,estado:"borrador"}:x));
+  };
+
   const poolAll=[
     ...poolBlend(lotes,costos).map(p=>({...p,tipo:"lote"})),
     ...blends.filter(b=>b.id!==editId&&stockBlend(b)>0).map(b=>({key:"blendstock:"+b.id,salidaId:null,reprId:b.id,codigo:b.codigo,producto:b.producto_comercial||b.nombre,kg_total:stockBlend(b),valor_kg:Math.round(b.costo_kg)||0,fecha:b.fecha,esStockDirecto:true,tipo:"blend"})),
@@ -164,7 +313,9 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
   });
   const totalKgBlends=blends.reduce((s,b)=>s+b.kg_total,0);
   const totalValBlends=blends.reduce((s,b)=>s+b.valor_total,0);
-  const totalValSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).reduce((a,x)=>a+(x.valor_total||0),0),0);
+  // Excluye "ajuste_inventario" de las salidas "reales" — el ajuste corrige el stock pero no es
+  // una salida/venta real, no debe mezclarse en el KPI de Valor Salidas.
+  const totalValSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),0),0);
   const DESTI_LABEL_BL={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"};
   const todasSalidasBl=blends.flatMap(b=>(b.salidas||[]).filter(s=>!s.auto_blend).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const mesesSalBl=[...new Set(todasSalidasBl.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
@@ -203,7 +354,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
       {poolSel.length>0&&(<button style={{...S.btn,background:C.purple}} onClick={abrirNuevoDesdePool}>+ Nuevo Blend con seleccion ({poolSel.length})</button>)}
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
-      {[["inventario","Inventario"],["historico","Historico de Salidas"]].map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tab===k?600:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+      {[["inventario","Inventario"],["historico","Historico de Salidas"],["inventario_mensual","Inventario Mensual"]].map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tab===k?600:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
     </div>
     {tab==="inventario"&&(<><div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote o blend..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
@@ -216,8 +367,8 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
     {(filtroMes||filtroProducto||filtroNomCom||busqueda)&&(()=>{
       const sumBKgT=blendsFiltrados.reduce((s,b)=>s+b.kg_total,0);
       const sumBValT=blendsFiltrados.reduce((s,b)=>s+b.valor_total,0);
-      const sumBKgSal=blendsFiltrados.reduce((s,b)=>(b.salidas||[]).reduce((a,x)=>a+x.peso_salida,s),0);
-      const sumBValSal=blendsFiltrados.reduce((s,b)=>(b.salidas||[]).reduce((a,x)=>a+(x.valor_total||0),s),0);
+      const sumBKgSal=blendsFiltrados.reduce((s,b)=>(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+x.peso_salida,s),0);
+      const sumBValSal=blendsFiltrados.reduce((s,b)=>(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),s),0);
       const sumBStk=blendsFiltrados.reduce((s,b)=>s+stockBlend(b),0);
       return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
         <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>BLENDS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{blendsFiltrados.length}</div></div>
@@ -261,6 +412,102 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino}){
       {(busquedaBH||filtroMesBH||filtroProductoBH||filtroDestinoBH)&&salidasBlFiltradas.length>0&&(()=>{const sumKgBH=salidasBlFiltradas.reduce((s,x)=>s+x.peso_salida,0);const sumValBH=salidasBlFiltradas.reduce((s,x)=>s+(x.valor_total||0),0);return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{salidasBlFiltradas.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG SALIDAS</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(sumKgBH)} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR TOTAL</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValBH))}</div></div></div>);})()}
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Blend","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{salidasBlFiltradas.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace"}}>{s.codigo}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaB(s.blendRef,s)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV>
     </div>):(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>))}
+
+    {tab==="inventario_mensual"&&(<>
+      {!invActivo?(<>
+        <div style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Inventario Mensual — Blend</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>Arqueo de existencias: compara el stock teorico del sistema contra el conteo fisico</div></div>
+          <button style={S.btn} onClick={()=>{setFormNuevoInv({fecha_conteo:today(),usuario_conteo:""});setModalNuevoInv(true);}}>+ Nuevo Inventario Mensual</button>
+        </div>
+        {inventariosBlend.length===0?(
+          <div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin inventarios mensuales registrados todavia. Usa el boton para crear el primer arqueo.</div>
+        ):(
+          <div style={S.card}>
+            <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>
+              {["Mes","Fecha Conteo","Usuario","Estado","Blends","Contados","Rojo/Amarillo",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+            </tr></thead>
+            <tbody>{[...inventariosBlend].sort((a,b)=>(b.fecha_conteo||"").localeCompare(a.fecha_conteo||"")).map(inv=>{
+              const contados=inv.detalle.filter(d=>d.stock_fisico!=null).length;
+              const rojos=inv.detalle.filter(d=>d.estado_semaforo==="rojo").length;
+              const amarillos=inv.detalle.filter(d=>d.estado_semaforo==="amarillo").length;
+              return(<tr key={inv.id}>
+                <td style={{...S.td,textTransform:"capitalize",fontWeight:700,color:C.navy}}>{inv.mes} {inv.anio}</td>
+                <td style={{...S.td,color:C.textDim}}>{fmtFecha(inv.fecha_conteo)}</td>
+                <td style={S.td}>{inv.usuario_conteo}</td>
+                <td style={S.td}><Bdg label={inv.estado==="cerrado"?"Cerrado":"Borrador"} col={inv.estado==="cerrado"?C.green:C.gold} bg={inv.estado==="cerrado"?C.greenBg:C.goldBg}/></td>
+                <td style={{...S.td,textAlign:"center"}}>{inv.detalle.length}</td>
+                <td style={{...S.td,textAlign:"center"}}>{contados}/{inv.detalle.length}</td>
+                <td style={{...S.td,textAlign:"center"}}>{(rojos+amarillos)>0?(<span style={{color:rojos>0?C.red:C.gold,fontWeight:700}}>{rojos>0&&rojos+" rojo"}{rojos>0&&amarillos>0&&" · "}{amarillos>0&&amarillos+" amarillo"}</span>):(<span style={{color:C.green}}>—</span>)}</td>
+                <td style={S.td}><button style={S.btnG} onClick={()=>setSelInvId(inv.id)}>{inv.estado==="cerrado"?"Ver":"Continuar"}</button></td>
+              </tr>);
+            })}</tbody></table></TablaScrollV>
+          </div>
+        )}
+      </>):(()=>{
+        const detalleView=detalleLocal||invActivo.detalle;
+        const kgTeoricoTotal=detalleView.reduce((s,d)=>s+d.stock_teorico,0);
+        const kgFisicoTotal=detalleView.reduce((s,d)=>s+(d.stock_fisico||0),0);
+        const difTotalKg=kgFisicoTotal-kgTeoricoTotal;
+        const difTotalPct=kgTeoricoTotal>0?(difTotalKg/kgTeoricoTotal)*100:0;
+        const contados=detalleView.filter(d=>d.stock_fisico!=null).length;
+        const rojos=detalleView.filter(d=>d.estado_semaforo==="rojo").length;
+        const amarillos=detalleView.filter(d=>d.estado_semaforo==="amarillo").length;
+        const bloqueado=invActivo.estado==="cerrado";
+        const detalleFiltrado=busquedaInv?detalleView.filter(d=>d.lote_codigo.toLowerCase().includes(busquedaInv.toLowerCase())):detalleView;
+        return(<>
+          <div style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+            <div>
+              <button style={{...S.btnG,marginBottom:8}} onClick={()=>setSelInvId(null)}>← Volver al listado</button>
+              <div style={{fontWeight:700,fontSize:14,color:C.navy,textTransform:"capitalize"}}>{invActivo.mes} {invActivo.anio} <Bdg label={bloqueado?"Cerrado":"Borrador"} col={bloqueado?C.green:C.gold} bg={bloqueado?C.greenBg:C.goldBg}/></div>
+              <div style={{fontSize:11,color:C.textDim,marginTop:2}}>Conteo: {fmtFecha(invActivo.fecha_conteo)} · {invActivo.usuario_conteo}</div>
+            </div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {!bloqueado&&<button style={S.btnG} onClick={()=>exportarPlanillaExcel({...invActivo,detalle:detalleView})}>⬇ Exportar Planilla</button>}
+              {bloqueado&&<button style={S.btnG} onClick={()=>exportarActaPDF(invActivo)}>⬇ Exportar PDF</button>}
+              {bloqueado?(<button style={S.btnG} onClick={()=>reabrirInventario(invActivo)}>Reabrir</button>):(<button style={{...S.btn,background:C.green}} onClick={()=>cerrarInventario({...invActivo,detalle:detalleView})}>Cerrar Inventario</button>)}
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:16}}>
+            <KPI label="Contados" value={contados+"/"+detalleView.length} col={C.navy}/>
+            <KPI label="Stock Teorico" value={fmt(kgTeoricoTotal)+" kg"} col={C.teal}/>
+            <KPI label="Stock Fisico" value={fmt(kgFisicoTotal)+" kg"} col={C.accent}/>
+            <KPI label="Diferencia" value={fmt(difTotalKg)+" kg"} col={Math.abs(difTotalPct)<=2?C.green:Math.abs(difTotalPct)<=5?C.gold:C.red}/>
+            <KPI label="Diferencia %" value={difTotalPct.toFixed(1)+"%"} col={Math.abs(difTotalPct)<=2?C.green:Math.abs(difTotalPct)<=5?C.gold:C.red}/>
+            <KPI label="Rojo/Amarillo" value={rojos+" / "+amarillos} col={rojos>0?C.red:amarillos>0?C.gold:C.green}/>
+          </div>
+          <div style={{...S.card,display:"flex",gap:10,alignItems:"center",marginBottom:12}}>
+            <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de blend..." value={busquedaInv} onChange={e=>setBusquedaInv(e.target.value)}/>
+            <span style={{color:C.textFaint,fontSize:12,whiteSpace:"nowrap"}}>{detalleFiltrado.length} de {detalleView.length} blends</span>
+          </div>
+          <div style={S.card}>
+            <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1000}}><thead><tr>
+              {["Codigo Blend","Producto","Stock Teorico kg","Stock Fisico kg","Diferencia kg","Diferencia %","Estado","Nota Justificacion"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+            </tr></thead>
+            <tbody>{detalleFiltrado.map(d=>(
+              <tr key={d.lote_id}>
+                <td style={{...S.td,fontWeight:700,color:C.purple,fontFamily:"monospace"}}>{d.lote_codigo}</td>
+                <td style={S.td}><Bdg label={d.producto||"—"} col={C.teal} bg={C.tealBg}/></td>
+                <td style={{...S.td,textAlign:"right",color:C.textDim,fontVariantNumeric:"tabular-nums"}}>{fmt(d.stock_teorico)} kg</td>
+                <td style={S.td}>{bloqueado?(<span style={{fontWeight:700}}>{d.stock_fisico!=null?fmt(d.stock_fisico)+" kg":"—"}</span>):(<input style={{...S.input,width:110,padding:"6px 8px"}} type="number" step="0.1" placeholder="kg" value={d.stock_fisico??""} onChange={e=>actualizarDetalleInv(d.lote_id,"stock_fisico",e.target.value)} onBlur={guardarDetalle}/>)}</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:700,color:d.stock_fisico==null?C.textFaint:d.diferencia_kg===0?C.textDim:d.diferencia_kg>0?C.green:C.red,fontVariantNumeric:"tabular-nums"}}>{d.stock_fisico!=null?fmt(d.diferencia_kg):"—"}</td>
+                <td style={{...S.td,textAlign:"right",color:d.stock_fisico==null?C.textFaint:C.textDim,fontVariantNumeric:"tabular-nums"}}>{d.stock_fisico!=null?d.diferencia_pct.toFixed(1)+"%":"—"}</td>
+                <td style={S.td}>{d.estado_semaforo?(<Bdg label={SEM_LABEL[d.estado_semaforo]} col={SEM_COL[d.estado_semaforo]} bg={SEM_BG[d.estado_semaforo]}/>):(<span style={{color:C.textFaint,fontSize:11}}>Pendiente</span>)}</td>
+                <td style={S.td}>{bloqueado?(<span style={{color:C.textDim,fontSize:12}}>{d.nota_justificacion||"—"}</span>):(<input style={{...S.input,minWidth:180}} placeholder={d.estado_semaforo&&d.estado_semaforo!=="verde"?"Obligatorio: explica la diferencia":"Opcional"} value={d.nota_justificacion} onChange={e=>actualizarDetalleInv(d.lote_id,"nota_justificacion",e.target.value)} onBlur={guardarDetalle}/>)}</td>
+              </tr>
+            ))}</tbody></table></TablaScrollV>
+          </div>
+        </>);
+      })()}
+      {modalNuevoInv&&(<Modal title="Nuevo Inventario Mensual" onClose={()=>setModalNuevoInv(false)}>
+        <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:14,fontSize:12,color:C.textDim}}>Se creara un borrador con el stock teorico actual de los {blends.length} blends registrados. El conteo fisico y las notas se completan despues.</div>
+        <Fld label="Fecha de Conteo"><input style={S.input} type="date" value={formNuevoInv.fecha_conteo} onChange={e=>setFormNuevoInv(p=>({...p,fecha_conteo:e.target.value}))}/></Fld>
+        <Fld label="Usuario que Cuenta"><input style={S.input} placeholder="Nombre de quien realiza el conteo" value={formNuevoInv.usuario_conteo} onChange={e=>setFormNuevoInv(p=>({...p,usuario_conteo:e.target.value}))}/></Fld>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+          <button style={S.btnG} onClick={()=>setModalNuevoInv(false)}>Cancelar</button>
+          <button style={S.btn} onClick={crearInventario}>Crear Borrador</button>
+        </div>
+      </Modal>)}
+    </>)}
 
     {modal&&(<Modal title={editId?"Editar Blend":"Nuevo Blend"} onClose={cerrarModal} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
