@@ -114,9 +114,12 @@ export function Procesamiento({lotes,setLotes,costos,lotesFino,setLotesFino}){
         const sumPC=historicoFiltrado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
         const sumPP=historicoFiltrado.reduce((s,l)=>s+(l.kg_producto||0),0);
         const convProm=sumPP>0?sumPC/sumPP:0;
-        const sumKgSalP=historicoFiltrado.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0),0);
-        const sumValSalP=historicoFiltrado.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,b)=>a+(b.valor_total||0),0),0);
-        const stkP=sumPP-sumKgSalP;
+        // sumKgSalPTodas incluye el ajuste de inventario (para que stkP sea exacto); sumKgSalP/
+        // sumValSalP (mostrados como "salidas") lo excluyen — un ajuste de conteo no es una salida real.
+        const sumKgSalPTodas=historicoFiltrado.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0),0);
+        const sumKgSalP=historicoFiltrado.reduce((s,l)=>s+(l.salidas_bodega||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+b.peso_salida,0),0);
+        const sumValSalP=historicoFiltrado.reduce((s,l)=>s+(l.salidas_bodega||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
+        const stkP=sumPP-sumKgSalPTodas;
         return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
           <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>LOTES</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{historicoFiltrado.length}</div></div>
           <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG CEREZA</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumPC)} kg</div></div>

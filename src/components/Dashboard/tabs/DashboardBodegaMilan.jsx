@@ -8,12 +8,14 @@ export function DashboardBodegaMilan({lotes,costos}){
   const [filtroMesBM,setFiltroMesBM]=useState("todos");
   const lotesBM=lotes.filter(l=>l.kg_producto>0&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
   const lotesBMFilt=filtroMesBM==="todos"?lotesBM:lotesBM.filter(l=>l.mes===filtroMesBM);
-  const bmDetalle=lotesBMFilt.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);const cst=calcCosto(l,costos,lotes);const ck=cst?cst.total:0;return{...l,_stock:l.kg_producto-sal,_salTot:sal,_costoKg:ck,_costoTotal:ck*l.kg_producto};});
+  // salTodas incluye el ajuste de inventario (para que _stock sea exacto); _salTot (mostrado como
+  // "kg Salidas") lo excluye — un ajuste de conteo no es una salida/venta real.
+  const bmDetalle=lotesBMFilt.map(l=>{const salTodas=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);const salReales=(l.salidas_bodega||[]).filter(s=>s.destino_key!=="ajuste_inventario").reduce((a,s)=>a+s.peso_salida,0);const cst=calcCosto(l,costos,lotes);const ck=cst?cst.total:0;return{...l,_stock:l.kg_producto-salTodas,_salTot:salReales,_costoKg:ck,_costoTotal:ck*l.kg_producto};});
   const bmKgEnt=bmDetalle.reduce((s,l)=>s+l.kg_producto,0);
   const bmValEnt=bmDetalle.reduce((s,l)=>s+l._costoTotal,0);
   const bmStockKg=bmDetalle.reduce((s,l)=>s+l._stock,0);
   const bmSalidasKg=bmDetalle.reduce((s,l)=>s+l._salTot,0);
-  const bmValSalidas=lotesBMFilt.reduce((s,l)=>s+(l.salidas_bodega||[]).reduce((a,si)=>a+(si.valor_total||0),0),0);
+  const bmValSalidas=lotesBMFilt.reduce((s,l)=>s+(l.salidas_bodega||[]).filter(si=>si.destino_key!=="ajuste_inventario").reduce((a,si)=>a+(si.valor_total||0),0),0);
   const bmValStock=bmDetalle.reduce((s,l)=>s+l._stock*l._costoKg,0);
   const bmPorProd={};bmDetalle.forEach(l=>{const p=l.producto||"Sin Producto";if(!bmPorProd[p])bmPorProd[p]={kgEnt:0,costoTot:0,kgSal:0,kgStock:0};bmPorProd[p].kgEnt+=l.kg_producto;bmPorProd[p].costoTot+=l._costoTotal;bmPorProd[p].kgSal+=l._salTot;bmPorProd[p].kgStock+=l._stock;});
   const bmProdData=Object.entries(bmPorProd).sort((a,b)=>b[1].kgEnt-a[1].kgEnt).map(([prod,d])=>({prod,kgEnt:d.kgEnt,costoUk:d.kgEnt>0?d.costoTot/d.kgEnt:0,kgSal:d.kgSal,kgStock:d.kgStock}));
