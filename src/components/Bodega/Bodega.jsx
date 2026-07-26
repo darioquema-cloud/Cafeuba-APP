@@ -65,7 +65,10 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const SEM_COL={verde:C.green,amarillo:C.gold,rojo:C.red};
   const SEM_BG={verde:C.greenBg,amarillo:C.goldBg,rojo:C.redBg};
   const SEM_LABEL={verde:"OK",amarillo:"Revisar",rojo:"Critico"};
-  const invActivo=(inventariosMensuales||[]).find(i=>i.id===selInvId)||null;
+  // Documentos viejos (ya en produccion) no tienen campo modulo — se tratan como "bodega_milan"
+  // para no romper el historico existente al introducir el mismo tab en Bodega Trilladora.
+  const inventariosBM=(inventariosMensuales||[]).filter(i=>(i.modulo||"bodega_milan")==="bodega_milan");
+  const invActivo=inventariosBM.find(i=>i.id===selInvId)||null;
   // FIX: escribir a Firestore en cada tecla (setInventariosMensuales -> setDoc del documento
   // completo) provocaba que el eco de onSnapshot pisara el input mientras se escribia, perdiendo
   // el foco. Ahora se edita un borrador LOCAL (detalleLocal) sin tocar Firestore, y solo se
@@ -80,7 +83,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
     const detalle=lotesB.map(l=>({lote_id:l.id,lote_codigo:l.codigo,producto:l.producto||"",stock_teorico:stockDisponible(l),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
-    const nuevo={id:genId(),mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_milan",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"bodega_milan",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_milan",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);
@@ -390,14 +393,14 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
           <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Inventario Mensual — Piloto Bodega Milan</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>Arqueo de existencias: compara el stock teorico del sistema contra el conteo fisico</div></div>
           <button style={S.btn} onClick={()=>{setFormNuevoInv({fecha_conteo:today(),usuario_conteo:""});setModalNuevoInv(true);}}>+ Nuevo Inventario Mensual</button>
         </div>
-        {(inventariosMensuales||[]).length===0?(
+        {inventariosBM.length===0?(
           <div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin inventarios mensuales registrados todavia. Usa el boton para crear el primer arqueo.</div>
         ):(
           <div style={S.card}>
             <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>
               {["Mes","Fecha Conteo","Usuario","Estado","Lotes","Contados","Rojo/Amarillo",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}
             </tr></thead>
-            <tbody>{[...(inventariosMensuales||[])].sort((a,b)=>(b.fecha_conteo||"").localeCompare(a.fecha_conteo||"")).map(inv=>{
+            <tbody>{[...inventariosBM].sort((a,b)=>(b.fecha_conteo||"").localeCompare(a.fecha_conteo||"")).map(inv=>{
               const contados=inv.detalle.filter(d=>d.stock_fisico!=null).length;
               const rojos=inv.detalle.filter(d=>d.estado_semaforo==="rojo").length;
               const amarillos=inv.detalle.filter(d=>d.estado_semaforo==="amarillo").length;
