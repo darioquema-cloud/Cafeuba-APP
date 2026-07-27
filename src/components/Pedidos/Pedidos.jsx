@@ -2,7 +2,6 @@ import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
 
 // ═══ Funciones de stock replicadas TAL CUAL (solo lectura) de BodegaTrilladora.jsx y
 // BodegaTrilladoraFino.jsx — no viven exportadas en esos archivos, asi que se copian aqui
@@ -24,13 +23,12 @@ const stockGrupoBTF=(grupo)=>{const exc=grupo.reduce((s,x)=>s+(x.trilla?.kg_exce
 const construirGruposBTF=(lotesFino,arr)=>{const vistos=new Set();const gs=[];arr.forEach(l=>{if(vistos.has(l.id))return;const g=grupoDeBTF(lotesFino,l);g.forEach(x=>vistos.add(x.id));gs.push(g);});return gs;};
 const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
 
-const TIPO_LABEL={excelso:"Excelso (Bodega Trilladora)",excelso_cf:"Excelso Fino (Bodega Trilladora Fino)",blend:"Blend",blend_cf:"Blend Cafe Fino"};
+const normProducto=(p)=>(p||"").trim().toUpperCase();
 
 export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,user}){
   const [modal,setModal]=useState(false);
   const [cliente,setCliente]=useState("");
-  const [tipoProducto,setTipoProducto]=useState("excelso");
-  const [refId,setRefId]=useState("");
+  const [productoComercial,setProductoComercial]=useState("");
   const [kgSolicitados,setKgSolicitados]=useState("");
   const [precioKg,setPrecioKg]=useState("");
   const [fechaEntrega,setFechaEntrega]=useState("");
@@ -38,57 +36,65 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
   const [err,setErr]=useState("");
   const [fCliente,setFCliente]=useState("");
   const [fEstado,setFEstado]=useState("todos");
-  const [fTipo,setFTipo]=useState("");
+  const [fProducto,setFProducto]=useState("");
 
+  // ═══ Lista unificada: combina las 4 fuentes de stock (excelso, excelso CF, blend, blend
+  // CF) en una sola estructura plana, agrupable por producto_norm sin importar la seccion.
   const trilledLotes=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const gruposExcelso=construirGruposT(lotes,trilledLotes);
-  const opcionesExcelso=gruposExcelso.map(g=>{const repr=g[0];return{id:repr.id,codigo:repr.trilla?.nombre_trillado||repr.codigo,stock:stockGrupoDe(lotes,repr),producto:repr.producto||"Sin Producto"};});
+  const entExcelso=gruposExcelso.map(g=>{
+    const repr=g[0];
+    return{tipo:"excelso",seccion_label:"Excelso (Bodega Trilladora)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoDe(lotes,repr)};
+  });
 
   const trilledFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
   const gruposFino=construirGruposBTF(lotesFino,trilledFino);
-  const opcionesExcelsoCF=gruposFino.map(g=>{const repr=g[0];return{id:repr.id,codigo:repr.trilla?.nombre_trillado||repr.codigo,stock:stockGrupoBTF(g),producto:repr.producto||"Sin Producto"};});
+  const entExcelsoCF=gruposFino.map(g=>{
+    const repr=g[0];
+    return{tipo:"excelso_cf",seccion_label:"Excelso Fino (Bodega Trilladora Fino)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoBTF(g)};
+  });
 
-  const opcionesBlend=blends.map(b=>({id:b.id,codigo:b.codigo,stock:stockBlend(b),producto:b.producto_comercial||b.nombre||"Sin Producto"}));
-  const opcionesBlendCF=blendsFino.map(b=>({id:b.id,codigo:b.codigo,stock:stockBlend(b),producto:b.producto_comercial||b.nombre||"Sin Producto"}));
+  const entBlend=blends.map(b=>({tipo:"blend",seccion_label:"Blend",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b)}));
+  const entBlendCF=blendsFino.map(b=>({tipo:"blend_cf",seccion_label:"Blend Cafe Fino",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b)}));
 
-  const opcionesPorTipo={excelso:opcionesExcelso,excelso_cf:opcionesExcelsoCF,blend:opcionesBlend,blend_cf:opcionesBlendCF};
-  const opcionSel=opcionesPorTipo[tipoProducto]?.find(o=>o.id===refId)||null;
+  const entidadesUnificadas=[...entExcelso,...entExcelsoCF,...entBlend,...entBlendCF];
+  const productosUnicos=[...new Set(entidadesUnificadas.map(e=>e.producto_norm))].sort((a,b)=>a.localeCompare(b));
 
-  // Disponible recalculado en vivo para la tabla — no usa el valor congelado del registro
-  const stockActualDe=(pedido)=>{
-    if(pedido.tipo_producto==="excelso"){
-      const l=lotes.find(x=>x.id===pedido.ref_id);
-      return l?stockGrupoDe(lotes,l):null;
-    }
-    if(pedido.tipo_producto==="excelso_cf"){
-      const l=lotesFino.find(x=>x.id===pedido.ref_id);
-      return l?stockGrupoBTF(grupoDeBTF(lotesFino,l)):null;
-    }
-    if(pedido.tipo_producto==="blend"){
-      const b=blends.find(x=>x.id===pedido.ref_id);
-      return b?stockBlend(b):null;
-    }
-    if(pedido.tipo_producto==="blend_cf"){
-      const b=blendsFino.find(x=>x.id===pedido.ref_id);
-      return b?stockBlend(b):null;
-    }
+  const desgloseDe=(productoNorm)=>entidadesUnificadas.filter(e=>e.producto_norm===productoNorm);
+  const desgloseSel=productoComercial?desgloseDe(productoComercial):[];
+  const totalDisponibleSel=desgloseSel.reduce((s,e)=>s+e.disponible,0);
+
+  // Disponible recalculado en vivo para la tabla — no usa el snapshot congelado del registro.
+  // Tolerante con pedidos viejos (estructura ref_id/tipo_producto suelto, sin producto_comercial).
+  const disponibleDeProducto=(productoNorm)=>{
+    if(!productoNorm)return null;
+    const filas=desgloseDe(productoNorm);
+    if(!filas.length)return null;
+    return{total:filas.reduce((s,e)=>s+e.disponible,0),count:filas.length};
+  };
+  const stockActualLegacy=(pedido)=>{
+    if(pedido.tipo_producto==="excelso"){const l=lotes.find(x=>x.id===pedido.ref_id);return l?stockGrupoDe(lotes,l):null;}
+    if(pedido.tipo_producto==="excelso_cf"){const l=lotesFino.find(x=>x.id===pedido.ref_id);return l?stockGrupoBTF(grupoDeBTF(lotesFino,l)):null;}
+    if(pedido.tipo_producto==="blend"){const b=blends.find(x=>x.id===pedido.ref_id);return b?stockBlend(b):null;}
+    if(pedido.tipo_producto==="blend_cf"){const b=blendsFino.find(x=>x.id===pedido.ref_id);return b?stockBlend(b):null;}
     return null;
   };
 
   const abrirNuevo=()=>{
-    setCliente("");setTipoProducto("excelso");setRefId("");setKgSolicitados("");setPrecioKg("");setFechaEntrega("");setNotas("");setErr("");setModal(true);
+    setCliente("");setProductoComercial("");setKgSolicitados("");setPrecioKg("");setFechaEntrega("");setNotas("");setErr("");setModal(true);
   };
 
   const guardar=()=>{
     const kg=numVal(kgSolicitados);
     if(!cliente.trim()){setErr("Ingresa el nombre del cliente.");return;}
-    if(!refId){setErr("Selecciona el producto especifico.");return;}
+    if(!productoComercial){setErr("Selecciona el producto comercial.");return;}
     if(!(kg>0)){setErr("Ingresa un peso solicitado valido (mayor a 0).");return;}
     const precio=numVal(precioKg);
     const valor=precio>0?kg*precio:0;
     const nuevo={
-      id:genId(),fecha_registro:today(),cliente:cliente.trim(),tipo_producto:tipoProducto,
-      ref_id:refId,ref_codigo:opcionSel?.codigo||"",
+      id:genId(),fecha_registro:today(),cliente:cliente.trim(),
+      producto_comercial:productoComercial,
+      desglose:desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible})),
       kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
       fecha_entrega_esperada:fechaEntrega,notas,entregado:false,
       usuario_registro:user?.nombre||user?.email||"",
@@ -110,7 +116,11 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
     if(fCliente&&!p.cliente.toLowerCase().includes(fCliente.toLowerCase()))return false;
     if(fEstado==="pendientes"&&p.entregado)return false;
     if(fEstado==="entregados"&&!p.entregado)return false;
-    if(fTipo&&p.tipo_producto!==fTipo)return false;
+    if(fProducto){
+      const q=fProducto.toLowerCase();
+      const prodTexto=(p.producto_comercial||p.ref_codigo||"").toLowerCase();
+      if(!prodTexto.includes(q))return false;
+    }
     return true;
   }).sort((a,b)=>b.fecha_registro.localeCompare(a.fecha_registro));
 
@@ -137,33 +147,30 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
     </div>
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por cliente..." value={fCliente} onChange={e=>setFCliente(e.target.value)}/>
+      <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por producto comercial..." value={fProducto} onChange={e=>setFProducto(e.target.value)}/>
       <select style={{...S.select,width:150}} value={fEstado} onChange={e=>setFEstado(e.target.value)}>
         <option value="todos">Todos</option>
         <option value="pendientes">Pendientes</option>
         <option value="entregados">Entregados</option>
       </select>
-      <select style={{...S.select,width:220}} value={fTipo} onChange={e=>setFTipo(e.target.value)}>
-        <option value="">Todos los productos</option>
-        {Object.entries(TIPO_LABEL).map(([k,v])=>(<option key={k} value={k}>{v}</option>))}
-      </select>
-      {(fCliente||fEstado!=="todos"||fTipo)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFCliente("");setFEstado("todos");setFTipo("");}}>✕ Limpiar</button>}
+      {(fCliente||fEstado!=="todos"||fProducto)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFCliente("");setFEstado("todos");setFProducto("");}}>✕ Limpiar</button>}
       <span style={{color:C.textFaint,fontSize:12,alignSelf:"center"}}>{pedidosFiltrados.length} de {pedidos.length} pedidos</span>
     </div>
     <div style={S.card}>
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Pedidos Registrados</div>
-      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1100}}><thead><tr>
-        {["Fecha","Cliente","Producto/Codigo","Tipo","Kg Solicitados","Disponible","Valor Estimado","Fecha Entrega","Entregado","Notas","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}><thead><tr>
+        {["Fecha","Cliente","Producto","Kg Solicitados","Disponible","Valor Estimado","Fecha Entrega","Entregado","Notas","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
       </tr></thead>
       <tbody>{pedidosFiltrados.map(p=>{
-        const disponible=stockActualDe(p);
+        const dispInfo=p.producto_comercial?disponibleDeProducto(p.producto_comercial):null;
+        const disponible=dispInfo?dispInfo.total:(p.producto_comercial?null:stockActualLegacy(p));
         const excede=disponible!=null&&p.kg_solicitados>disponible;
         return(<tr key={p.id}>
           <td style={{...S.td,color:C.textDim}}>{fmtFecha(p.fecha_registro)}</td>
           <td style={{...S.td,fontWeight:600}}>{p.cliente}</td>
-          <td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{p.ref_codigo}</td>
-          <td style={S.td}><Bdg label={TIPO_LABEL[p.tipo_producto]||p.tipo_producto} col={C.teal} bg={C.tealBg}/></td>
+          <td style={S.td}><Bdg label={p.producto_comercial||p.ref_codigo||"—"} col={C.gold} bg={C.goldBg}/></td>
           <td style={{...S.td,fontWeight:700,color:excede?C.red:C.navy}}>{fmt(p.kg_solicitados)} kg</td>
-          <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}</span>)}</td>
+          <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}{dispInfo&&dispInfo.count>1&&(<span style={{color:C.textFaint,fontWeight:400,fontSize:11}}> ({dispInfo.count} lotes)</span>)}</span>)}</td>
           <td style={{...S.td,color:C.gold,fontWeight:700}}>{p.valor_estimado>0?fmtCOP(p.valor_estimado):"—"}</td>
           <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}</td>
           <td style={S.td}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.textFaint,fontWeight:600,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
@@ -178,36 +185,33 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
       {err&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {err}</div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Cliente" half><input style={S.input} value={cliente} onChange={e=>setCliente(e.target.value)}/></Fld>
-        <Fld label="Tipo de Producto" half>
-          <select style={S.select} value={tipoProducto} onChange={e=>{setTipoProducto(e.target.value);setRefId("");}}>
-            {Object.entries(TIPO_LABEL).map(([k,v])=>(<option key={k} value={k}>{v}</option>))}
-          </select>
-        </Fld>
-        <Fld label="Producto Especifico">
-          <select style={S.select} value={refId} onChange={e=>setRefId(e.target.value)}>
+        <Fld label="Producto Comercial" half>
+          <select style={S.select} value={productoComercial} onChange={e=>setProductoComercial(e.target.value)}>
             <option value="">Selecciona...</option>
-            {(()=>{
-              const listaEntidades=opcionesPorTipo[tipoProducto]||[];
-              const grupos={};
-              listaEntidades.forEach(e=>{
-                const key=e.producto||"Sin Producto";
-                if(!grupos[key])grupos[key]=[];
-                grupos[key].push(e);
-              });
-              const productosOrdenados=Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
-              return productosOrdenados.map(prod=>(
-                <optgroup key={prod} label={prod}>
-                  {grupos[prod].sort((a,b)=>a.codigo.localeCompare(b.codigo)).map(e=>(
-                    <option key={e.id} value={e.id}>{e.codigo} — {fmt(e.stock)} kg disponibles</option>
-                  ))}
-                </optgroup>
-              ));
-            })()}
+            {productosUnicos.map(prod=>(<option key={prod} value={prod}>{prod||"(Sin Producto)"}</option>))}
           </select>
-          {opcionSel&&(<div style={{marginTop:4,fontSize:12,fontWeight:600,color:(numVal(kgSolicitados)>opcionSel.stock)?C.red:C.green}}>
-            Disponible: {fmt(opcionSel.stock)} kg{numVal(kgSolicitados)>opcionSel.stock&&" — ⚠ Supera el stock disponible"}
-          </div>)}
         </Fld>
+      </div>
+      {productoComercial&&(<div style={{...S.card,background:C.panel2,marginBottom:14,padding:12}}>
+        <div style={{fontWeight:600,fontSize:12,color:C.navy,marginBottom:8}}>Desglose por seccion — {productoComercial||"(Sin Producto)"}</div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          {["Seccion","Codigo","Kg Disponibles"].map(h=>(<th key={h} style={{...S.th,fontSize:11}}>{h}</th>))}
+        </tr></thead>
+        <tbody>
+          {desgloseSel.map((e,i)=>(<tr key={e.tipo+":"+e.ref_id+":"+i}>
+            <td style={{...S.td,fontSize:12}}>{e.seccion_label}</td>
+            <td style={{...S.td,fontFamily:"monospace",color:C.accent,fontWeight:600,fontSize:12}}>{e.ref_codigo}</td>
+            <td style={{...S.td,color:C.green,fontWeight:600,fontSize:12}}>{fmt(e.disponible)} kg</td>
+          </tr>))}
+          {desgloseSel.length===0&&(<tr><td colSpan={3} style={{...S.td,color:C.textFaint,fontSize:12}}>Sin stock disponible para este producto en ninguna seccion.</td></tr>)}
+        </tbody>
+        <tfoot><tr>
+          <td style={{...S.td,fontWeight:700,fontSize:12}} colSpan={2}>Total disponible</td>
+          <td style={{...S.td,fontWeight:800,fontSize:13,color:(numVal(kgSolicitados)>totalDisponibleSel)?C.red:C.green}}>{fmt(totalDisponibleSel)} kg{numVal(kgSolicitados)>totalDisponibleSel&&" — ⚠ Supera el stock disponible"}</td>
+        </tr></tfoot>
+        </table>
+      </div>)}
+      <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Kg Solicitados" half><input style={S.input} type="number" value={kgSolicitados} onChange={e=>setKgSolicitados(e.target.value)}/></Fld>
         <Fld label="Precio/kg (opcional)" half><input style={S.input} type="number" value={precioKg} onChange={e=>setPrecioKg(e.target.value)}/></Fld>
         <Fld label="Valor Estimado" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} readOnly value={precioKg>0&&kgSolicitados>0?fmtCOP(numVal(kgSolicitados)*numVal(precioKg)):""}/></Fld>
