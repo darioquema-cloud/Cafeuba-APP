@@ -320,6 +320,9 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
   // Excluye "ajuste_inventario" de las salidas "reales" — el ajuste corrige el stock pero no es
   // una salida/venta real, no debe mezclarse en el KPI de Valor Salidas.
   const totalValSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),0),0);
+  const totalKgStockB=blends.reduce((s,b)=>s+Math.max(0,stockBlend(b)),0);
+  const totalValStockB=blends.reduce((s,b)=>s+Math.max(0,stockBlend(b))*(b.costo_kg||0),0);
+  const totalKgSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.peso_salida||0),0),0);
   const DESTI_LABEL_BL={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"};
   const todasSalidasBl=blends.flatMap(b=>(b.salidas||[]).filter(s=>!s.auto_blend).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const mesesSalBl=[...new Set(todasSalidasBl.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
@@ -335,12 +338,13 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>MEZCLAS</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Blend</div><div style={{color:C.textDim,fontSize:12,marginTop:2}}>Combina excelso de varios lotes en un blend nuevo</div></div><button style={{...S.btn,background:C.purple}} onClick={abrirNuevo}>+ Nuevo Blend</button></div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Blends Creados" value={blends.length} col={C.navy}/>
-      <KPI label="kg Disponibles (Stock)" value={fmt(totalKgDisponiblePool)+" kg"} col={C.teal}/>
-      <KPI label="kg en Blends (Salida)" value={fmt(totalKgBlends)+" kg"} col={C.accent}/>
-      <KPI label="Valor en Blends" value={fmtCOP(totalValBlends)} col={C.gold}/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValSalidasB)} col={C.green}/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
+      <KPI label="Kg Blend Producido" value={fmt(totalKgBlends)+" kg"} col={C.accent} autoFit/>
+      <KPI label="Valor Blend Producido" value={fmtCOP(totalValBlends)} col={C.gold} autoFit/>
+      <KPI label="Kg Salidos" value={fmt(totalKgSalidasB)+" kg"} col={C.green} autoFit/>
+      <KPI label="Valor Salidas" value={fmtCOP(totalValSalidasB)} col={C.green} autoFit/>
+      <KPI label="Kg en Stock" value={fmt(totalKgStockB)+" kg"} col={C.teal} autoFit/>
+      <KPI label="Valor en Stock" value={fmtCOP(totalValStockB)} col={C.teal} autoFit/>
     </div>
     <div style={{...S.card,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:10}}>Pool de Excelso Disponible</div>
