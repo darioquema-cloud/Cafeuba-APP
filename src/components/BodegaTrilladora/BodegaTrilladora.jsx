@@ -2,7 +2,7 @@ import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{semanaISO,mesDe}from"../../lib/dates";
+import{semanaISO,mesDe,mesTrillaDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri,getSeedCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import*as XLSX from"xlsx";
@@ -21,7 +21,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
   const [tab,setTab]=useState("inventario");
   const [hBusqT,setHBusqT]=useState("");const [hMesT,setHMesT]=useState("");const [hProdT,setHProdT]=useState("");
   const trilledLotes=lotes.filter(l=>l.trilla?.kg_excelso>0);
-  const mesesT=[...new Set(trilledLotes.map(l=>l.mes).filter(Boolean))].sort();
+  const mesesT=[...new Set(trilledLotes.map(l=>mesTrillaDe(l)).filter(Boolean))].sort();
   const productosT=[...new Set(trilledLotes.map(l=>l.producto).filter(Boolean))].sort();
   const grupoDe=(l)=>[l,...lotes.filter(x=>(l.trilla?.lotes_combinados||[]).includes(x.id))];
   const stockGrupoDe=(l)=>{
@@ -36,12 +36,12 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     return grupos;
   };
   const gruposTFiltrados=construirGruposT(trilledLotes).filter(grupo=>{
-    if(filtroMes&&!grupo.some(l=>l.mes===filtroMes))return false;
+    if(filtroMes&&!grupo.some(l=>mesTrillaDe(l)===filtroMes))return false;
     if(filtroProducto&&!grupo.some(l=>l.producto===filtroProducto))return false;
     if(busqueda&&!grupo.some(l=>l.codigo.toLowerCase().includes(busqueda.toLowerCase())))return false;
     return true;
   });
-  const costoKgExDe=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(l.mes,costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
+  const costoKgExDe=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
   const stockTrilladora=(l)=>(l.trilla?.kg_excelso||0)-(l.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0);
   const totalExcelso=trilledLotes.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
   // Excluye "ajuste_inventario" de las salidas "reales" — el ajuste corrige el stock pero no es
@@ -57,8 +57,31 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     const efCostoKg=(x)=>{const p=pesoATrilladora(x);const cl=calcCosto(x,costos,lotes);if(p>0&&cl?.total>0)return cl.total;const stored=x.trilla?.costo_kg_excelso||0;return stored>0?stored:getSeedCostoTri(x.codigo,x.kg_producto);};
     const pesoEf=grupo.reduce((s,x)=>s+efPeso(x),0);
     const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
-    const D=calcCostoTri(repr.mes,costos,lotes).costoTriKg;
+    const D=calcCostoTri(mesTrillaDe(repr),costos,lotes).costoTriKg;
     return excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
+  };
+
+  // Accion manual de una sola vez: recalcula costo_kg_excelso/valor_total de TODOS los cortes
+  // ya trillados usando el mes real de fecha_trilla (mesTrillaDe) en vez del mes de recepcion
+  // de cereza (l.mes) que se usaba antes por error al llamar calcCostoTri.
+  const recalcularCostosTrilla=()=>{
+    if(!window.confirm("¿Recalcular el Costo Trilladora/kg de TODOS los cortes ya trillados usando el mes real de la fecha de trilla? Esto sobrescribe el costo guardado de cada lote trillado."))return;
+    const grupos=construirGruposT(trilledLotes);
+    setLotes(prev=>{
+      const efPeso=(x)=>pesoATrilladora(x)||(x.trilla?.kg_excelso||0);
+      const efCostoKg=(x)=>{const p=pesoATrilladora(x);const cl=calcCosto(x,costos,lotes);if(p>0&&cl?.total>0)return cl.total;const stored=x.trilla?.costo_kg_excelso||0;return stored>0?stored:getSeedCostoTri(x.codigo,x.kg_producto);};
+      let next=[...prev];
+      grupos.forEach(grupo=>{
+        const repr=grupo[0];
+        const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
+        const excelsoGrupo=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
+        const D=calcCostoTri(mesTrillaDe(repr),costos,lotes).costoTriKg;
+        const costoKgEx=excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
+        next=next.map(l=>grupo.some(g=>g.id===l.id)?{...l,trilla:{...l.trilla,costo_kg_excelso:costoKgEx,valor_total:costoKgEx*(l.trilla?.kg_excelso||0)}}:l);
+      });
+      return next;
+    });
+    alert("Costos de Trilladora recalculados con el mes correcto.");
   };
 
   const abrirSalidaT=(l)=>{
@@ -269,10 +292,13 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
   };
 
   return(<div>
-    <div style={{marginBottom:22}}>
-      <div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>INVENTARIO</div>
-      <div style={{color:C.navy,fontSize:22,fontWeight:700}}>Bodega Trilladora - Excelso</div>
-      <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Inventario de cafe excelso con costo total de produccion</div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>INVENTARIO</div>
+        <div style={{color:C.navy,fontSize:22,fontWeight:700}}>Bodega Trilladora - Excelso</div>
+        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Inventario de cafe excelso con costo total de produccion</div>
+      </div>
+      <button style={{...S.btnG,fontSize:12}} onClick={recalcularCostosTrilla}>↻ Recalcular Costos de Trilla (mes correcto)</button>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Excelso Total kg" value={fmt(totalExcelso)+" kg"} col={C.green}/>
@@ -302,7 +328,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
         const salG=g.reduce((a,x)=>a+(x.salidas_trilladora||[]).reduce((b,c)=>b+c.peso_salida,0),0);
         const stk=excelsoG-salG;
         const costoTG=g.reduce((a,x)=>{const cl=calcCosto(x,costos,lotes);return a+(cl?cl.total*pesoATrilladora(x):0);},0);
-        const D=calcCostoTri(g[0].mes,costos,lotes).costoTriKg;
+        const D=calcCostoTri(mesTrillaDe(g[0]),costos,lotes).costoTriKg;
         const costoKgEx=excelsoG>0?Math.round(costoTG/excelsoG)+Math.round(D):0;
         return s+(stk*costoKgEx);
       },0);
@@ -329,7 +355,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
         const pesoEf=grupo.reduce((s,x)=>s+efPeso(x),0);
         const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
         const aProm=pesoEf>0?costoTotalGrupo/pesoEf:null;
-        const D=calcCostoTri(repr.mes,costos,lotes).costoTriKg;
+        const D=calcCostoTri(mesTrillaDe(repr),costos,lotes).costoTriKg;
         const costoKgEx=excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
         const fi=[...new Set(grupo.flatMap(x=>x.cereza.map(c=>c.finca)))];
         const salGrupo=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
@@ -339,7 +365,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
           <td style={{...S.td,color:C.green,fontWeight:600,fontFamily:"monospace",fontSize:11}}>{t.nombre_trillado||"—"}</td>
           <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha_trilla)}</td>
           <td style={S.td}><Bdg label={t.codigo_corte||"—"} col={C.accent}/></td>
-          <td style={{...S.td,textTransform:"capitalize"}}>{repr.mes}</td>
+          <td style={{...S.td,textTransform:"capitalize"}}>{mesTrillaDe(repr)}</td>
           <td style={S.td}><Bdg label={repr.producto} col={C.teal} bg={C.tealBg}/></td>
           <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}</div></td>
           <td style={{...S.td,fontWeight:700,color:C.green,fontSize:15}}>{fmt(excelsoGrupo)} kg</td>

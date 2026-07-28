@@ -2,14 +2,13 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
-import{mesDe,semanaISO}from"../../../lib/dates";
+import{mesDe,semanaISO,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
 export function DashboardTrilla({lotes,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
   const lotesTrilla=lotes.filter(l=>l.trilla?.kg_excelso>0);
-  const mesTrillaDe=l=>mesDe(l.trilla?.fecha_trilla);
   const mesesTR=MESES.filter(m=>lotesTrilla.some(l=>mesTrillaDe(l)===m));
   const lotesTF=filtroMesTR==="todos"?lotesTrilla:lotesTrilla.filter(l=>mesTrillaDe(l)===filtroMesTR);
 

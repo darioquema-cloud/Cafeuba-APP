@@ -106,7 +106,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
     // Arrastrar valor unitario (costo/kg excelso) y valor total al objeto trilla (punto 4)
     const costoTotalGrupo=selArr.reduce((s,l)=>{const cl=calcCosto(l,costos,lotes);return s+(cl?cl.total*pesoATrilladora(l):0);},0);
     const excelsoTotal=+form.excelso||0;
-    const D=calcCostoTri(selArr[0]?.mes||"",costos,lotes).costoTriKg;
+    const D=calcCostoTri(mesDe(form.fecha_trilla),costos,lotes).costoTriKg;
     const costoKgExGrupo=excelsoTotal>0?Math.round(costoTotalGrupo/excelsoTotal)+Math.round(D):0;
     setLotes(p=>p.map(l=>{
       const idx=selArr.findIndex(x=>x.id===l.id);
