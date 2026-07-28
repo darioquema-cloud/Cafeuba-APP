@@ -6,6 +6,7 @@ import{mesDe}from"../../../lib/dates";
 import{Bdg,TablaScrollV}from"../../ui";
 export function DashboardCentral({lotes,costos}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
+  const [hoverMes,setHoverMes]=useState(null);
   const lotesCP=lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
   const lotesCPFilt=filtroMesDash==="todos"?lotesCP:lotesCP.filter(l=>l.mes===filtroMesDash);
   const tkq=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
@@ -59,7 +60,7 @@ export function DashboardCentral({lotes,costos}){
       ))}
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:16,marginBottom:20}}>
-      <div style={{...S.card,minHeight:260}}>
+      <div style={{...S.card,minHeight:260,position:"relative"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Cereza Recibida por Mes</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>Suma kg acumulada</div></div>
           <div style={{background:C.tealBg,borderRadius:8,padding:"4px 10px",fontSize:12,fontWeight:700,color:C.teal}}>{fmt(tkq)} kg total</div>
@@ -79,7 +80,8 @@ export function DashboardCentral({lotes,costos}){
               const y=pt+cH-bH;
               const isMax=d.kg===Math.max(...mesMostrar.map(x=>x.kg));
               return(<g key={d.mes}>
-                <rect x={x} y={y} width={bW} height={bH} fill={isMax?C.navy:C.teal} rx="3" opacity={isMax?1:0.82}/>
+                <rect x={x} y={y} width={bW} height={bH} fill={isMax?C.navy:C.teal} rx="3" opacity={isMax?1:0.82}
+                  onMouseEnter={()=>setHoverMes(i)} onMouseLeave={()=>setHoverMes(null)} style={{cursor:"pointer"}}/>
                 <text x={x+bW/2} y={pt+cH+14} textAnchor="middle" fontSize="8.5" fill={C.textDim} fontFamily="Inter,sans-serif">{d.mes.slice(0,3).toUpperCase()}</text>
                 <text x={x+bW/2} y={Math.max(y-5,pt+9)} textAnchor="middle" fontSize="8" fill={isMax?C.navy:C.teal} fontWeight="700" fontFamily="Inter,sans-serif">{d.kg>=1000?(d.kg/1000).toFixed(1)+"k":Math.round(d.kg)}</text>
               </g>);
@@ -87,6 +89,14 @@ export function DashboardCentral({lotes,costos}){
             <line x1={pl} y1={pt} x2={pl} y2={pt+cH} stroke={C.border} strokeWidth="1.5"/>
             <line x1={pl} y1={pt+cH} x2={pl+cW} y2={pt+cH} stroke={C.border} strokeWidth="1.5"/>
           </svg>);
+        })()}
+        {hoverMes!==null&&mesMostrar[hoverMes]&&(()=>{
+          const d=mesMostrar[hoverMes];
+          const bStep=(520-52-10)/mesMostrar.length;
+          const x=52+bStep*hoverMes+bStep/2;
+          return(<div style={{position:"absolute",left:(x/520*100)+"%",top:10,transform:"translateX(-50%)",background:C.navy,color:"#fff",padding:"6px 10px",borderRadius:6,fontSize:11,fontWeight:600,pointerEvents:"none",whiteSpace:"nowrap",zIndex:5}}>
+            {d.mes}: {fmt(d.kg,0)} kg
+          </div>);
         })()}
       </div>
       <div style={{...S.card,minHeight:260}}>
@@ -96,7 +106,7 @@ export function DashboardCentral({lotes,costos}){
         </div>
         {fincaData.length===0?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",paddingTop:40}}>Sin datos de fincas.</div>:(()=>{
           const COLS=[C.navy,C.accent,C.teal,C.green,C.purple,C.gold,C.orange];
-          const W=380,rowH=30,pt=4,pl=115,pr=52,pb=4;
+          const W=380,rowH=30,pt=4,pl=115,pr=70,pb=4;
           const H=pt+pb+fincaData.length*rowH;
           const maxV=fincaData[0][1];
           const barZone=W-pl-pr;
@@ -107,9 +117,12 @@ export function DashboardCentral({lotes,costos}){
               const col=COLS[i%COLS.length];
               const label=finca.length>16?finca.slice(0,15)+"…":finca;
               return(<g key={finca}>
-                <text x={pl-8} y={y+rowH/2+4} textAnchor="end" fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">{label}</text>
+                <text x={pl-8} y={y+rowH/2+4} textAnchor="end" fontSize="10" fill={C.text} fontFamily="Inter,sans-serif">
+                  {label}
+                  <title>{finca}</title>
+                </text>
                 <rect x={pl} y={y+5} width={bW} height={rowH-12} fill={col} rx="3" opacity="0.88"/>
-                <text x={pl+bW+5} y={y+rowH/2+4} fontSize="9" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">{kg>=1000?(kg/1000).toFixed(1)+"k":Math.round(kg)}</text>
+                <text x={pl+bW+5} y={y+rowH/2+4} fontSize="9" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">{fmt(kg,0)}</text>
               </g>);
             })}
           </svg>);
