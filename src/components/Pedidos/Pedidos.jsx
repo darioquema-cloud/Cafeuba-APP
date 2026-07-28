@@ -27,6 +27,35 @@ const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0
 
 const normProducto=(p)=>(p||"").trim().toUpperCase();
 
+// Composicion Producto Comercial (Blend) -> Base(s) de Excelso, con su porcentaje. La mayoria
+// usa 40% de una base especifica + 60% de Excelso regional generico (no verificado, se asume
+// siempre disponible); NIU es la excepcion: 50% PP + 50% CC, sin componente regional.
+const BASES_PRODUCTO={
+  "CATURRA NITRO":[{base:"SD",pct:0.4}],
+  "NG":[{base:"LYCHE",pct:0.4}],
+  "AGI":[{base:"AGRAZ",pct:0.4}],
+  "APRIL":[{base:"DR",pct:0.4}],
+  "LOGAN":[{base:"AR",pct:0.4}],
+  "TOFFEE":[{base:"BB",pct:0.4}],
+  "TROPICAL":[{base:"NR",pct:0.4}],
+  "MAYPOP":[{base:"MR",pct:0.4}],
+  "NIU":[{base:"PP",pct:0.5},{base:"CC",pct:0.5}],
+  "TOBACCO":[{base:"VAINILLA",pct:0.4}],
+};
+
+// Estimacion informativa de fecha de entrega cuando falta stock — solo excluye fines de
+// semana (sin festivos colombianos por ahora), no bloquea ni reserva stock.
+const sumarDiasHabiles=(fechaInicio,dias)=>{
+  const f=new Date(fechaInicio);
+  let restantes=dias;
+  while(restantes>0){
+    f.setDate(f.getDate()+1);
+    const dow=f.getDay();
+    if(dow!==0&&dow!==6)restantes--;
+  }
+  return f;
+};
+
 // ═══ Funciones de costo replicadas TAL CUAL (solo lectura) de BodegaTrilladoraFino.jsx
 // (costoKgExFinoDe) — no vive exportada en ese archivo, asi que se copia aqui como funcion
 // pura sin modificar su logica interna.
@@ -92,6 +121,29 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     desgloseSel.reduce((s,f)=>s+f.valor_unitario*f.disponible,0)/totalDisponibleSel
     :0;
 
+  // Estimacion informativa de dias segun disponibilidad de la(s) base(s) de Excelso que
+  // componen el blend faltante — no reserva stock, solo consulta entidadesUnificadas.
+  const stockDisponibleDeBase=(nombreBase)=>{
+    const nb=normProducto(nombreBase);
+    return entidadesUnificadas
+      .filter(e=>(e.tipo==="excelso"||e.tipo==="excelso_cf")&&e.producto_norm===nb)
+      .reduce((s,e)=>s+e.disponible,0);
+  };
+  const calcularDiasBlend=(productoComercialNorm,faltanteKg)=>{
+    const composicion=BASES_PRODUCTO[productoComercialNorm];
+    if(!composicion)return 20;
+    const todasAlcanzan=composicion.every(({base,pct})=>{
+      const necesario=faltanteKg*pct;
+      return stockDisponibleDeBase(base)>=necesario;
+    });
+    return todasAlcanzan?6:20;
+  };
+
+  const esBlendPredominante=desgloseSel.some(f=>f.tipo==="blend"||f.tipo==="blend_cf");
+  const faltante=Math.max(0,(+kgSolicitados||0)-totalDisponibleSel);
+  const diasEstimados=esBlendPredominante?calcularDiasBlend(productoComercial,faltante):20;
+  const fechaEstimadaEntrega=faltante>0?sumarDiasHabiles(new Date(),diasEstimados):null;
+
   // Disponible recalculado en vivo para la tabla — no usa el snapshot congelado del registro.
   // Tolerante con pedidos viejos (estructura ref_id/tipo_producto suelto, sin producto_comercial).
   const disponibleDeProducto=(productoNorm)=>{
@@ -125,6 +177,8 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
       desglose:desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible,valor_unitario:e.valor_unitario})),
       kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
       fecha_entrega_esperada:fechaEntrega,notas,entregado:false,
+      faltante_kg:faltante>0?faltante:0,
+      fecha_estimada_sistema:fechaEstimadaEntrega?fechaEstimadaEntrega.toISOString().slice(0,10):null,
       usuario_registro:user?.nombre||user?.email||"",
     };
     setPedidos(p=>[nuevo,...p]);
@@ -200,7 +254,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
           <td style={{...S.td,fontWeight:700,color:excede?C.red:C.navy}}>{fmt(p.kg_solicitados)} kg</td>
           <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}{dispInfo&&dispInfo.count>1&&(<span style={{color:C.textFaint,fontWeight:400,fontSize:11}}> ({dispInfo.count} lotes)</span>)}</span>)}</td>
           <td style={{...S.td,color:C.gold,fontWeight:700}}>{p.valor_estimado>0?fmtCOP(p.valor_estimado):"—"}</td>
-          <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}</td>
+          <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}{p.faltante_kg>0&&p.fecha_estimada_sistema&&(<div style={{color:C.orange,fontSize:10,fontWeight:600,marginTop:2}}>Est. sistema: {fmtFecha(p.fecha_estimada_sistema)}</div>)}</td>
           <td style={S.td}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.textFaint,fontWeight:600,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
           <td style={{...S.td,color:C.textDim,fontSize:12}}>{p.notas||"-"}</td>
           <td style={S.td}><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarPedido(p.id)}>Eliminar</button></td>
@@ -240,6 +294,17 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
           <td style={{...S.td,fontWeight:800,fontSize:13,color:C.gold}}>{desgloseSel.length>0?("Prom: "+fmtCOP(valorPromedioPonderado)):"—"}</td>
         </tr></tfoot>
         </table>
+        {faltante>0&&(
+          <div style={{marginTop:10,padding:"10px 14px",background:C.orange+"15",border:"1px solid "+C.orange+"40",borderRadius:8,fontSize:12,color:C.navy}}>
+            ⚠️ Faltan {fmt(faltante,1)} kg por producir. Tiempo estimado: {diasEstimados} días hábiles.
+            Fecha estimada de entrega: <b>{fechaEstimadaEntrega?.toLocaleDateString("es-CO")}</b>
+            {esBlendPredominante&&BASES_PRODUCTO[productoComercial]&&(
+              <div style={{marginTop:4,fontSize:11,opacity:.8}}>
+                Base(s) requerida(s): {BASES_PRODUCTO[productoComercial].map(b=>b.base+" ("+fmt(faltante*b.pct,1)+" kg)").join(", ")}
+              </div>
+            )}
+          </div>
+        )}
       </div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Kg Solicitados" half><input style={S.input} type="number" value={kgSolicitados} onChange={e=>setKgSolicitados(e.target.value)}/></Fld>
