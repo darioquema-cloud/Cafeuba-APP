@@ -2,6 +2,8 @@ import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
+import{calcCosto,calcCostoTri,getSeedCostoTri}from"../../lib/costing";
+import{pesoATrilladora}from"../../lib/stock";
 
 // ═══ Funciones de stock replicadas TAL CUAL (solo lectura) de BodegaTrilladora.jsx y
 // BodegaTrilladoraFino.jsx — no viven exportadas en esos archivos, asi que se copian aqui
@@ -25,7 +27,16 @@ const stockBlend=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0
 
 const normProducto=(p)=>(p||"").trim().toUpperCase();
 
-export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,user}){
+// ═══ Funciones de costo replicadas TAL CUAL (solo lectura) de BodegaTrilladoraFino.jsx
+// (costoKgExFinoDe) — no vive exportada en ese archivo, asi que se copia aqui como funcion
+// pura sin modificar su logica interna.
+const costoKgExFinoDe=(grupo)=>{
+  for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}
+  for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}
+  return 0;
+};
+
+export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,costos,user}){
   const [modal,setModal]=useState(false);
   const [cliente,setCliente]=useState("");
   const [productoComercial,setProductoComercial]=useState("");
@@ -38,24 +49,38 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
   const [fEstado,setFEstado]=useState("todos");
   const [fProducto,setFProducto]=useState("");
 
+  // ═══ Costo replicado TAL CUAL (solo lectura) de costoKgGrupoDe en BodegaTrilladora.jsx —
+  // no vive exportada en ese archivo, asi que se copia aqui como closure sin modificar su
+  // logica interna.
+  const costoKgGrupoExcelso=(grupo)=>{
+    const repr=grupo[0];
+    const excelsoGrupo=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
+    const efPeso=(x)=>pesoATrilladora(x)||(x.trilla?.kg_excelso||0);
+    const efCostoKg=(x)=>{const p=pesoATrilladora(x);const cl=calcCosto(x,costos,lotes);if(p>0&&cl?.total>0)return cl.total;const stored=x.trilla?.costo_kg_excelso||0;return stored>0?stored:getSeedCostoTri(x.codigo,x.kg_producto);};
+    const pesoEf=grupo.reduce((s,x)=>s+efPeso(x),0);
+    const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
+    const D=calcCostoTri(repr.mes,costos,lotes).costoTriKg;
+    return excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
+  };
+
   // ═══ Lista unificada: combina las 4 fuentes de stock (excelso, excelso CF, blend, blend
   // CF) en una sola estructura plana, agrupable por producto_norm sin importar la seccion.
   const trilledLotes=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const gruposExcelso=construirGruposT(lotes,trilledLotes);
   const entExcelso=gruposExcelso.map(g=>{
     const repr=g[0];
-    return{tipo:"excelso",seccion_label:"Excelso (Bodega Trilladora)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoDe(lotes,repr)};
+    return{tipo:"excelso",seccion_label:"Excelso (Bodega Trilladora)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoDe(lotes,repr),valor_unitario:costoKgGrupoExcelso(g)};
   });
 
   const trilledFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
   const gruposFino=construirGruposBTF(lotesFino,trilledFino);
   const entExcelsoCF=gruposFino.map(g=>{
     const repr=g[0];
-    return{tipo:"excelso_cf",seccion_label:"Excelso Fino (Bodega Trilladora Fino)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoBTF(g)};
+    return{tipo:"excelso_cf",seccion_label:"Excelso Fino (Bodega Trilladora Fino)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoBTF(g),valor_unitario:costoKgExFinoDe(g)};
   });
 
-  const entBlend=blends.map(b=>({tipo:"blend",seccion_label:"Blend",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b)}));
-  const entBlendCF=blendsFino.map(b=>({tipo:"blend_cf",seccion_label:"Blend Cafe Fino",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b)}));
+  const entBlend=blends.map(b=>({tipo:"blend",seccion_label:"Blend",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b),valor_unitario:Math.round(b.costo_kg)||0}));
+  const entBlendCF=blendsFino.map(b=>({tipo:"blend_cf",seccion_label:"Blend Cafe Fino",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b),valor_unitario:Math.round(b.costo_kg)||0}));
 
   const entidadesUnificadas=[...entExcelso,...entExcelsoCF,...entBlend,...entBlendCF];
   const productosUnicos=[...new Set(entidadesUnificadas.map(e=>e.producto_norm))].sort((a,b)=>a.localeCompare(b));
@@ -63,6 +88,9 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
   const desgloseDe=(productoNorm)=>entidadesUnificadas.filter(e=>e.producto_norm===productoNorm);
   const desgloseSel=productoComercial?desgloseDe(productoComercial):[];
   const totalDisponibleSel=desgloseSel.reduce((s,e)=>s+e.disponible,0);
+  const valorPromedioPonderado=totalDisponibleSel>0?
+    desgloseSel.reduce((s,f)=>s+f.valor_unitario*f.disponible,0)/totalDisponibleSel
+    :0;
 
   // Disponible recalculado en vivo para la tabla — no usa el snapshot congelado del registro.
   // Tolerante con pedidos viejos (estructura ref_id/tipo_producto suelto, sin producto_comercial).
@@ -94,7 +122,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
     const nuevo={
       id:genId(),fecha_registro:today(),cliente:cliente.trim(),
       producto_comercial:productoComercial,
-      desglose:desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible})),
+      desglose:desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible,valor_unitario:e.valor_unitario})),
       kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
       fecha_entrega_esperada:fechaEntrega,notas,entregado:false,
       usuario_registro:user?.nombre||user?.email||"",
@@ -195,19 +223,21 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,us
       {productoComercial&&(<div style={{...S.card,background:C.panel2,marginBottom:14,padding:12}}>
         <div style={{fontWeight:600,fontSize:12,color:C.navy,marginBottom:8}}>Desglose por seccion — {productoComercial||"(Sin Producto)"}</div>
         <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          {["Seccion","Codigo","Kg Disponibles"].map(h=>(<th key={h} style={{...S.th,fontSize:11}}>{h}</th>))}
+          {["Seccion","Codigo","Kg Disponibles","Valor Unitario"].map(h=>(<th key={h} style={{...S.th,fontSize:11}}>{h}</th>))}
         </tr></thead>
         <tbody>
           {desgloseSel.map((e,i)=>(<tr key={e.tipo+":"+e.ref_id+":"+i}>
             <td style={{...S.td,fontSize:12}}>{e.seccion_label}</td>
             <td style={{...S.td,fontFamily:"monospace",color:C.accent,fontWeight:600,fontSize:12}}>{e.ref_codigo}</td>
             <td style={{...S.td,color:C.green,fontWeight:600,fontSize:12}}>{fmt(e.disponible)} kg</td>
+            <td style={{...S.td,color:C.gold,fontWeight:600,fontSize:12}}>{fmtCOP(e.valor_unitario)}</td>
           </tr>))}
-          {desgloseSel.length===0&&(<tr><td colSpan={3} style={{...S.td,color:C.textFaint,fontSize:12}}>Sin stock disponible para este producto en ninguna seccion.</td></tr>)}
+          {desgloseSel.length===0&&(<tr><td colSpan={4} style={{...S.td,color:C.textFaint,fontSize:12}}>Sin stock disponible para este producto en ninguna seccion.</td></tr>)}
         </tbody>
         <tfoot><tr>
           <td style={{...S.td,fontWeight:700,fontSize:12}} colSpan={2}>Total disponible</td>
           <td style={{...S.td,fontWeight:800,fontSize:13,color:(numVal(kgSolicitados)>totalDisponibleSel)?C.red:C.green}}>{fmt(totalDisponibleSel)} kg{numVal(kgSolicitados)>totalDisponibleSel&&" — ⚠ Supera el stock disponible"}</td>
+          <td style={{...S.td,fontWeight:800,fontSize:13,color:C.gold}}>{desgloseSel.length>0?("Prom: "+fmtCOP(valorPromedioPonderado)):"—"}</td>
         </tr></tfoot>
         </table>
       </div>)}
