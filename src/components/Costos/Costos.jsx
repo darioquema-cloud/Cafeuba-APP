@@ -11,6 +11,10 @@ export function Costos({costos,setCostos}){
   const blankFormC=()=>({fecha:today(),mes:MESES[new Date().getMonth()],tipo:TIPOS_COSTO[0],descripcion:"",valor:"",centro:CENTROS[0]});
   const abrirNuevoC=()=>{setEditId(null);setForm(blankFormC());setModal(true);};
   const abrirEditarC=(c)=>{setEditId(c.id);setForm({fecha:c.fecha,mes:c.mes,tipo:c.tipo,descripcion:c.descripcion,valor:c.valor,centro:c.centro});setModal(true);};
+  const eliminarC=(id)=>{
+    if(!window.confirm("¿Eliminar este registro de costo? Esta acción no se puede deshacer."))return;
+    setCostos(p=>p.filter(c=>c.id!==id));
+  };
   const reg=()=>{
     if(!form.valor||!form.descripcion)return;
     if(editId){setCostos(p=>p.map(c=>c.id===editId?{...c,...form,valor:+form.valor}:c));}
@@ -60,7 +64,7 @@ export function Costos({costos,setCostos}){
         <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Suma de los filtrados</div><div style={{fontSize:18,fontWeight:700,color:C.navy}}>{fmtCOP(sumFiltrado)}</div></div>
       </div>);
     })()}
-    <div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Historial</div><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["Fecha","Mes","Tipo","Descripcion","Centro","Valor",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{costosHFiltrados.map(c=>(<tr key={c.id}><td style={{...S.td,color:C.textDim}}>{c.fecha}</td><td style={{...S.td,color:C.textDim,textTransform:"capitalize"}}>{c.mes}</td><td style={S.td}><Bdg label={c.tipo} col={C.orange} bg={C.orangeBg}/></td><td style={{...S.td,color:C.text}}>{c.descripcion}</td><td style={S.td}><Bdg label={c.centro} col={CENTRO_COL[c.centro]||C.teal} bg={CENTRO_BG[c.centro]||C.tealBg}/></td><td style={{...S.td,color:C.orange,fontWeight:700,textAlign:"right"}}>{fmtCOP(c.valor)}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarC(c)}>Editar</button></td></tr>))}</tbody></table></TablaScrollV></div>
+    <div style={S.card}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Historial</div><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["Fecha","Mes","Tipo","Descripcion","Centro","Valor",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{costosHFiltrados.map(c=>(<tr key={c.id}><td style={{...S.td,color:C.textDim}}>{c.fecha}</td><td style={{...S.td,color:C.textDim,textTransform:"capitalize"}}>{c.mes}</td><td style={S.td}><Bdg label={c.tipo} col={C.orange} bg={C.orangeBg}/></td><td style={{...S.td,color:C.text}}>{c.descripcion}</td><td style={S.td}><Bdg label={c.centro} col={CENTRO_COL[c.centro]||C.teal} bg={CENTRO_BG[c.centro]||C.tealBg}/></td><td style={{...S.td,color:C.orange,fontWeight:700,textAlign:"right"}}>{fmtCOP(c.valor)}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarC(c)}>Editar</button><button style={{...S.btnG,color:C.red,borderColor:C.red+"40",marginLeft:6}} onClick={()=>eliminarC(c.id)}>Eliminar</button></td></tr>))}</tbody></table></TablaScrollV></div>
     {modal&&(<Modal title={editId?"Editar Costo":"Registrar Nuevo Costo"} onClose={()=>{setModal(false);setEditId(null);}}>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>{const d=e.target.value;setForm(p=>({...p,fecha:d,mes:mesDe(d)||p.mes}));}}/></Fld>
