@@ -229,13 +229,20 @@ export function DashboardCentral({lotes,costos}){
             const cx=105,cy=105,r=88;
             if(cbPieData.length===1){
               const d=cbPieData[0];const col=PCOLS[0];
-              return(<svg viewBox="0 0 420 215" width="100%" style={{display:"block",overflow:"visible"}}>
-                <circle cx={cx} cy={cy} r={r} fill={col} stroke={C.panel} strokeWidth="2" opacity="0.93"/>
-                <text x={cx} y={cy+6} textAnchor="middle" fontSize="20" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">100%</text>
-                <rect x="218" y="15" width="13" height="13" fill={col} rx="2"/><text x="236" y="25" fontSize="10.5" fill={C.text} fontFamily="Inter,sans-serif">{(d.tipo||"Sin tipo").length>19?(d.tipo||"Sin tipo").slice(0,18)+"…":(d.tipo||"Sin tipo")}</text>
-                <text x="302" y="25" textAnchor="end" fontSize="10.5" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">100%</text>
-                <text x="418" y="25" textAnchor="end" fontSize="10" fill={C.textDim} fontFamily="Inter,sans-serif">{fmtCOP(d.val)}</text>
-              </svg>);
+              return(<div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
+                <svg viewBox="0 0 220 220" width="180" height="180" style={{flexShrink:0}}>
+                  <circle cx={cx} cy={cy} r={r} fill={col} stroke={C.panel} strokeWidth="2" opacity="0.93"/>
+                  <text x={cx} y={cy+6} textAnchor="middle" fontSize="20" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">100%</text>
+                </svg>
+                <div style={{flex:1,minWidth:220}}>
+                  <div key={d.tipo} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid "+C.border}}>
+                    <span style={{width:9,height:9,borderRadius:"50%",background:col,flexShrink:0}}/>
+                    <span style={{fontSize:12,color:C.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0}}>{d.tipo||"Sin tipo"}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:col,width:48,textAlign:"right",flexShrink:0}}>100%</span>
+                    <span style={{fontSize:11,color:C.textDim,width:90,textAlign:"right",flexShrink:0}}>{fmtCOP(d.val)}</span>
+                  </div>
+                </div>
+              </div>);
             }
             let cum=0;
             const slices=cbPieData.map((d,i)=>{
@@ -247,26 +254,27 @@ export function DashboardCentral({lotes,costos}){
               const mid=(s0+s1)/2-Math.PI/2;
               return{...d,path,col:PCOLS[i%PCOLS.length],frac,mid};
             });
-            const vH=Math.max(215,30+cbPieData.length*22+20);
-            return(<svg viewBox={`0 0 420 ${vH}`} width="100%" style={{display:"block",overflow:"visible"}}>
-              <circle cx={cx} cy={cy} r={r+3} fill={C.bg} stroke={C.border} strokeWidth="1"/>
-              {slices.map(s=>(
-                <g key={s.tipo}>
-                  <path d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2.5" opacity="0.93"/>
-                  {s.frac>0.055&&(<text x={(cx+(r*0.62)*Math.cos(s.mid)).toFixed(2)} y={(cy+(r*0.62)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9.5" fill="#fff" fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>)}
-                </g>
-              ))}
-              {slices.map((s,i)=>{
-                const ry=25+i*22;
-                const tipo=s.tipo&&s.tipo.length>19?s.tipo.slice(0,18)+"…":(s.tipo||"Sin tipo");
-                return(<g key={s.tipo+"_l"}>
-                  <rect x="218" y={ry-10} width="13" height="13" fill={s.col} rx="2" opacity="0.9"/>
-                  <text x="236" y={ry} fontSize="10.5" fill={C.text} fontFamily="Inter,sans-serif">{tipo}</text>
-                  <text x="302" y={ry} textAnchor="end" fontSize="10.5" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>
-                  <text x="418" y={ry} textAnchor="end" fontSize="10" fill={C.textDim} fontFamily="Inter,sans-serif">{fmtCOP(s.val)}</text>
-                </g>);
-              })}
-            </svg>);
+            return(<div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
+              <svg viewBox="0 0 220 220" width="180" height="180" style={{flexShrink:0}}>
+                <circle cx={cx} cy={cy} r={r+3} fill={C.bg} stroke={C.border} strokeWidth="1"/>
+                {slices.map(s=>(
+                  <g key={s.tipo}>
+                    <path d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2.5" opacity="0.93"/>
+                    {s.frac>0.055&&(<text x={(cx+(r*0.62)*Math.cos(s.mid)).toFixed(2)} y={(cy+(r*0.62)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9.5" fill="#fff" fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>)}
+                  </g>
+                ))}
+              </svg>
+              <div style={{flex:1,minWidth:220}}>
+                {slices.map(s=>(
+                  <div key={s.tipo} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid "+C.border}}>
+                    <span style={{width:9,height:9,borderRadius:"50%",background:s.col,flexShrink:0}}/>
+                    <span style={{fontSize:12,color:C.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0}}>{s.tipo||"Sin tipo"}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:s.col,width:48,textAlign:"right",flexShrink:0}}>{s.pct}%</span>
+                    <span style={{fontSize:11,color:C.textDim,width:90,textAlign:"right",flexShrink:0}}>{fmtCOP(s.val)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>);
           })()
         }
       </div>
