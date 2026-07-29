@@ -9,7 +9,7 @@ import{DashboardBlends}from"./tabs/DashboardBlends";
 import{DashboardMaquila}from"./tabs/DashboardMaquila";
 import{DashboardUbaTostado}from"./tabs/DashboardUbaTostado";
 const TABS_DASH=[["central","Central de Procesos"],["bodega_milan","Bodega Milan"],["trilla","Trilla"],["bodega_cf","Bodega Cafe Fino"],["trilladora_cf","Trilladora CF"],["blends","Blends"],["maquila","Maquila"],["uba_tostado","UBA Tostado"]];
-export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino}){
+export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino,empaques}){
   const [tabDash,setTabDash]=useState("central");
   return(<div>
     <div style={{marginBottom:16}}><div style={{color:C.textDim,fontSize:11,fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PLAN MILAN - CENTRAL DE BENEFICIO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Dashboard Ejecutivo</div><div style={{color:C.textDim,fontSize:12,marginTop:3}}>{new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</div></div>
@@ -23,6 +23,6 @@ export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,
     {tabDash==="trilladora_cf"&&<DashboardTrilladoraCF lotesFino={lotesFino}/>}
     {tabDash==="blends"&&<DashboardBlends blends={blends} blendsFino={blendsFino}/>}
     {tabDash==="maquila"&&<DashboardMaquila maquilas={maquilas}/>}
-    {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado}/>}
+    {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado} empaques={empaques}/>}
   </div>);
 }
