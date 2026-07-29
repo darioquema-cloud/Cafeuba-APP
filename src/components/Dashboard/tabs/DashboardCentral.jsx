@@ -9,9 +9,11 @@ export function DashboardCentral({lotes,costos}){
   const [hoverMes,setHoverMes]=useState(null);
   const lotesCP=lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
   const lotesCPFilt=filtroMesDash==="todos"?lotesCP:lotesCP.filter(l=>l.mes===filtroMesDash);
+  const lotesTerminadosCP=lotesCPFilt.filter(l=>(l.kg_producto||0)>0);
   const tkq=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const tp=lotesCPFilt.reduce((s,l)=>s+(l.kg_producto||0),0);
   const tc=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
+  const tcTerminados=lotesTerminadosCP.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
   const tex=lotesCP.filter(l=>l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   const ep=lotesCP.filter(l=>!["Finalizado","Cerrado"].includes(l.estado)).length;
   const tcos=costos.reduce((s,c)=>s+c.valor,0);
@@ -31,12 +33,13 @@ export function DashboardCentral({lotes,costos}){
   const INS_KEYS=[["jugo","Jugo"],["panela","Panela"],["harina","Harina"],["levadura","Levadura"]];
   const insumosData=INS_KEYS.map(([k,nombre])=>{const qty=lotesCPFilt.reduce((s,l)=>s+(l.insumos?.[k]||0),0);const val=lotesCPFilt.reduce((s,l)=>{const ins=l.insumos||{};return s+(ins[k]||0)*(ins["vr_"+k]||0);},0);return{nombre,qty,val};});
   const totalInsCP=insumosData.reduce((s,d)=>s+d.val,0);
+  const totalInsTerminados=INS_KEYS.reduce((s,[k])=>s+lotesTerminadosCP.reduce((ss,l)=>{const ins=l.insumos||{};return ss+(ins[k]||0)*(ins["vr_"+k]||0);},0),0);
   const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMesDash==="todos"||c.mes===filtroMesDash));
   const cbPorTipo={};cbCosFiltrados.forEach(c=>{cbPorTipo[c.tipo]=(cbPorTipo[c.tipo]||0)+c.valor;});
   const cbPieTotal=Object.values(cbPorTipo).reduce((s,v)=>s+v,0);
   const cbPieData=Object.entries(cbPorTipo).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([tipo,val])=>({tipo,val,pct:cbPieTotal>0?((val/cbPieTotal)*100).toFixed(1):"0.0"}));
-  const promA=tp>0?tc/tp:0;
-  const promB=tp>0?totalInsCP/tp:0;
+  const promA=tp>0?tcTerminados/tp:0;
+  const promB=tp>0?totalInsTerminados/tp:0;
   const promC=tp>0?cbPieTotal/tp:0;
   const promTotal=promA+promB+promC;
   return(<>
