@@ -30,7 +30,12 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const [modalEditar,setModalEditar]=useState(false);
   const [formEditar,setFormEditar]=useState({kg_producto:"",bultos:"",humedad:"",fecha_fin_secado:"",equipo_secado:EQUIPOS_SECADO[0]});
   const [modalPre,setModalPre]=useState(false);
-  const [formPre,setFormPre]=useState({fecha:today(),perfil_taza:"",peso_muestra:"",almendra_sana:"",granos_brocados:"",granos_inmaduros:"",inferiores:"",gr_merma:""});
+  const [formPre,setFormPre]=useState({
+    fecha:today(),perfil_taza:"",almendra_sana:"",
+    peso_muestra:"",almendra_total:"",humedad_muestra:"",densidad:"",actividad_agua:"",
+    malla_14:"",inferiores:"",gr_merma:"",
+    negro:"",vinagre:"",grano_verde:"",reventado:"",dano_maquina:"",broca_severa:"",broca_punto:""
+  });
   const [filtroMes,setFiltroMes]=useState("");
   const [filtroProducto,setFiltroProducto]=useState("");
   const [busqueda,setBusqueda]=useState("");
@@ -231,15 +236,37 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     setModalEditar(false);
   };
 
-  const totalPasillaPre=(+formPre.granos_brocados||0)+(+formPre.granos_inmaduros||0)+(+formPre.inferiores||0);
+  const totalDefectosPre=(+formPre.negro||0)+(+formPre.vinagre||0)+(+formPre.grano_verde||0)+(+formPre.reventado||0)+(+formPre.dano_maquina||0)+(+formPre.broca_severa||0)+(+formPre.broca_punto||0);
+  const totalPasillaPre=(+formPre.inferiores||0);
   const factorPre=(+formPre.almendra_sana)>0?((+formPre.peso_muestra||0)/(+formPre.almendra_sana))*70:0;
   const pctMermaPre=(+formPre.peso_muestra)>0?((+formPre.gr_merma||0)/(+formPre.peso_muestra))*100:0;
-  const sumaComponentesPre=(+formPre.almendra_sana||0)+(+formPre.granos_brocados||0)+(+formPre.granos_inmaduros||0)+(+formPre.inferiores||0)+(+formPre.gr_merma||0);
+  const sumaComponentesPre=(+formPre.almendra_sana||0)+(+formPre.inferiores||0)+(+formPre.gr_merma||0);
   const alertaPesosPre=(+formPre.peso_muestra)>0&&sumaComponentesPre>(+formPre.peso_muestra);
-  const abrirPre=(l)=>{setSelLote(l);setFormPre(l.pretrilla?{fecha:l.pretrilla.fecha,perfil_taza:l.pretrilla.perfil_taza,peso_muestra:l.pretrilla.peso_muestra,almendra_sana:l.pretrilla.almendra_sana,granos_brocados:l.pretrilla.granos_brocados,granos_inmaduros:l.pretrilla.granos_inmaduros,inferiores:l.pretrilla.inferiores,gr_merma:l.pretrilla.gr_merma}:{fecha:today(),perfil_taza:"",peso_muestra:"",almendra_sana:"",granos_brocados:"",granos_inmaduros:"",inferiores:"",gr_merma:""});setModalPre(true);};
+  const abrirPre=(l)=>{setSelLote(l);setFormPre(l.pretrilla?{
+    fecha:l.pretrilla.fecha||today(),perfil_taza:l.pretrilla.perfil_taza||"",almendra_sana:l.pretrilla.almendra_sana||"",
+    peso_muestra:l.pretrilla.peso_muestra||"",almendra_total:l.pretrilla.almendra_total||"",humedad_muestra:l.pretrilla.humedad_muestra||"",densidad:l.pretrilla.densidad||"",actividad_agua:l.pretrilla.actividad_agua||"",
+    malla_14:l.pretrilla.malla_14||"",inferiores:l.pretrilla.inferiores||"",gr_merma:l.pretrilla.gr_merma||"",
+    negro:l.pretrilla.negro||"",vinagre:l.pretrilla.vinagre||"",grano_verde:l.pretrilla.grano_verde||"",reventado:l.pretrilla.reventado||"",dano_maquina:l.pretrilla.dano_maquina||"",broca_severa:l.pretrilla.broca_severa||"",broca_punto:l.pretrilla.broca_punto||""
+  }:{
+    fecha:today(),perfil_taza:"",almendra_sana:"",
+    peso_muestra:"",almendra_total:"",humedad_muestra:"",densidad:"",actividad_agua:"",
+    malla_14:"",inferiores:"",gr_merma:"",
+    negro:"",vinagre:"",grano_verde:"",reventado:"",dano_maquina:"",broca_severa:"",broca_punto:""
+  });setModalPre(true);};
   const guardarPre=()=>{
     if(!selLote)return;
-    setLotes(p=>p.map(l=>l.id===selLote.id?{...l,pretrilla:{fecha:formPre.fecha,perfil_taza:formPre.perfil_taza,peso_muestra:+formPre.peso_muestra||0,almendra_sana:+formPre.almendra_sana||0,granos_brocados:+formPre.granos_brocados||0,granos_inmaduros:+formPre.granos_inmaduros||0,inferiores:+formPre.inferiores||0,gr_merma:+formPre.gr_merma||0,total_pasilla:totalPasillaPre,factor_pretrilla:factorPre,pct_merma:pctMermaPre}}:l));
+    setLotes(p=>p.map(l=>l.id===selLote.id?{...l,pretrilla:{
+      fecha:formPre.fecha,perfil_taza:formPre.perfil_taza,almendra_sana:+formPre.almendra_sana||0,
+      peso_muestra:+formPre.peso_muestra||0,almendra_total:+formPre.almendra_total||0,
+      humedad_muestra:+formPre.humedad_muestra||0,densidad:+formPre.densidad||0,
+      actividad_agua:+formPre.actividad_agua||0,malla_14:+formPre.malla_14||0,
+      inferiores:+formPre.inferiores||0,gr_merma:+formPre.gr_merma||0,
+      negro:+formPre.negro||0,vinagre:+formPre.vinagre||0,grano_verde:+formPre.grano_verde||0,
+      reventado:+formPre.reventado||0,dano_maquina:+formPre.dano_maquina||0,
+      broca_severa:+formPre.broca_severa||0,broca_punto:+formPre.broca_punto||0,
+      total_defectos:totalDefectosPre,
+      total_pasilla:totalPasillaPre,factor_pretrilla:factorPre,pct_merma:pctMermaPre
+    }}:l));
     setModalPre(false);
   };
 
@@ -551,15 +578,50 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha" half><input style={S.input} type="date" value={formPre.fecha} onChange={e=>setFormPre(p=>({...p,fecha:e.target.value}))}/></Fld>
-        <Fld label="Perfil de Taza" half><input style={S.input} value={formPre.perfil_taza} onChange={e=>setFormPre(p=>({...p,perfil_taza:e.target.value}))}/></Fld>
-        <Fld label="Peso Muestra (gr)" half><input style={S.input} type="number" value={formPre.peso_muestra} onChange={e=>setFormPre(p=>({...p,peso_muestra:e.target.value}))}/></Fld>
+        <Fld label="Perfil de Taza" half>
+          <select style={S.select} value={formPre.perfil_taza} onChange={e=>setFormPre(p=>({...p,perfil_taza:e.target.value}))}>
+            <option value="">Selecciona...</option>
+            <option value="Intensidad Alta">Intensidad Alta</option>
+            <option value="Intensidad Media">Intensidad Media</option>
+            <option value="Intensidad Baja">Intensidad Baja</option>
+            <option value="Sin Perfil">Sin Perfil</option>
+            <option value="Defecto">Defecto</option>
+            <option value="Regional">Regional</option>
+          </select>
+        </Fld>
         <Fld label="Almendra Sana (gr)" half><input style={S.input} type="number" value={formPre.almendra_sana} onChange={e=>setFormPre(p=>({...p,almendra_sana:e.target.value}))}/></Fld>
-        <Fld label="Granos Brocados (gr)" half><input style={S.input} type="number" value={formPre.granos_brocados} onChange={e=>setFormPre(p=>({...p,granos_brocados:e.target.value}))}/></Fld>
-        <Fld label="Granos Inmaduros/Reventados (gr)" half><input style={S.input} type="number" value={formPre.granos_inmaduros} onChange={e=>setFormPre(p=>({...p,granos_inmaduros:e.target.value}))}/></Fld>
-        <Fld label="Inferiores (gr)" half><input style={S.input} type="number" value={formPre.inferiores} onChange={e=>setFormPre(p=>({...p,inferiores:e.target.value}))}/></Fld>
-        <Fld label="Gr Merma" half><input style={S.input} type="number" value={formPre.gr_merma} onChange={e=>setFormPre(p=>({...p,gr_merma:e.target.value}))}/></Fld>
       </div>
-      {alertaPesosPre&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; Revisar pesos: la suma de almendra sana + brocados + inmaduros/reventados + inferiores + merma ({fmt(sumaComponentesPre,1)} gr) supera el peso de la muestra ({fmt(+formPre.peso_muestra||0,1)} gr).</div>)}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:14,marginBottom:14}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <tbody>
+            {[["Peso Muestra (gr)","peso_muestra"],["Almendra Total (gr)","almendra_total"],["Humedad (%)","humedad_muestra"],["Densidad","densidad"],["Actividad de Agua","actividad_agua"],["Malla 14 (gr)","malla_14"],["Inferiores (gr)","inferiores"],["Gr Merma","gr_merma"]].map(([label,key])=>(
+              <tr key={key}>
+                <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text}}>{label}</td>
+                <td style={{border:"1px solid "+C.border,padding:2}}>
+                  <input style={{...S.input,border:"none",textAlign:"right"}} type="number" value={formPre[key]} onChange={e=>setFormPre(p=>({...p,[key]:e.target.value}))}/>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <tbody>
+            {[["Negro (gr)","negro"],["Vinagre (gr)","vinagre"],["Grano Verde (gr)","grano_verde"],["Reventado (gr)","reventado"],["Daño de Maquina (gr)","dano_maquina"],["Broca Severa (gr)","broca_severa"],["Broca de Punto (gr)","broca_punto"]].map(([label,key])=>(
+              <tr key={key}>
+                <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text}}>{label}</td>
+                <td style={{border:"1px solid "+C.border,padding:2}}>
+                  <input style={{...S.input,border:"none",textAlign:"right"}} type="number" value={formPre[key]} onChange={e=>setFormPre(p=>({...p,[key]:e.target.value}))}/>
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,fontWeight:700,color:C.navy}}>Total</td>
+              <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontWeight:700,color:C.navy,textAlign:"right"}}>{fmt(totalDefectosPre,1)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {alertaPesosPre&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; Revisar pesos: la suma de almendra sana + inferiores + merma ({fmt(sumaComponentesPre,1)} gr) supera el peso de la muestra ({fmt(+formPre.peso_muestra||0,1)} gr).</div>)}
       <div style={{background:C.bg,borderRadius:6,padding:12,marginTop:4,border:"1px solid "+C.border}}>
         <div style={{color:C.textDim,fontSize:11,fontWeight:600,marginBottom:8}}>CALCULOS AUTOMATICOS</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
