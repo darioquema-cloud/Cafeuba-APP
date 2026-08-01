@@ -4,7 +4,7 @@ import{MESES}from"../../data/constants";
 import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
-export function Ventas({lotes,lotesFino,blends,blendsFino}){
+export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
   const [filtroTipo,setFiltroTipo]=useState("todos");
@@ -14,13 +14,33 @@ export function Ventas({lotes,lotesFino,blends,blendsFino}){
   const esExterno=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro")&&!s.auto_blend;
 
   const todasVentas=useMemo(()=>[
-    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
-    ...(lotes||[]).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Excelso",tipoKey:"excelso",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
-    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Café Fino",tipoKey:"cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
-    ...(lotesFino||[]).filter(l=>l.para_trilladora).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Trilladora CF",tipoKey:"trilladora_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
-    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
-    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0}))),
+    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_bodega",origenId:l.id}))),
+    ...(lotes||[]).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Excelso",tipoKey:"excelso",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_trilladora",origenId:l.id}))),
+    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Café Fino",tipoKey:"cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_bodega",origenId:l.id}))),
+    ...(lotesFino||[]).filter(l=>l.para_trilladora).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Trilladora CF",tipoKey:"trilladora_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_trilladora",origenId:l.id}))),
+    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blends",origenId:b.id}))),
+    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blendsFino",origenId:b.id}))),
   ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino]);
+
+  const actualizarCampoVenta=(v,campo,valor)=>{
+    const patch=(setArr,field)=>{
+      setArr(prev=>prev.map(item=>{
+        if(item.id!==v.origenId)return item;
+        const nuevasSalidas=(item[field]||[]).map(s=>{
+          if(s.id!==v.id)return s;
+          if(campo==="precio_venta_kg")return{...s,precio_venta_kg:+valor||0};
+          return{...s,[campo]:valor};
+        });
+        return{...item,[field]:nuevasSalidas};
+      }));
+    };
+    if(v.origenColeccion==="lotes_bodega")patch(setLotes,"salidas_bodega");
+    else if(v.origenColeccion==="lotes_trilladora")patch(setLotes,"salidas_trilladora");
+    else if(v.origenColeccion==="lotesFino_bodega")patch(setLotesFino,"salidas_bodega");
+    else if(v.origenColeccion==="lotesFino_trilladora")patch(setLotesFino,"salidas_trilladora");
+    else if(v.origenColeccion==="blends")patch(setBlends,"salidas");
+    else if(v.origenColeccion==="blendsFino")patch(setBlendsFino,"salidas");
+  };
 
   const mesesDisp=MESES.filter(m=>todasVentas.some(v=>v.mes===m));
   const tiposDisp=[...new Set(todasVentas.map(v=>v.tipo))];
@@ -159,22 +179,44 @@ export function Ventas({lotes,lotesFino,blends,blendsFino}){
           </div>
           <TablaScrollV>
             <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
-              <thead><tr>{["Fecha","Factura / Remisión","Producto","Tipo","kg","Valor/kg","Valor Total"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+              <thead><tr>{["Fecha","Factura","Remisión","Producto","Tipo","kg","Valor/kg","Valor Total","Precio Venta Unitario","Ingreso Total"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
               <tbody>
                 {histCliente.map((v,i)=>(<tr key={v.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
                   <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.fecha||"—"}</td>
-                  <td style={S.td}>{v.factura&&<div style={{fontSize:12,fontWeight:600,color:C.navy}}>F: {v.factura}</div>}{v.remision&&<div style={{fontSize:11,color:C.textDim}}>R: {v.remision}</div>}{!v.factura&&!v.remision&&"—"}</td>
+                  <td style={S.td}>
+                    <input
+                      defaultValue={v.factura}
+                      placeholder="Sin factura"
+                      style={{...S.input,fontSize:12,padding:"4px 6px",width:100,border:"1px solid transparent",background:"transparent"}}
+                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";}}
+                      onBlur={e=>{e.target.style.border="1px solid transparent";e.target.style.background="transparent";if(e.target.value!==v.factura)actualizarCampoVenta(v,"factura",e.target.value);}}
+                    />
+                  </td>
+                  <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.remision||"—"}</td>
                   <td style={S.td}><Bdg label={v.producto} col={TIPO_COL[v.tipo]||C.navy} bg={TIPO_BG[v.tipo]}/></td>
                   <td style={S.td}><span style={{...tg(TIPO_COL[v.tipo]||C.navy,TIPO_BG[v.tipo]),fontSize:10}}>{v.tipo}</span></td>
                   <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(v.kg)} kg</td>
-                  <td style={{...S.td,textAlign:"right",color:C.textDim,fontVariantNumeric:"tabular-nums"}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
-                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
+                  <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
+                  <td style={{...S.td,textAlign:"right"}}>
+                    <input
+                      type="number"
+                      defaultValue={v.precio_venta_kg||""}
+                      placeholder="—"
+                      style={{...S.input,fontSize:12,padding:"4px 6px",width:90,textAlign:"right",border:"1px solid transparent",background:"transparent"}}
+                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";}}
+                      onBlur={e=>{e.target.style.border="1px solid transparent";e.target.style.background="transparent";const nuevo=+e.target.value||0;if(nuevo!==(v.precio_venta_kg||0))actualizarCampoVenta(v,"precio_venta_kg",nuevo);}}
+                    />
+                  </td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(v.kg*(v.precio_venta_kg||0))}</td>
                 </tr>))}
                 <tr style={{background:C.navy}}>
-                  <td colSpan={4} style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
+                  <td colSpan={5} style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
                   <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(histCliente.reduce((s,v)=>s+v.kg,0))} kg</td>
                   <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
                   <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(histCliente.reduce((s,v)=>s+v.valor_total,0))}</td>
+                  <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(histCliente.reduce((s,v)=>s+v.kg*(v.precio_venta_kg||0),0))}</td>
                 </tr>
               </tbody>
             </table>
