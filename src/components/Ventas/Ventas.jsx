@@ -54,6 +54,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
 
   const totalKg=ventasFilt.reduce((s,v)=>s+v.kg,0);
   const totalValor=ventasFilt.reduce((s,v)=>s+v.valor_total,0);
+  const ingresoReal=ventasFilt.reduce((s,v)=>s+v.kg*(v.precio_venta_kg||0),0);
   const promKg=totalKg>0?totalValor/totalKg:0;
   const clientesUnicos=[...new Set(ventasFilt.map(v=>v.cliente).filter(c=>c&&c!=="Sin Cliente"))];
 
@@ -110,7 +111,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     </div>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:20}}>
-      {[{label:"Total Facturado",value:fmtCOP(totalValor),sub:ventasFilt.length+" transacciones",col:C.navy,icon:"💵",big:true},{label:"kg Vendidos",value:fmt(totalKg)+" kg",sub:"peso neto despachado",col:C.teal,icon:"⚖️"},{label:"Precio Prom. / kg",value:promKg>0?fmtCOP(promKg):"—",sub:"valor promedio ponderado",col:C.gold,icon:"📈"},{label:"Clientes Activos",value:clientesUnicos.length,sub:"en periodo seleccionado",col:C.accent,icon:"🤝"}].map(k=>(
+      {[{label:"Total Facturado",value:fmtCOP(ingresoReal),sub:"ingreso real segun precio de venta",col:C.navy,icon:"💵",big:true},{label:"Costo de Ventas",value:fmtCOP(totalValor),sub:ventasFilt.length+" transacciones",col:C.textDim,icon:"📦"},{label:"kg Vendidos",value:fmt(totalKg)+" kg",sub:"peso neto despachado",col:C.teal,icon:"⚖️"},{label:"Precio Prom. / kg",value:promKg>0?fmtCOP(promKg):"—",sub:"valor promedio ponderado",col:C.gold,icon:"📈"},{label:"Clientes Activos",value:clientesUnicos.length,sub:"en periodo seleccionado",col:C.accent,icon:"🤝"}].map(k=>(
         <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px",borderTop:"3px solid "+k.col,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1}}>{k.label}</span>
@@ -200,12 +201,17 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                   <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
                   <td style={{...S.td,textAlign:"right"}}>
                     <input
-                      type="number"
-                      defaultValue={v.precio_venta_kg||""}
+                      type="text"
+                      defaultValue={v.precio_venta_kg?fmt(v.precio_venta_kg,0):""}
                       placeholder="—"
-                      style={{...S.input,fontSize:12,padding:"4px 6px",width:90,textAlign:"right",border:"1px solid transparent",background:"transparent"}}
-                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";}}
-                      onBlur={e=>{e.target.style.border="1px solid transparent";e.target.style.background="transparent";const nuevo=+e.target.value||0;if(nuevo!==(v.precio_venta_kg||0))actualizarCampoVenta(v,"precio_venta_kg",nuevo);}}
+                      style={{...S.input,fontSize:12,padding:"4px 6px",width:100,textAlign:"right",border:"1px solid transparent",background:"transparent"}}
+                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";e.target.value=v.precio_venta_kg||"";}}
+                      onBlur={e=>{
+                        e.target.style.border="1px solid transparent";e.target.style.background="transparent";
+                        const nuevo=+String(e.target.value).replace(/[^\d]/g,"")||0;
+                        e.target.value=nuevo?fmt(nuevo,0):"";
+                        if(nuevo!==(v.precio_venta_kg||0))actualizarCampoVenta(v,"precio_venta_kg",nuevo);
+                      }}
                     />
                   </td>
                   <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(v.kg*(v.precio_venta_kg||0))}</td>
