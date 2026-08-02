@@ -115,6 +115,28 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     else if(item.origen_tipo==="bodega_tri_fino"){setLotesFino(p=>p.map(l=>l.id!==item.lote_id?l:{...l,salidas_trilladora:(l.salidas_trilladora||[]).filter(s=>s.id!==item.salidaId)}));}
     else if(item.origen_tipo==="blend_fino"){setBlendsFino(p=>p.map(b=>b.id!==item.lote_id?b:{...b,salidas:(b.salidas||[]).filter(s=>s.id!==item.salidaId)}));}
   };
+  const listosParaTostar=[
+    ...pendientes.map(t=>({
+      id:t.id,tipo:"pendiente",codigo:t.codigo,producto:t.nombre_producto||"—",
+      kg:t.kg_a_tostar,valorUnit:t.valor_unitario||0,mes:mesDe(t.fecha)||t.mes||"",
+      origenLabel:t.codigo_lote_origen||(t.lotes_blend||[]).join(", ")||"—",
+      _raw:t
+    })),
+    ...poolDirecto.map(item=>({
+      id:item.origen_tipo+"_"+item.salidaId,tipo:"pool",codigo:item.lote_codigo,
+      producto:item.nombre||"—",kg:item.kg_disponible,valorUnit:item.valor_unitario||0,
+      mes:mesDe(item.fecha)||"",
+      origenLabel:item.origen_tipo==="blend_fino"?"Blend CF":item.origen_tipo==="bodega_tri_fino"?"Trilladora CF":"Bodega CF",
+      _raw:item
+    })),
+  ];
+  const [filtroProductoListos,setFiltroProductoListos]=useState("");
+  const [filtroMesListos,setFiltroMesListos]=useState("todos");
+  const mesesListos=[...new Set(listosParaTostar.map(r=>r.mes).filter(Boolean))];
+  const listosFiltrados=listosParaTostar.filter(r=>
+    (filtroMesListos==="todos"||r.mes===filtroMesListos)&&
+    (!filtroProductoListos||r.producto.toLowerCase().includes(filtroProductoListos.toLowerCase()))
+  );
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Registros de Tueste</div>
@@ -128,33 +150,37 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     </div>
     {(pendientes.length>0||poolDirecto.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
       <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+poolDirecto.length})</div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-        {pendientes.map(t=>(<div key={t.id} style={{background:C.orangeBg,border:"1px solid "+C.orange+"40",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
-          <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{t.codigo}</div>
-          <div style={{color:C.navy,fontWeight:700,fontSize:14,marginTop:4}}>{t.nombre_producto||"—"}</div>
-          <div style={{marginTop:6,display:"flex",gap:8,flexWrap:"wrap"}}>
-            <span style={{color:C.accent,fontWeight:700,fontSize:13}}>{fmt(t.kg_a_tostar,1)} kg</span>
-            {t.valor_unitario>0&&<span style={{color:C.gold,fontSize:12}}>{fmtCOP(t.valor_unitario)}/kg</span>}
-          </div>
-          {(t.lotes_blend||[]).length>0&&<div style={{color:C.purple,fontSize:11,marginTop:4}}>Blend: {t.lotes_blend.join(", ")}</div>}
-          {t.codigo_lote_origen&&<div style={{color:C.textDim,fontSize:11,marginTop:2}}>Origen: {t.codigo_lote_origen}</div>}
-          <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirEditar(t)}>Registrar Tueste</button>
-          <button style={{...S.btnG,fontSize:11,padding:"7px 12px",marginTop:4,width:"100%",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(t)}>Eliminar</button>
-        </div>))}
-        {poolDirecto.map(item=>(<div key={item.origen_tipo+"_"+item.salidaId} style={{background:C.orangeBg,border:"2px dashed "+C.orange+"80",borderRadius:8,padding:"12px 14px",minWidth:210,maxWidth:270}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
-            <div style={{color:C.orange,fontWeight:700,fontSize:11,fontFamily:"monospace"}}>{item.lote_codigo}</div>
-            <Bdg label={item.origen_tipo==="blend_fino"?"Blend CF":item.origen_tipo==="bodega_tri_fino"?"Trilladora":"Bodega CF"} col={item.origen_tipo==="blend_fino"?C.accent:C.teal} bg={item.origen_tipo==="blend_fino"?C.accentBg:C.tealBg}/>
-          </div>
-          <div style={{color:C.navy,fontWeight:700,fontSize:14,marginTop:4}}>{item.nombre||"—"}</div>
-          <div style={{marginTop:6}}><span style={{color:C.green,fontWeight:700,fontSize:13}}>{fmt(item.kg_disponible,1)} kg disponibles</span></div>
-          {item.kg_consumido>0&&<div style={{color:C.textDim,fontSize:11,marginTop:2}}>En batches: {fmt(item.kg_consumido,1)} kg · Total: {fmt(item.kg_original,1)} kg</div>}
-          {(item.lotes_blend||[]).length>0&&<div style={{color:C.purple,fontSize:11,marginTop:3}}>Blend: {item.lotes_blend.join(", ")}</div>}
-          {item.valor_unitario>0&&<div style={{color:C.gold,fontSize:11,marginTop:2}}>{fmtCOP(item.valor_unitario)}/kg</div>}
-          <button style={{...S.btn,background:C.orange,fontSize:11,padding:"7px 12px",marginTop:10,width:"100%"}} onClick={()=>abrirDirecto(item)}>Iniciar Batch de Tueste</button>
-          {item.kg_consumido===0&&<button style={{...S.btnG,fontSize:11,padding:"7px 12px",marginTop:4,width:"100%",color:C.red,borderColor:C.red+"60"}} onClick={()=>revertirSalidaDirecta(item)}>Revertir salida</button>}
-        </div>))}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <input value={filtroProductoListos} onChange={e=>setFiltroProductoListos(e.target.value)} placeholder="Buscar por producto..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
+        <select value={filtroMesListos} onChange={e=>setFiltroMesListos(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
+          <option value="todos">Todos los meses</option>
+          {mesesListos.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+        </select>
+        {(filtroProductoListos||filtroMesListos!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoListos("");setFiltroMesListos("todos");}}>✕ Limpiar</button>}
+        <span style={{fontSize:11,color:C.textFaint}}>{listosFiltrados.length} de {listosParaTostar.length}</span>
       </div>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Codigo","Producto","Tipo","Mes","kg","Valor/kg","Origen","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>{listosFiltrados.map(r=>(<tr key={r.id}>
+          <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.orange,fontSize:11}}>{r.codigo}</td>
+          <td style={{...S.td,fontWeight:600}}>{r.producto}</td>
+          <td style={S.td}>{r.tipo==="pendiente"?<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>:<Bdg label="Pool Directo" col={C.teal} bg={C.tealBg}/>}</td>
+          <td style={{...S.td,textTransform:"capitalize"}}>{r.mes||"—"}</td>
+          <td style={{...S.td,color:C.accent,fontWeight:700}}>{fmt(r.kg,1)} kg</td>
+          <td style={{...S.td,color:C.gold}}>{r.valorUnit>0?fmtCOP(r.valorUnit):"—"}</td>
+          <td style={{...S.td,color:C.textDim,fontSize:12}}>{r.origenLabel}</td>
+          <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {r.tipo==="pendiente"?(<>
+              <button style={{...S.btn,background:C.orange,fontSize:11,padding:"6px 10px"}} onClick={()=>abrirEditar(r._raw)}>Registrar Tueste</button>
+              <button style={{...S.btnG,fontSize:11,padding:"6px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(r._raw)}>Eliminar</button>
+            </>):(<>
+              <button style={{...S.btn,background:C.orange,fontSize:11,padding:"6px 10px"}} onClick={()=>abrirDirecto(r._raw)}>Iniciar Batch</button>
+              {r._raw.kg_consumido===0&&<button style={{...S.btnG,fontSize:11,padding:"6px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>revertirSalidaDirecta(r._raw)}>Revertir</button>}
+            </>)}
+          </div></td>
+        </tr>))}</tbody>
+      </table></TablaScrollV>
+      {listosFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin lotes que coincidan con el filtro.</div>}
     </div>)}
     <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div><TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
       <tbody>{blendsTostado.filter(t=>t.kg_cafe_tostado>0).map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
