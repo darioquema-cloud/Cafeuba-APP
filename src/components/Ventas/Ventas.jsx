@@ -110,15 +110,15 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
       <span style={{fontSize:11,color:C.textFaint,marginLeft:"auto"}}>{ventasFilt.length} resultados</span>
     </div>
 
-    <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:14,marginBottom:20}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,minmax(0,1fr))",gap:14,marginBottom:20}}>
       {[{label:"Total Facturado",value:fmtCOP(ingresoReal),sub:"ingreso real segun precio de venta",col:C.navy,icon:"💵",big:true},{label:"Costo de Ventas",value:fmtCOP(totalValor),sub:ventasFilt.length+" transacciones",col:C.textDim,icon:"📦"},{label:"kg Vendidos",value:fmt(totalKg)+" kg",sub:"peso neto despachado",col:C.teal,icon:"⚖️"},{label:"Precio Prom. / kg",value:promKg>0?fmtCOP(promKg):"—",sub:"valor promedio ponderado",col:C.gold,icon:"📈"},{label:"Clientes Activos",value:clientesUnicos.length,sub:"en periodo seleccionado",col:C.accent,icon:"🤝"}].map(k=>(
-        <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px",borderTop:"3px solid "+k.col,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-            <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1}}>{k.label}</span>
-            <span style={{fontSize:18,opacity:0.6}}>{k.icon}</span>
+        <div key={k.label} style={{background:C.panel,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",borderTop:"3px solid "+k.col,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+            <span style={{fontSize:9,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:0.5}}>{k.label}</span>
+            <span style={{fontSize:15,opacity:0.6}}>{k.icon}</span>
           </div>
-          <div style={{fontSize:k.big?20:24,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:4,fontVariantNumeric:"tabular-nums"}}>{k.value}</div>
-          <div style={{fontSize:11,color:C.textFaint}}>{k.sub}</div>
+          <div style={{fontSize:k.big?17:16,fontWeight:800,color:k.col,lineHeight:1.1,marginBottom:3,fontVariantNumeric:"tabular-nums"}}>{k.value}</div>
+          <div style={{fontSize:10,color:C.textFaint}}>{k.sub}</div>
         </div>
       ))}
     </div>
