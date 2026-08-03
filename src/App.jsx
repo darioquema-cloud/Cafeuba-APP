@@ -1,4 +1,4 @@
-import{useState,useMemo,useEffect,useRef,useLayoutEffect}from"react";
+import{useState,useMemo,useEffect,useRef,useLayoutEffect,lazy,Suspense}from"react";
 import*as XLSX from"xlsx";
 import{auth}from"./firebase";
 import{signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut as fbSignOut,signInWithEmailAndPassword,sendPasswordResetEmail,createUserWithEmailAndPassword,getAuth as fbGetAuth}from"firebase/auth";
@@ -14,24 +14,24 @@ import{pesoATrilladora,pesoATrilladoraCafeFino,pesoOtrosBodega}from"./lib/stock"
 import{Bdg,Fld,KPI,KPIDoble,Bar,Modal,AutoFitText,TablaScrollV,SelectDestino,destinoLabel}from"./components/ui";
 import{CoffeeLoader}from"./components/ui/CoffeeLoader";
 import{LoginForm}from"./components/Login/LoginForm";
-import{Costos}from"./components/Costos/Costos";
-import{Usuarios}from"./components/Usuarios/Usuarios";
-import{Trazabilidad}from"./components/Trazabilidad/Trazabilidad";
-import{Procesamiento}from"./components/Procesamiento/Procesamiento";
-import{Bodega}from"./components/Bodega/Bodega";
-import{BodegaTrilladora}from"./components/BodegaTrilladora/BodegaTrilladora";
-import{BodegaFino}from"./components/BodegaFino/BodegaFino";
-import{BodegaTrilladoraFino}from"./components/BodegaTrilladoraFino/BodegaTrilladoraFino";
-import{TrilladoraFino}from"./components/TrilladoraFino/TrilladoraFino";
-import{Trilla}from"./components/Trilla/Trilla";
-import{Blend}from"./components/Blend/Blend";
-import{BlendFino}from"./components/BlendFino/BlendFino";
-import{Maquila}from"./components/Maquila/Maquila";
-import{BulkLoader}from"./components/BulkLoader/BulkLoader";
-import{Ventas}from"./components/Ventas/Ventas";
-import{Dashboard}from"./components/Dashboard/Dashboard";
-import{UbaTostado}from"./components/UbaTostado/UbaTostado";
-import{Pedidos}from"./components/Pedidos/Pedidos";
+const Costos=lazy(()=>import("./components/Costos/Costos").then(m=>({default:m.Costos})));
+const Usuarios=lazy(()=>import("./components/Usuarios/Usuarios").then(m=>({default:m.Usuarios})));
+const Trazabilidad=lazy(()=>import("./components/Trazabilidad/Trazabilidad").then(m=>({default:m.Trazabilidad})));
+const Procesamiento=lazy(()=>import("./components/Procesamiento/Procesamiento").then(m=>({default:m.Procesamiento})));
+const Bodega=lazy(()=>import("./components/Bodega/Bodega").then(m=>({default:m.Bodega})));
+const BodegaTrilladora=lazy(()=>import("./components/BodegaTrilladora/BodegaTrilladora").then(m=>({default:m.BodegaTrilladora})));
+const BodegaFino=lazy(()=>import("./components/BodegaFino/BodegaFino").then(m=>({default:m.BodegaFino})));
+const BodegaTrilladoraFino=lazy(()=>import("./components/BodegaTrilladoraFino/BodegaTrilladoraFino").then(m=>({default:m.BodegaTrilladoraFino})));
+const TrilladoraFino=lazy(()=>import("./components/TrilladoraFino/TrilladoraFino").then(m=>({default:m.TrilladoraFino})));
+const Trilla=lazy(()=>import("./components/Trilla/Trilla").then(m=>({default:m.Trilla})));
+const Blend=lazy(()=>import("./components/Blend/Blend").then(m=>({default:m.Blend})));
+const BlendFino=lazy(()=>import("./components/BlendFino/BlendFino").then(m=>({default:m.BlendFino})));
+const Maquila=lazy(()=>import("./components/Maquila/Maquila").then(m=>({default:m.Maquila})));
+const BulkLoader=lazy(()=>import("./components/BulkLoader/BulkLoader").then(m=>({default:m.BulkLoader})));
+const Ventas=lazy(()=>import("./components/Ventas/Ventas").then(m=>({default:m.Ventas})));
+const Dashboard=lazy(()=>import("./components/Dashboard/Dashboard").then(m=>({default:m.Dashboard})));
+const UbaTostado=lazy(()=>import("./components/UbaTostado/UbaTostado").then(m=>({default:m.UbaTostado})));
+const Pedidos=lazy(()=>import("./components/Pedidos/Pedidos").then(m=>({default:m.Pedidos})));
 
 
 
@@ -176,7 +176,7 @@ export default function App(){
         <nav style={{flex:1,padding:"14px 10px",overflowY:"auto"}}>{navFiltrado.map((item)=>item.sep?(<div key={item.k} style={{height:1,background:C.border,margin:"6px 6px"}}/>):(<div key={item.k} onClick={()=>setView(item.k)} style={{padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,borderRadius:6,marginBottom:2,background:viewEfectiva===item.k?C.accentBg:"transparent",color:viewEfectiva===item.k?C.navy:C.textDim,fontSize:13,fontWeight:viewEfectiva===item.k?600:400,borderLeft:viewEfectiva===item.k?"3px solid "+C.accent:"3px solid transparent"}}><span dangerouslySetInnerHTML={{__html:item.icon}} style={{fontSize:14,width:18,textAlign:"center"}}/>{item.l}</div>))}</nav>
         <div style={{padding:"12px 14px",borderTop:"1px solid "+C.border}}><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><div style={{width:34,height:34,borderRadius:"50%",background:C.navy,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:C.white,flexShrink:0}}>{user?.nombre?.charAt(0)}</div><div style={{overflow:"hidden"}}><div style={{color:C.navy,fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.nombre}</div><div style={{color:C.textDim,fontSize:10}}>{user?.rol}</div></div></div><button style={{...S.btnG,width:"100%",textAlign:"center",fontSize:12}} onClick={()=>{fbSignOut(auth);setLoggedIn(false);setUser(null);}}>Cerrar Sesion</button></div>
       </div>
-      <div style={S.main}>{esReadOnly&&(<div style={{background:C.goldBg,border:"1px solid "+C.gold+"50",borderRadius:8,padding:"9px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:15}}>&#128065;</span><span style={{color:C.gold,fontWeight:700,fontSize:13}}>Solo lectura</span><span style={{color:C.gold,fontSize:12,opacity:0.85}}> — Puedes consultar este módulo pero no tienes permisos para modificar datos.</span></div>)}{View}</div>
+      <div style={S.main}>{esReadOnly&&(<div style={{background:C.goldBg,border:"1px solid "+C.gold+"50",borderRadius:8,padding:"9px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:15}}>&#128065;</span><span style={{color:C.gold,fontWeight:700,fontSize:13}}>Solo lectura</span><span style={{color:C.gold,fontSize:12,opacity:0.85}}> — Puedes consultar este módulo pero no tienes permisos para modificar datos.</span></div>)}<Suspense fallback={<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"60vh"}}><CoffeeLoader/></div>}>{View}</Suspense></div>
     </div>
   </>);
 }
