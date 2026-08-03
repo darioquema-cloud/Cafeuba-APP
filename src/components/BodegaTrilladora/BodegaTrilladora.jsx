@@ -1,6 +1,6 @@
 import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
-import{KPI,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
+import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{semanaISO,mesDe,mesTrillaDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri,getSeedCostoTri}from"../../lib/costing";
@@ -47,6 +47,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
   // Excluye "ajuste_inventario" de las salidas "reales" — el ajuste corrige el stock pero no es
   // una salida/venta real, no debe mezclarse en el KPI de Valor Salidas.
   const totalValorSalidasT=trilledLotes.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
+  const totalKgSalidasT=trilledLotes.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.peso_salida||0),0),0);
   const stockActual=trilledLotes.reduce((s,l)=>{const stock=stockTrilladora(l);const costoKg=costoKgExDe(l);return {kg:s.kg+stock,val:s.val+(costoKg*stock)};},{kg:0,val:0});
   // Costo Total/kg ponderado del grupo (mismo calculo usado en la tabla principal) — se reutiliza
   // tal cual en el Acta de Inventario (PDF) para que el valor no se recalcule con otra formula.
@@ -300,11 +301,10 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
       </div>
       <button style={{...S.btnG,fontSize:12}} onClick={recalcularCostosTrilla}>↻ Recalcular Costos de Trilla (mes correcto)</button>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Excelso Total kg" value={fmt(totalExcelso)+" kg"} col={C.green}/>
-      <KPI label="Stock Disponible kg" value={fmt(stockActual.kg)+" kg"} col={C.accent}/>
-      <KPI label="Valor Stock Disponible" value={fmtCOP(stockActual.val)} col={C.gold}/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValorSalidasT)} col={C.purple}/>
+    <div style={{display:"grid",gridTemplateColumns:"minmax(120px,160px) repeat(3,1fr)",gap:12,marginBottom:20,alignItems:"stretch"}}>
+      <KPI label="Excelso Total" value={fmt(totalExcelso)+" kg"} col={C.green}/>
+      <KPIDoble label="Stock Disponible" kgVal={fmt(stockActual.kg)+" kg"} valorVal={fmtCOP(stockActual.val)} col={C.accent}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasT)+" kg"} valorVal={fmtCOP(totalValorSalidasT)} col={C.purple}/>
       <KPI label="Costo Prom/kg Ex" value={stockActual.kg>0?fmtCOP(Math.round(stockActual.val/stockActual.kg)):"—"} col={C.teal}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>

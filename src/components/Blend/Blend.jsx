@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{NORMAS}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe,semanaISO}from"../../lib/dates";
-import{Bdg,Fld,KPI,Modal,TablaScrollV,SelectDestino}from"../ui";
+import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
@@ -338,13 +338,10 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>MEZCLAS</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Blend</div><div style={{color:C.textDim,fontSize:12,marginTop:2}}>Combina excelso de varios lotes en un blend nuevo</div></div><button style={{...S.btn,background:C.purple}} onClick={abrirNuevo}>+ Nuevo Blend</button></div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Kg Blend Producido" value={fmt(totalKgBlends)+" kg"} col={C.accent} autoFit/>
-      <KPI label="Valor Blend Producido" value={fmtCOP(totalValBlends)} col={C.gold} autoFit/>
-      <KPI label="Kg Salidos" value={fmt(totalKgSalidasB)+" kg"} col={C.green} autoFit/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValSalidasB)} col={C.green} autoFit/>
-      <KPI label="Kg en Stock" value={fmt(totalKgStockB)+" kg"} col={C.teal} autoFit/>
-      <KPI label="Valor en Stock" value={fmtCOP(totalValStockB)} col={C.teal} autoFit/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+      <KPIDoble label="Blend Producido" kgVal={fmt(totalKgBlends)+" kg"} valorVal={fmtCOP(totalValBlends)} col={C.accent}/>
+      <KPIDoble label="Salidos" kgVal={fmt(totalKgSalidasB)+" kg"} valorVal={fmtCOP(totalValSalidasB)} col={C.green}/>
+      <KPIDoble label="En Stock" kgVal={fmt(totalKgStockB)+" kg"} valorVal={fmtCOP(totalValStockB)} col={C.teal}/>
     </div>
     <div style={{...S.card,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:10}}>Pool de Excelso Disponible</div>
