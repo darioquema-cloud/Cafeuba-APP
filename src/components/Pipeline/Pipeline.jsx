@@ -78,12 +78,8 @@ export function Pipeline({oportunidades,setOportunidades,user}){
   };
 
   return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}>
-      <div>
-        <div style={{color:C.accent,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>COMERCIAL</div>
-        <div style={{color:C.navy,fontSize:22,fontWeight:700}}>CRM - Embudo de Oportunidades</div>
-        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Embudo de oportunidades comerciales — avance manual por etapas</div>
-      </div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+      <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Embudo de Oportunidades</div>
       <button style={S.btn} onClick={abrirNuevo}>+ Nueva Oportunidad</button>
     </div>
 
