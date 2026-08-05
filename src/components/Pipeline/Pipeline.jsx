@@ -160,6 +160,11 @@ export function Pipeline({oportunidades,setOportunidades,user}){
     setOportunidades(list=>list.map(o=>o.id===id?{...o,estado:"activo"}:o));
   };
 
+  const eliminarOportunidad=(id)=>{
+    if(!window.confirm("¿Eliminar esta oportunidad? Esta acción no se puede deshacer."))return;
+    setOportunidades(p=>p.filter(o=>o.id!==id));
+  };
+
   const abrirPerder=(id)=>{setPerderId(id);setMotivo("");setErrPerder("");};
   const confirmarPerdida=()=>{
     if(!motivo.trim()){setErrPerder("Ingresa el motivo de la perdida.");return;}
@@ -247,6 +252,7 @@ export function Pipeline({oportunidades,setOportunidades,user}){
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.green,borderColor:C.green+"40"}} onClick={()=>marcarGanada(op.id)}>Ganada</button>
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.red,borderColor:C.red+"40"}} onClick={()=>abrirPerder(op.id)}>Perdida</button>
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.gold,borderColor:C.gold+"40"}} onClick={()=>ponerEnPausa(op.id)}>Pausa</button>
+              <button style={{...S.btnG,fontSize:11,padding:"5px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarOportunidad(op.id)}>Eliminar</button>
             </div></td>
           </tr>);
         })}</tbody></table>
@@ -268,7 +274,10 @@ export function Pipeline({oportunidades,setOportunidades,user}){
           <td style={S.td}><Bdg label={estadoInfo(op.estado).label} col={estadoInfo(op.estado).col}/></td>
           <td style={{...S.td,color:C.red}}>{op.motivo_perdida||"—"}</td>
           <td style={{...S.td,color:C.textDim}}>{fmtFecha(fechaUltimaEtapa(op))}</td>
-          <td style={S.td}><button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.teal,borderColor:C.teal+"40"}} onClick={()=>reactivar(op.id)}>Reactivar</button></td>
+          <td style={S.td}><div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.teal,borderColor:C.teal+"40"}} onClick={()=>reactivar(op.id)}>Reactivar</button>
+            <button style={{...S.btnG,fontSize:11,padding:"5px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarOportunidad(op.id)}>Eliminar</button>
+          </div></td>
         </tr>))}</tbody></table>
         {perdidasPausa.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin oportunidades perdidas o en pausa todavia.</div>}
       </div>
@@ -290,7 +299,10 @@ export function Pipeline({oportunidades,setOportunidades,user}){
           <td style={S.td}>{op.incoterm||"—"}</td>
           <td style={S.td}>{op.volumen_kg>0?fmt(op.volumen_kg):"—"}</td>
           <td style={{...S.td,color:C.textDim}}>{fmtFecha(fechaUltimaEtapa(op))}</td>
-          <td style={S.td}><button style={{...S.btnG,fontSize:11,padding:"5px 10px"}} onClick={()=>abrirEditar(op)}>Ver/Editar</button></td>
+          <td style={S.td}><div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            <button style={{...S.btnG,fontSize:11,padding:"5px 10px"}} onClick={()=>abrirEditar(op)}>Ver/Editar</button>
+            <button style={{...S.btnG,fontSize:11,padding:"5px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarOportunidad(op.id)}>Eliminar</button>
+          </div></td>
         </tr>))}</tbody></table>
         </div>
         {ganadas.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin oportunidades ganadas todavia.</div>}
