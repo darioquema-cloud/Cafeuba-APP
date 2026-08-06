@@ -40,6 +40,33 @@ const etapaKeyEfectiva=(op)=>ETAPAS.some(e=>e.key===op.etapa)?op.etapa:"entrada_
 const etapaInfo=(key)=>ETAPAS.find(e=>e.key===key)||ETAPAS[0];
 const estadoInfo=(key)=>ESTADOS.find(e=>e.key===key)||ESTADOS[0];
 
+// Si el usuario llenó campos de una etapa más adelantada que la etapa actual, se le
+// pregunta si quiere avanzar la etapa también (ver guardar() en el componente).
+const sugerirEtapaPorCampos=(datos)=>{
+  const reglas=[
+    {etapa:"respuesta_inicial",campos:["fecha_respuesta_inicial","info_solicitada"]},
+    {etapa:"presentacion",campos:["fecha_presentacion_enviada"]},
+    {etapa:"envio_muestras",campos:["muestra_enviada","fecha_envio_muestra","tamano_muestra"]},
+    {etapa:"seguimiento_muestras",campos:["feedback_muestra","interes_post_muestra"]},
+    {etapa:"catacion",campos:["fecha_catacion_reunion","tipo_reunion","notas_reunion_negociacion"]},
+    {etapa:"negociacion",campos:["incoterm","volumen_kg","precio_acordado_usd","condiciones_pago"]},
+    {etapa:"confirmacion_compra",campos:["fecha_confirmacion_compra","valor_total_confirmado_usd"]},
+    {etapa:"produccion_exportacion",campos:["documentos","fecha_trilla","fecha_embarque","estado_exportacion"]},
+    {etapa:"postventa",campos:["fecha_seguimiento_postventa","feedback_postventa"]},
+    {etapa:"recompra",campos:["fecha_ultima_recompra","n_compras_historico","valor_total_historico_cop"]},
+  ];
+  let masAlta=null;
+  reglas.forEach(r=>{
+    const tieneAlgo=r.campos.some(c=>{const v=datos[c];return v!==""&&v!=null&&v!==0;});
+    if(tieneAlgo){
+      const idx=ETAPAS.findIndex(e=>e.key===r.etapa);
+      const idxActual=masAlta?ETAPAS.findIndex(e=>e.key===masAlta):-1;
+      if(idx>idxActual)masAlta=r.etapa;
+    }
+  });
+  return masAlta;
+};
+
 const fechaUltimaEtapa=(op)=>{
   const h=op.historial_etapas||[];
   return h.length?h[h.length-1].fecha:op.fecha_registro;
@@ -129,14 +156,27 @@ export function Pipeline({oportunidades,setOportunidades,user}){
       fecha_seguimiento_postventa:form.fecha_seguimiento_postventa,feedback_postventa:form.feedback_postventa.trim(),
       fecha_ultima_recompra:form.fecha_ultima_recompra,n_compras_historico:numVal(form.n_compras_historico),valor_total_historico_cop:numVal(form.valor_total_historico_cop),
     };
+    const etapaActual=opPrevia?etapaKeyEfectiva(opPrevia):"entrada_lead";
+    const historialActual=opPrevia?(opPrevia.historial_etapas||[]):[{etapa:"entrada_lead",fecha:today()}];
+    const etapaSugerida=sugerirEtapaPorCampos(datos);
+    const idxActual=ETAPAS.findIndex(e=>e.key===etapaActual);
+    const idxSugerida=etapaSugerida?ETAPAS.findIndex(e=>e.key===etapaSugerida):-1;
+    let avanzarEtapa=false;
+    if(idxSugerida>idxActual){
+      const labelSugerida=ETAPAS[idxSugerida].label;
+      avanzarEtapa=window.confirm(`Detectamos que llenaste datos de "${labelSugerida}".\n\n¿Quieres avanzar la etapa de esta oportunidad hasta ahí también?`);
+    }
+    const etapaFinal=avanzarEtapa?etapaSugerida:etapaActual;
+    const historialFinal=avanzarEtapa?[...historialActual,{etapa:etapaSugerida,fecha:today()}]:historialActual;
+
     if(editId){
-      setOportunidades(list=>list.map(o=>o.id===editId?{...o,...datos}:o));
+      setOportunidades(list=>list.map(o=>o.id===editId?{...o,...datos,...(avanzarEtapa?{etapa:etapaFinal,historial_etapas:historialFinal}:{})}:o));
     }else{
       const nueva={
         id:genId(),fecha_registro:today(),...datos,
-        etapa:"entrada_lead",estado:"activo",motivo_perdida:"",
+        etapa:etapaFinal,estado:"activo",motivo_perdida:"",
         usuario_registro:user?.nombre||user?.email||"",
-        historial_etapas:[{etapa:"entrada_lead",fecha:today()}],
+        historial_etapas:historialFinal,
       };
       setOportunidades(list=>[nueva,...list]);
     }
