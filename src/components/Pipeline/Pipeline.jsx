@@ -106,6 +106,22 @@ export function Pipeline({oportunidades,setOportunidades,user}){
 
   const setF=(k,v)=>setForm(f=>({...f,[k]:v}));
 
+  const filaCampo=(label,key,tipo="text",opciones=null)=>(
+    <tr key={key}>
+      <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text,width:"45%"}}>{label}</td>
+      <td style={{border:"1px solid "+C.border,padding:2}}>
+        {tipo==="select"?(
+          <select style={{...S.input,border:"none"}} value={form[key]} onChange={e=>setF(key,e.target.value)}>
+            <option value="">Selecciona...</option>
+            {opciones.map(o=>(<option key={o} value={o}>{o}</option>))}
+          </select>
+        ):(
+          <input type={tipo} style={{...S.input,border:"none"}} value={form[key]} onChange={e=>setF(key,e.target.value)}/>
+        )}
+      </td>
+    </tr>
+  );
+
   const activas=oportunidades.filter(o=>o.estado==="activo"||!o.estado);
   const vencidos=activas.filter(o=>o.fecha_proxima_accion&&o.fecha_proxima_accion<today());
   const valorConfirmado=oportunidades.filter(o=>o.estado==="ganado").reduce((s,o)=>s+(o.valor_estimado||0),0);
@@ -395,91 +411,82 @@ export function Pipeline({oportunidades,setOportunidades,user}){
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 1-2 · Entrada y Calificación</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Fecha Respuesta Inicial" half><input type="date" style={S.input} value={form.fecha_respuesta_inicial} onChange={e=>setF("fecha_respuesta_inicial",e.target.value)}/></Fld>
-          <Fld label="Info Solicitada" half><input style={S.input} value={form.info_solicitada} onChange={e=>setF("info_solicitada",e.target.value)}/></Fld>
-          {form.fecha_respuesta_inicial&&(<Fld label="Tiempo de Respuesta (dias)" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} readOnly value={diasEntre(fechaBaseModal,form.fecha_respuesta_inicial)+" dias"}/></Fld>)}
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Fecha Respuesta Inicial","fecha_respuesta_inicial","date")}
+            {filaCampo("Info Solicitada","info_solicitada","text")}
+            {form.fecha_respuesta_inicial&&(
+              <tr>
+                <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text}}>Tiempo de Respuesta</td>
+                <td style={{border:"1px solid "+C.border,padding:"6px 10px",color:C.gold,fontWeight:600}}>{diasEntre(fechaBaseModal,form.fecha_respuesta_inicial)} dias</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </details>
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 3-5 · Presentación y Muestras</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Fecha Presentación Enviada" half><input type="date" style={S.input} value={form.fecha_presentacion_enviada} onChange={e=>setF("fecha_presentacion_enviada",e.target.value)}/></Fld>
-          <Fld label="Muestra Enviada" half>
-            <select style={S.select} value={form.muestra_enviada} onChange={e=>setF("muestra_enviada",e.target.value)}>
-              <option value="">Selecciona...</option>
-              <option value="Sí">Sí</option>
-              <option value="No">No</option>
-            </select>
-          </Fld>
-          <Fld label="Fecha Envío Muestra" half><input type="date" style={S.input} value={form.fecha_envio_muestra} onChange={e=>setF("fecha_envio_muestra",e.target.value)}/></Fld>
-          <Fld label="Tamaño de Muestra" half><input style={S.input} value={form.tamano_muestra} onChange={e=>setF("tamano_muestra",e.target.value)}/></Fld>
-          <Fld label="Feedback de Muestra"><input style={S.input} value={form.feedback_muestra} onChange={e=>setF("feedback_muestra",e.target.value)}/></Fld>
-          <Fld label="Interes Post-Muestra" half>
-            <select style={S.select} value={form.interes_post_muestra} onChange={e=>setF("interes_post_muestra",e.target.value)}>
-              <option value="">Selecciona...</option>
-              {INTERES_POST_MUESTRA.map(i=>(<option key={i} value={i}>{i}</option>))}
-            </select>
-          </Fld>
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Fecha Presentación Enviada","fecha_presentacion_enviada","date")}
+            {filaCampo("Muestra Enviada","muestra_enviada","select",["Sí","No"])}
+            {filaCampo("Fecha Envío Muestra","fecha_envio_muestra","date")}
+            {filaCampo("Tamaño de Muestra","tamano_muestra","text")}
+            {filaCampo("Feedback de Muestra","feedback_muestra","text")}
+            {filaCampo("Interes Post-Muestra","interes_post_muestra","select",INTERES_POST_MUESTRA)}
+          </tbody>
+        </table>
       </details>
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 6 · Catación / Reunión</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Fecha Catación / Reunión" half><input type="date" style={S.input} value={form.fecha_catacion_reunion} onChange={e=>setF("fecha_catacion_reunion",e.target.value)}/></Fld>
-          <Fld label="Tipo de Reunión" half>
-            <select style={S.select} value={form.tipo_reunion} onChange={e=>setF("tipo_reunion",e.target.value)}>
-              <option value="">Selecciona...</option>
-              {TIPOS_REUNION.map(t=>(<option key={t} value={t}>{t}</option>))}
-            </select>
-          </Fld>
-          <Fld label="Notas de Reunión / Negociación"><textarea style={{...S.input,minHeight:50,resize:"vertical"}} value={form.notas_reunion_negociacion} onChange={e=>setF("notas_reunion_negociacion",e.target.value)}/></Fld>
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Fecha Catación / Reunión","fecha_catacion_reunion","date")}
+            {filaCampo("Tipo de Reunión","tipo_reunion","select",TIPOS_REUNION)}
+            {filaCampo("Notas de Reunión / Negociación","notas_reunion_negociacion","text")}
+          </tbody>
+        </table>
       </details>
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 7-8 · Negociación</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Incoterm" half>
-            <select style={S.select} value={form.incoterm} onChange={e=>setF("incoterm",e.target.value)}>
-              <option value="">Selecciona...</option>
-              {INCOTERMS.map(i=>(<option key={i} value={i}>{i}</option>))}
-            </select>
-          </Fld>
-          <Fld label="Volumen (kg)" half><input type="number" style={S.input} value={form.volumen_kg} onChange={e=>setF("volumen_kg",e.target.value)}/></Fld>
-          <Fld label="Precio Acordado (USD)" half><input type="number" style={S.input} value={form.precio_acordado_usd} onChange={e=>setF("precio_acordado_usd",e.target.value)}/></Fld>
-          <Fld label="Condiciones de Pago" half><input style={S.input} value={form.condiciones_pago} onChange={e=>setF("condiciones_pago",e.target.value)}/></Fld>
-          <Fld label="Fecha Confirmación de Compra" half><input type="date" style={S.input} value={form.fecha_confirmacion_compra} onChange={e=>setF("fecha_confirmacion_compra",e.target.value)}/></Fld>
-          <Fld label="Valor Total Confirmado (USD)" half><input type="number" style={S.input} value={form.valor_total_confirmado_usd} onChange={e=>setF("valor_total_confirmado_usd",e.target.value)}/></Fld>
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Incoterm","incoterm","select",INCOTERMS)}
+            {filaCampo("Volumen (kg)","volumen_kg","number")}
+            {filaCampo("Precio Acordado (USD)","precio_acordado_usd","number")}
+            {filaCampo("Condiciones de Pago","condiciones_pago","text")}
+            {filaCampo("Fecha Confirmación de Compra","fecha_confirmacion_compra","date")}
+            {filaCampo("Valor Total Confirmado (USD)","valor_total_confirmado_usd","number")}
+          </tbody>
+        </table>
       </details>
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 9 · Producción y Exportación</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Documentos" half><input style={S.input} value={form.documentos} onChange={e=>setF("documentos",e.target.value)}/></Fld>
-          <Fld label="Fecha Trilla" half><input type="date" style={S.input} value={form.fecha_trilla} onChange={e=>setF("fecha_trilla",e.target.value)}/></Fld>
-          <Fld label="Fecha Embarque" half><input type="date" style={S.input} value={form.fecha_embarque} onChange={e=>setF("fecha_embarque",e.target.value)}/></Fld>
-          <Fld label="Estado de Exportación" half>
-            <select style={S.select} value={form.estado_exportacion} onChange={e=>setF("estado_exportacion",e.target.value)}>
-              <option value="">Selecciona...</option>
-              {ESTADOS_EXPORTACION.map(e=>(<option key={e} value={e}>{e}</option>))}
-            </select>
-          </Fld>
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Documentos","documentos","text")}
+            {filaCampo("Fecha Trilla","fecha_trilla","date")}
+            {filaCampo("Fecha Embarque","fecha_embarque","date")}
+            {filaCampo("Estado de Exportación","estado_exportacion","select",ESTADOS_EXPORTACION)}
+          </tbody>
+        </table>
       </details>
 
       <details style={{marginTop:10,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px"}}>
         <summary style={{cursor:"pointer",fontWeight:600,fontSize:12,color:C.navy}}>Etapa 10-12 · Postventa y Recompra</summary>
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px",marginTop:10}}>
-          <Fld label="Fecha Seguimiento Postventa" half><input type="date" style={S.input} value={form.fecha_seguimiento_postventa} onChange={e=>setF("fecha_seguimiento_postventa",e.target.value)}/></Fld>
-          <Fld label="Feedback Postventa"><input style={S.input} value={form.feedback_postventa} onChange={e=>setF("feedback_postventa",e.target.value)}/></Fld>
-          <Fld label="Fecha Última Recompra" half><input type="date" style={S.input} value={form.fecha_ultima_recompra} onChange={e=>setF("fecha_ultima_recompra",e.target.value)}/></Fld>
-          <Fld label="N° Compras Histórico" half><input type="number" style={S.input} value={form.n_compras_historico} onChange={e=>setF("n_compras_historico",e.target.value)}/></Fld>
-          <Fld label="Valor Total Histórico (COP)" half><input type="number" style={S.input} value={form.valor_total_historico_cop} onChange={e=>setF("valor_total_historico_cop",e.target.value)}/></Fld>
-        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",marginTop:10}}>
+          <tbody>
+            {filaCampo("Fecha Seguimiento Postventa","fecha_seguimiento_postventa","date")}
+            {filaCampo("Feedback Postventa","feedback_postventa","text")}
+            {filaCampo("Fecha Última Recompra","fecha_ultima_recompra","date")}
+            {filaCampo("N° Compras Histórico","n_compras_historico","number")}
+            {filaCampo("Valor Total Histórico (COP)","valor_total_historico_cop","number")}
+          </tbody>
+        </table>
       </details>
 
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}>
