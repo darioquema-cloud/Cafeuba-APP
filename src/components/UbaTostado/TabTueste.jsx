@@ -137,6 +137,14 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     (filtroMesListos==="todos"||r.mes===filtroMesListos)&&
     (!filtroProductoListos||r.producto.toLowerCase().includes(filtroProductoListos.toLowerCase()))
   );
+  const [filtroProductoHist,setFiltroProductoHist]=useState("");
+  const [filtroMesHist,setFiltroMesHist]=useState("todos");
+  const historico=blendsTostado.filter(t=>t.kg_cafe_tostado>0);
+  const mesesHist=[...new Set(historico.map(t=>mesDe(t.fecha)).filter(Boolean))];
+  const historicoFiltrado=historico.filter(t=>
+    (filtroMesHist==="todos"||mesDe(t.fecha)===filtroMesHist)&&
+    (!filtroProductoHist||(t.nombre_producto||"").toLowerCase().includes(filtroProductoHist.toLowerCase()))
+  );
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Registros de Tueste</div>
@@ -182,8 +190,26 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       </table></TablaScrollV>
       {listosFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin lotes que coincidan con el filtro.</div>}
     </div>)}
-    <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div><TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{blendsTostado.filter(t=>t.kg_cafe_tostado>0).map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
+    <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div>
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
+        <select value={filtroMesHist} onChange={e=>setFiltroMesHist(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
+          <option value="todos">Todos los meses</option>
+          {mesesHist.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+        </select>
+        {(filtroProductoHist||filtroMesHist!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoHist("");setFiltroMesHist("todos");}}>✕ Limpiar</button>}
+        <span style={{fontSize:11,color:C.textFaint}}>{historicoFiltrado.length} de {historico.length}</span>
+      </div>
+      {(filtroProductoHist||filtroMesHist!=="todos")&&(()=>{
+        const sumKg=historicoFiltrado.reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
+        const sumValor=historicoFiltrado.reduce((s,t)=>s+(t.valor_total||0),0);
+        return(<div style={{...S.card,display:"flex",gap:24,alignItems:"center",marginBottom:12,background:C.tealBg||C.bg}}>
+          <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Kg Tostados (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.navy}}>{fmt(sumKg,1)} kg</div></div>
+          <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Valor Total (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.gold}}>{fmtCOP(sumValor)}</div></div>
+        </div>);
+      })()}
+      <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha)}</td>
@@ -210,7 +236,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <td style={S.td}>{t.responsable||"-"}</td>
         <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{t.kg_cafe_tostado>0&&<button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaUBA(t)}>+ Salida</button>}<button style={{...S.btnG,fontSize:11,...(!t.kg_cafe_tostado?{color:C.orange,borderColor:C.orange+"60",fontWeight:700}:{})}} onClick={()=>abrirEditar(t)}>{t.kg_cafe_tostado?"Editar":"Completar"}</button><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(t)}>Eliminar</button></div></td>
       </tr>);})}</tbody></table></TablaScrollV>
-      {blendsTostado.filter(t=>t.kg_cafe_tostado>0).length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tuestes registrados todavia.</div>}
+      {historicoFiltrado.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{historico.length===0?"Sin tuestes registrados todavia.":"Ningun tueste coincide con el filtro."}</div>}
     </div>
     {modalSalidaUBA&&selTost&&(<Modal title={"Salida Granel / Muestra - "+selTost.codigo} onClose={()=>{setModalSalidaUBA(false);setErrSalidaUBA("");}}>
       <div style={{background:C.purpleBg,border:"1px solid "+C.purple+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
