@@ -3,6 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,Fld,Modal,Bdg}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
 import{diasEntre}from"../../lib/dates";
+import{CLIENTES_CEO_IMPORT}from"../../data/clientesCeoImport";
 
 const ETAPAS=[
   {key:"entrada_lead",label:"1. Entrada de Lead"},
@@ -221,6 +222,35 @@ export function Pipeline({oportunidades,setOportunidades,user}){
     setOportunidades(p=>p.filter(o=>o.id!==id));
   };
 
+  const importarClientesCEO=()=>{
+    const yaImportados=new Set(oportunidades.map(o=>(o.cliente||"").trim().toLowerCase()));
+    const nuevos=CLIENTES_CEO_IMPORT.filter(c=>!yaImportados.has(c.cliente.trim().toLowerCase()));
+    if(nuevos.length===0){alert("No hay clientes nuevos por importar — todos ya existen en el CRM.");return;}
+    if(!window.confirm(`Se van a importar ${nuevos.length} clientes nuevos del histórico de Café UBA. ¿Continuar?`))return;
+    const registros=nuevos.map(c=>({
+      id:genId(),
+      fecha_registro:today(),
+      cliente:c.cliente,
+      contacto:"",cargo:"",pais:"",email:"",telefono:"",
+      tipo_cliente:"",canal_entrada:"",responsable:"",
+      etapa:c.etapa,
+      estado:c.estado,
+      prioridad:c.prioridad||"",
+      potencial_estrategico:"",
+      producto_interes:"",kg_estimado:0,valor_estimado:0,
+      proxima_accion:c.proxima_accion||"",
+      fecha_proxima_accion:"",
+      motivo_perdida:c.estado==="perdido"?"Importado del histórico sin actividad reciente":"",
+      notas:c.notas||"",
+      n_compras_historico:c.n_compras_historico||0,
+      valor_total_historico_cop:c.valor_total_historico_cop||0,
+      usuario_registro:"Importación CEO",
+      historial_etapas:[{etapa:c.etapa,fecha:today()}],
+    }));
+    setOportunidades(p=>[...p,...registros]);
+    alert(`${registros.length} clientes importados correctamente.`);
+  };
+
   const abrirPerder=(id)=>{setPerderId(id);setMotivo("");setErrPerder("");};
   const confirmarPerdida=()=>{
     if(!motivo.trim()){setErrPerder("Ingresa el motivo de la perdida.");return;}
@@ -241,7 +271,10 @@ export function Pipeline({oportunidades,setOportunidades,user}){
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Embudo de Oportunidades</div>
-      <button style={S.btn} onClick={abrirNuevo}>+ Nueva Oportunidad</button>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button style={{...S.btnG,fontSize:12}} onClick={importarClientesCEO}>⬆ Importar Base CEO (160 clientes)</button>
+        <button style={S.btn} onClick={abrirNuevo}>+ Nueva Oportunidad</button>
+      </div>
     </div>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
