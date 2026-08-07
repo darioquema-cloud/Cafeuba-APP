@@ -1,6 +1,6 @@
-import{useState}from"react";
+import{useState,Fragment}from"react";
 import{C,S}from"../../theme";
-import{KPI,Fld,Modal,Bdg}from"../ui";
+import{KPI,Fld,Modal,Bdg,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
 import{diasEntre}from"../../lib/dates";
 import{CLIENTES_CEO_IMPORT}from"../../data/clientesCeoImport";
@@ -104,6 +104,7 @@ export function Pipeline({oportunidades,setOportunidades,user}){
   const [errPerder,setErrPerder]=useState("");
   const [fEtapa,setFEtapa]=useState("todas");
   const [fBusqueda,setFBusqueda]=useState("");
+  const [expandidoId,setExpandidoId]=useState(null);
 
   const setF=(k,v)=>setForm(f=>({...f,[k]:v}));
 
@@ -319,23 +320,24 @@ export function Pipeline({oportunidades,setOportunidades,user}){
             {(fEtapa!=="todas"||fBusqueda)&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFEtapa("todas");setFBusqueda("");}}>✕ Limpiar</button>}
           </div>
         </div>
-        <div style={{overflowX:"auto"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",minWidth:980}}><thead><tr>
-          {["Cliente","Tipo Cliente","Etapa","Prioridad","Incoterm / Vol.","Proxima Accion","Fecha Proxima Accion","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+        <TablaScrollV maxHeight={480}>
+        <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>
+          {["","Cliente","Etapa","Prioridad","Proxima Accion","Fecha Proxima Accion","Acciones"].map(h=>(<th key={h} style={{...S.th,position:"sticky",top:0,background:C.panel}}>{h}</th>))}
         </tr></thead>
         <tbody>{activasFiltradas.map(op=>{
           const idx=ETAPAS.findIndex(e=>e.key===etapaKeyEfectiva(op));
           const vencida=op.fecha_proxima_accion&&op.fecha_proxima_accion<today();
           const enNegociacionOMas=idx>=7;
-          return(<tr key={op.id}>
-            <td style={{...S.td,fontWeight:600}}>{op.cliente}</td>
-            <td style={{...S.td,color:C.textDim}}>{op.tipo_cliente||"—"}</td>
+          const expandido=expandidoId===op.id;
+          return(<Fragment key={op.id}>
+          <tr style={{cursor:"pointer",background:expandido?C.accentBg:"transparent"}} onClick={()=>setExpandidoId(expandido?null:op.id)}>
+            <td style={{...S.td,width:24,textAlign:"center",color:C.textDim}}>{expandido?"▾":"▸"}</td>
+            <td style={{...S.td,fontWeight:600,color:C.navy}}>{op.cliente}</td>
             <td style={S.td}>{etapaInfo(etapaKeyEfectiva(op)).label}</td>
             <td style={S.td}>{op.prioridad?<Bdg label={op.prioridad} col={PRIORIDAD_COL[op.prioridad]||C.gray}/>:"—"}</td>
-            <td style={{...S.td,color:C.textDim,fontSize:12}}>{enNegociacionOMas&&(op.incoterm||op.volumen_kg>0)?[op.incoterm,op.volumen_kg>0?fmt(op.volumen_kg)+" kg":null].filter(Boolean).join(" · "):"—"}</td>
             <td style={{...S.td,color:C.textDim}}>{op.proxima_accion||"—"}</td>
             <td style={{...S.td,color:vencida?C.red:C.textDim,fontWeight:vencida?700:400}}>{op.fecha_proxima_accion?fmtFecha(op.fecha_proxima_accion):"—"}{vencida&&" ⚠"}</td>
-            <td style={S.td}><div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            <td style={S.td} onClick={e=>e.stopPropagation()}><div style={{display:"flex",flexWrap:"wrap",gap:4}}>
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px"}} onClick={()=>abrirEditar(op)}>Editar</button>
               {idx<ETAPAS.length-1&&<button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.accent,borderColor:C.accent+"40"}} onClick={()=>avanzar(op)}>Avanzar →</button>}
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.green,borderColor:C.green+"40"}} onClick={()=>marcarGanada(op.id)}>Ganada</button>
@@ -343,9 +345,31 @@ export function Pipeline({oportunidades,setOportunidades,user}){
               <button style={{...S.btnG,fontSize:11,padding:"4px 8px",color:C.gold,borderColor:C.gold+"40"}} onClick={()=>ponerEnPausa(op.id)}>Pausa</button>
               <button style={{...S.btnG,fontSize:11,padding:"5px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarOportunidad(op.id)}>Eliminar</button>
             </div></td>
-          </tr>);
+          </tr>
+          {expandido&&(
+            <tr>
+              <td colSpan={7} style={{padding:"14px 20px",background:C.bg,borderBottom:"1px solid "+C.border}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"6px 24px",fontSize:12}}>
+                  <div><b style={{color:C.textDim}}>Tipo Cliente:</b> {op.tipo_cliente||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Contacto:</b> {op.contacto||"—"}{op.cargo?" ("+op.cargo+")":""}</div>
+                  <div><b style={{color:C.textDim}}>País:</b> {op.pais||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Email:</b> {op.email||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Teléfono:</b> {op.telefono||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Canal de Entrada:</b> {op.canal_entrada||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Responsable:</b> {op.responsable||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Potencial Estratégico:</b> {op.potencial_estrategico||"—"}</div>
+                  <div><b style={{color:C.textDim}}>Producto de Interés:</b> {op.producto_interes||"—"}</div>
+                  {enNegociacionOMas&&(op.incoterm||op.volumen_kg>0)&&<div><b style={{color:C.textDim}}>Incoterm / Vol.:</b> {[op.incoterm,op.volumen_kg>0?fmt(op.volumen_kg)+" kg":null].filter(Boolean).join(" · ")}</div>}
+                  <div><b style={{color:C.textDim}}>N° Compras Histórico:</b> {op.n_compras_historico||0}</div>
+                  <div><b style={{color:C.textDim}}>Valor Histórico:</b> {op.valor_total_historico_cop>0?fmtCOP(op.valor_total_historico_cop):"—"}</div>
+                </div>
+                {op.notas&&<div style={{marginTop:10,fontSize:12,color:C.text,borderTop:"1px solid "+C.border,paddingTop:8}}><b style={{color:C.textDim}}>Notas:</b> {op.notas}</div>}
+              </td>
+            </tr>
+          )}
+          </Fragment>);
         })}</tbody></table>
-        </div>
+        </TablaScrollV>
         {activasFiltradas.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{activas.length===0?"Sin oportunidades activas todavia.":"Ninguna oportunidad coincide con el filtro."}</div>}
       </div>
     </div>)}
