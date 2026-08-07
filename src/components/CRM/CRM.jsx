@@ -2,8 +2,9 @@ import{useState}from"react";
 import{C,S}from"../../theme";
 import{Pipeline}from"../Pipeline/Pipeline";
 import{Muestras}from"../Muestras/Muestras";
-const TABS=[["embudo","Embudo"],["muestras","Muestras"]];
-export function CRM({oportunidades,setOportunidades,muestras,setMuestras,user}){
+import{Visitas}from"../Visitas/Visitas";
+const TABS=[["embudo","Embudo"],["muestras","Muestras"],["visitas","Visitas"]];
+export function CRM({oportunidades,setOportunidades,muestras,setMuestras,visitas,setVisitas,user}){
   const [tab,setTab]=useState("embudo");
   return(<div>
     <div style={{marginBottom:16}}>
@@ -15,5 +16,6 @@ export function CRM({oportunidades,setOportunidades,muestras,setMuestras,user}){
     </div>
     {tab==="embudo"&&<Pipeline oportunidades={oportunidades} setOportunidades={setOportunidades} user={user}/>}
     {tab==="muestras"&&<Muestras muestras={muestras} setMuestras={setMuestras} oportunidades={oportunidades} user={user}/>}
+    {tab==="visitas"&&<Visitas visitas={visitas} setVisitas={setVisitas} oportunidades={oportunidades} user={user}/>}
   </div>);
 }
