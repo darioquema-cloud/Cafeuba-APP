@@ -208,6 +208,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
   const cerrarModal=()=>setModal(false);
   const addItem=(p)=>{if(items.some(it=>it.key===p.key))return;setItems(prev=>[...prev,{key:p.key,salidaId:p.salidaId,reprId:p.reprId,codigo:p.codigo,valor_kg:p.valor_kg,kg_usado:"",esStockDirecto:p.esStockDirecto,tipo:p.tipo||"lote"}]);};
   const setItemKg=(key,kg)=>setItems(prev=>prev.map(it=>it.key===key?{...it,kg_usado:kg}:it));
+  const setItemValorKg=(key,valor)=>setItems(prev=>prev.map(it=>it.key===key?{...it,valor_kg:valor}:it));
   const rmItem=(key)=>setItems(prev=>prev.filter(it=>it.key!==key));
   const guardar=()=>{
     const v=items.filter(it=>+it.kg_usado>0);
@@ -535,7 +536,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
           <td style={{padding:"4px 8px",color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:12}}>{it.codigo}</td>
           <td style={{padding:"4px"}}><input style={{...S.input,padding:"6px 8px",fontSize:12}} type="number" value={it.kg_usado} onChange={e=>setItemKg(it.key,e.target.value)}/></td>
           <td style={{padding:"4px 8px",fontSize:12,fontWeight:700,color:restante<0?C.red:C.green}}>{fmt(restante)} kg</td>
-          <td style={{padding:"4px 8px",fontSize:12,color:C.gold}}>{fmtCOP(it.valor_kg)}</td>
+          <td style={{padding:"4px"}}><input style={{...S.input,padding:"6px 8px",fontSize:12}} type="number" value={it.valor_kg} onChange={e=>setItemValorKg(it.key,e.target.value)}/></td>
           <td style={{padding:"4px 8px",fontSize:12,color:C.gold,fontWeight:700}}>{fmtCOP((+it.kg_usado||0)*(+it.valor_kg||0))}</td>
           <td style={{padding:"4px"}}><button style={{...S.btnG,padding:"5px 8px"}} onClick={()=>rmItem(it.key)}>x</button></td>
         </tr>);})}</tbody></table>)}
