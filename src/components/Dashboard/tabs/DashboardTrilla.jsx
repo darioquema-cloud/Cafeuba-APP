@@ -6,6 +6,7 @@ import{mesDe,semanaISO,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
+import{DonutChart}from"../../ui/DonutChart";
 export function DashboardTrilla({lotes,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
   const lotesTrilla=lotes.filter(l=>l.trilla?.kg_excelso>0);
@@ -196,54 +197,7 @@ export function DashboardTrilla({lotes,costos}){
       </div>
       {triPieData.length===0
         ?<div style={{color:C.textFaint,fontSize:13,textAlign:"center",padding:"40px 0"}}>Sin costos registrados para Trilladora en este periodo.</div>
-        :(()=>{
-          const PCOLS=[C.navy,C.teal,C.accent,C.green,C.purple,C.gold,C.orange,"#e11d48","#0369a1","#7c3aed","#059669","#b45309"];
-          const cx=105,cy=105,r=88;
-          if(triPieData.length===1){
-            const d=triPieData[0];const col=PCOLS[0];
-            const tipoLabel=(d.tipo||"Sin tipo").length>26?(d.tipo||"Sin tipo").slice(0,25)+"…":(d.tipo||"Sin tipo");
-            return(<svg viewBox="0 0 420 215" width="100%" style={{display:"block",overflow:"visible"}}>
-              <circle cx={cx} cy={cy} r={r} fill={col} stroke={C.panel} strokeWidth="2" opacity="0.93"/>
-              <text x={cx} y={cy+6} textAnchor="middle" fontSize="20" fill="#fff" fontWeight="800" fontFamily="Inter,sans-serif">100%</text>
-              <rect x="218" y="12" width="13" height="13" fill={col} rx="2"/>
-              <text x="236" y="22" fontSize="6.6" fill={C.text} fontWeight="600" fontFamily="Inter,sans-serif">{tipoLabel}</text>
-              <text x="236" y="37" fontSize="6.2" fill={col} fontWeight="700" fontFamily="Inter,sans-serif">100%</text>
-              <text x="418" y="37" textAnchor="end" fontSize="5.9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmtCOP(d.val)}</text>
-            </svg>);
-          }
-          let cum=0;
-          const slices=triPieData.map((d,i)=>{
-            const frac=triPieTotal>0?d.val/triPieTotal:0;
-            const s0=cum*2*Math.PI;cum+=frac;const s1=cum*2*Math.PI;
-            const x1=cx+r*Math.cos(s0-Math.PI/2),y1=cy+r*Math.sin(s0-Math.PI/2);
-            const x2=cx+r*Math.cos(s1-Math.PI/2),y2=cy+r*Math.sin(s1-Math.PI/2);
-            const path=`M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${(s1-s0)>Math.PI?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
-            const mid=(s0+s1)/2-Math.PI/2;
-            return{...d,path,col:PCOLS[i%PCOLS.length],frac,mid};
-          });
-          const ROW_H=32;
-          const legendTop=18;
-          const vH=Math.max(215,legendTop+triPieData.length*ROW_H+22);
-          return(<svg viewBox={`0 0 420 ${vH}`} width="100%" style={{display:"block",overflow:"visible"}}>
-            <circle cx={cx} cy={cy} r={r+3} fill={C.bg} stroke={C.border} strokeWidth="1"/>
-            {slices.map(s=>(
-              <g key={s.tipo}>
-                <path d={s.path} fill={s.col} stroke={C.panel} strokeWidth="2.5" opacity="0.93"/>
-                {s.frac>0.055&&(<text x={(cx+(r*0.62)*Math.cos(s.mid)).toFixed(2)} y={(cy+(r*0.62)*Math.sin(s.mid)+4).toFixed(2)} textAnchor="middle" fontSize="9.5" fill="#fff" fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>)}
-              </g>
-            ))}
-            {slices.map((s,i)=>{
-              const ry=legendTop+i*ROW_H;
-              const tipo=s.tipo&&s.tipo.length>26?s.tipo.slice(0,25)+"…":(s.tipo||"Sin tipo");
-              return(<g key={s.tipo+"_l"}>
-                <rect x="218" y={ry-8} width="13" height="13" fill={s.col} rx="2" opacity="0.9"/>
-                <text x="236" y={ry+2} fontSize="6.6" fill={C.text} fontWeight="600" fontFamily="Inter,sans-serif">{tipo}</text>
-                <text x="236" y={ry+17} fontSize="6.2" fill={s.col} fontWeight="700" fontFamily="Inter,sans-serif">{s.pct}%</text>
-                <text x="418" y={ry+17} textAnchor="end" fontSize="5.9" fill={C.textDim} fontFamily="Inter,sans-serif">{fmtCOP(s.val)}</text>
-              </g>);
-            })}
-          </svg>);
-        })()
+        :<DonutChart data={triPieData} labelKey="tipo" valueKey="val" centerLabel="valor total"/>
       }
     </div>
   </>);
