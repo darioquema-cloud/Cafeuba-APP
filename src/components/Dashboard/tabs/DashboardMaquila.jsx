@@ -2,8 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP}from"../../../lib/format";
-import{mesDe}from"../../../lib/dates";
-import{KPI,Bdg,TablaScrollV}from"../../ui";
+import{KPI}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
 export function DashboardMaquila({maquilas}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
@@ -19,6 +18,13 @@ export function DashboardMaquila({maquilas}){
     {label:"Entregado",valor:kgEntregadoTotal},
     {label:"Pendiente",valor:kgPendiente},
   ].filter(d=>d.valor>0);
+  const kgTrillados=maqAll.reduce((s,m)=>s+(m.trilla_mq?.kg_excelso||0),0);
+  const kgTostados=maqAll.reduce((s,m)=>s+(m.tostado_mq?.kg_cafe_tostado||0),0);
+  const barrasMaquila=[
+    {label:"Kg Recibidos",valor:maqKg,col:C.navy},
+    {label:"Kg Trillados",valor:kgTrillados,col:C.orange},
+    {label:"Kg Tostado",valor:kgTostados,col:C.purple},
+  ];
   return(<>
     {(()=>{const mesesDisp=MESES.filter(m=>(maquilas||[]).some(x=>x.mes===m));return(
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
@@ -43,19 +49,24 @@ export function DashboardMaquila({maquilas}){
         <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Recibido vs. Entregado</div>
         <DonutChart data={donutMaquila} labelKey="label" valueKey="valor" centerLabel="kg recibidos"/>
       </div>
-      <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Registros de Maquila</div>
-        {maqAll.length===0?<div style={{color:C.textFaint,fontSize:13}}>Sin maquilas registradas.</div>:(
-          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:620}}><thead><tr>{["Codigo","Mes","Cliente","kg Recibidos","Servicio","Estado"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-          <tbody>{[...maqAll].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).map(m=>(<tr key={m.id}>
-            <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.accent,fontSize:11}}>{m.codigo||"—"}</td>
-            <td style={{...S.td,textTransform:"capitalize"}}>{m.mes||mesDe(m.fecha)}</td>
-            <td style={{...S.td,fontWeight:600}}>{m.cliente}</td>
-            <td style={{...S.td,color:C.navy,fontWeight:600}}>{fmt(m.kg_recibidos||0)} kg</td>
-            <td style={S.td}>{m.servicio||"—"}</td>
-            <td style={S.td}><Bdg label={m.estado_pipeline||m.estado||"—"} col={C.teal} bg={C.tealBg}/></td>
-          </tr>))}
-          </tbody></table></TablaScrollV>
-        )}
+      <div style={S.card}>
+        <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Kg por Categoria</div>
+        {maqAll.length===0?<div style={{color:C.textFaint,fontSize:13}}>Sin maquilas registradas.</div>:(()=>{
+          const maxV=Math.max(...barrasMaquila.map(b=>b.valor),1);
+          return(<div style={{display:"flex",flexDirection:"column",gap:14,paddingTop:6}}>
+            {barrasMaquila.map(b=>(
+              <div key={b.label}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+                  <span style={{color:C.text,fontWeight:600}}>{b.label}</span>
+                  <span style={{color:b.col,fontWeight:700}}>{fmt(b.valor)} kg</span>
+                </div>
+                <div style={{background:C.bg,borderRadius:6,height:18,overflow:"hidden"}}>
+                  <div style={{width:(b.valor/maxV*100)+"%",height:"100%",background:b.col,borderRadius:6,transition:"width 0.3s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>);
+        })()}
       </div>
     </div>
   </>);
