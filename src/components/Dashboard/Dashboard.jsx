@@ -24,7 +24,7 @@ export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,
     {tabDash==="trilladora_cf"&&<DashboardTrilladoraCF lotesFino={lotesFino} costos={costos}/>}
     {tabDash==="blends"&&<DashboardBlends blends={blends} blendsFino={blendsFino}/>}
     {tabDash==="maquila"&&<DashboardMaquila maquilas={maquilas}/>}
-    {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado} empaques={empaques}/>}
+    {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado} empaques={empaques} lotesFino={lotesFino} blendsFino={blendsFino}/>}
     {tabDash==="informe_mensual"&&<DashboardInformeMensual lotes={lotes} costos={costos} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} blendsTostado={blendsTostado}/>}
   </div>);
 }

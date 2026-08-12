@@ -4,17 +4,52 @@ import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP}from"../../../lib/format";
 import{KPI}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
-export function DashboardUbaTostado({blendsTostado,empaques}){
+export function DashboardUbaTostado({blendsTostado,empaques,lotesFino,blendsFino}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
   const tostAll=(blendsTostado||[]).filter(t=>filtroMesDash==="todos"||t.mes===filtroMesDash);
   const emp=empaques||[];
-  const kgATostar=tostAll.reduce((s,t)=>s+(t.kg_a_tostar||0),0);
   const kgTostado=tostAll.reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
   const kgSalidas=tostAll.reduce((s,t)=>s+(t.salidas||[]).reduce((a,si)=>a+si.peso_salida,0),0);
   const kgEmpacado=emp.reduce((s,e)=>s+(e.kg_cafe_total||0),0);
   const kgStockGranel=Math.max(0,kgTostado-kgSalidas-kgEmpacado);
-  const pendientes=tostAll.filter(t=>(t.kg_a_tostar||0)>0&&(!t.kg_cafe_tostado||t.kg_cafe_tostado===0));
   const valorTotalProducido=tostAll.reduce((s,t)=>s+(t.valor_total||0),0);
+  const calcConsumido=(s,btList)=>btList.reduce((sum,t)=>{
+    const fuentes=t.fuentes||[];
+    if(fuentes.length>0){
+      return fuentes.reduce((acc,f)=>{
+        if(f.salidaId!=null)return f.salidaId===s.id?acc+(+f.kg_tomados||0):acc;
+        if(f.id!=null&&(f.kg_a_tostar!=null||f.kg_origen!=null))return t.origen_salida_id===s.id?acc+(+f.kg_a_tostar||0):acc;
+        return acc;
+      },sum);
+    }
+    if(t.origen_salida_id===s.id)return sum+(t.kg_a_tostar||0);
+    return sum;
+  },0);
+  const poolDirecto=(()=>{
+    const items=[];
+    (lotesFino||[]).forEach(lote=>{
+      const scan=(salidas,origenTipo)=>{
+        (salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{
+          const consumido=calcConsumido(s,tostAll);
+          const kgDisp=(s.peso_salida||0)-consumido;
+          items.push({kg_disponible:Math.round(kgDisp*100)/100,valor_unitario:s.valor_kg||0});
+        });
+      };
+      scan(lote.salidas_bodega,"bodega_fino");
+      scan(lote.salidas_trilladora,"bodega_tri_fino");
+    });
+    (blendsFino||[]).forEach(b=>{
+      (b.salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{
+        const consumido=calcConsumido(s,tostAll);
+        const kgDisp=(s.peso_salida||0)-consumido;
+        items.push({kg_disponible:Math.round(kgDisp*100)/100,valor_unitario:s.valor_kg||Math.round(b.costo_kg)||0});
+      });
+    });
+    return items;
+  })();
+  const pendientesDash=tostAll.filter(t=>(t.kg_a_tostar||0)>0&&(!t.kg_cafe_tostado||t.kg_cafe_tostado===0));
+  const kgDisponiblesTostar=pendientesDash.reduce((s,t)=>s+(t.kg_a_tostar||0),0)+poolDirecto.filter(p=>p.kg_disponible>0).reduce((s,p)=>s+p.kg_disponible,0);
+  const valorDisponiblesTostar=pendientesDash.reduce((s,t)=>s+(t.kg_a_tostar||0)*(t.valor_unitario||0),0)+poolDirecto.filter(p=>p.kg_disponible>0).reduce((s,p)=>s+p.kg_disponible*(p.valor_unitario||0),0);
   const rendProm=tostAll.length>0?(tostAll.reduce((s,t)=>{const ka=t.kg_a_tostar||0;return s+(ka>0?(t.kg_cafe_tostado||0)/ka*100:0);},0)/tostAll.length).toFixed(1):0;
   const donutTostado=[
     {label:"Stock en Granel",valor:kgStockGranel},
@@ -40,13 +75,12 @@ export function DashboardUbaTostado({blendsTostado,empaques}){
       </div>
     );})()}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:20}}>
-      <KPI label="Tostaciones" value={tostAll.length} col={C.purple} icon="☕" autoFit/>
-      <KPI label="Kg a Tostar" value={fmt(kgATostar)+" kg"} col={C.textDim} icon="📥" autoFit/>
       <KPI label="Kg Café Tostado" value={fmt(kgTostado)+" kg"} col={C.navy} icon="🔥" autoFit/>
       <KPI label="Rend. Promedio" value={rendProm+"%"} col={C.teal} icon="📊" autoFit/>
       <KPI label="Kg Empacado" value={fmt(kgEmpacado)+" kg"} col={C.accent} icon="📦" autoFit/>
       <KPI label="Stock en Granel" value={fmt(kgStockGranel)+" kg"} col={C.green} icon="🗄️" autoFit/>
-      <KPI label="Pendientes de Tostar" value={pendientes.length} col={C.orange} icon="⏳" autoFit/>
+      <KPI label="Kg Disponibles a Tostar" value={fmt(kgDisponiblesTostar)+" kg"} col={C.purple} icon="📥" autoFit/>
+      <KPI label="Valor Disponibles a Tostar" value={fmtCOP(valorDisponiblesTostar)} col={C.orange} icon="💵" autoFit/>
       <KPI label="Valor Total Producido" value={fmtCOP(valorTotalProducido)} col={C.gold} icon="💰" autoFit/>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16,marginBottom:20,alignItems:"start"}}>
