@@ -87,7 +87,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         (salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{
           const consumido=calcConsumido(s,blendsTostado);
           const kgDisp=(s.peso_salida||0)-consumido;
-          if(kgDisp>0.5){items.push({salidaId:s.id,origen_tipo:origenTipo,lote_id:lote.id,lote_codigo:lote.codigo,nombre:lote.producto||lote.codigo,kg_disponible:Math.round(kgDisp*100)/100,kg_consumido:consumido,kg_original:s.peso_salida,valor_unitario:s.valor_kg||0,fecha:s.fecha,lotes_blend:[]});}
+          items.push({salidaId:s.id,origen_tipo:origenTipo,lote_id:lote.id,lote_codigo:lote.codigo,nombre:lote.producto||lote.codigo,kg_disponible:Math.round(kgDisp*100)/100,kg_consumido:consumido,kg_original:s.peso_salida,valor_unitario:s.valor_kg||0,fecha:s.fecha,lotes_blend:[]});
         });
       };
       scan(lote.salidas_bodega,"bodega_fino");
@@ -97,7 +97,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       (b.salidas||[]).filter(s=>s.destino_key==="uba_tostado").forEach(s=>{
         const consumido=calcConsumido(s,blendsTostado);
         const kgDisp=(s.peso_salida||0)-consumido;
-        if(kgDisp>0.5){items.push({salidaId:s.id,origen_tipo:"blend_fino",lote_id:b.id,lote_codigo:b.codigo,nombre:b.producto_comercial||b.nombre||b.codigo,kg_disponible:Math.round(kgDisp*100)/100,kg_consumido:consumido,kg_original:s.peso_salida,valor_unitario:s.valor_kg||Math.round(b.costo_kg)||0,fecha:s.fecha,lotes_blend:(b.items||[]).map(it=>it.codigo)});}
+        items.push({salidaId:s.id,origen_tipo:"blend_fino",lote_id:b.id,lote_codigo:b.codigo,nombre:b.producto_comercial||b.nombre||b.codigo,kg_disponible:Math.round(kgDisp*100)/100,kg_consumido:consumido,kg_original:s.peso_salida,valor_unitario:s.valor_kg||Math.round(b.costo_kg)||0,fecha:s.fecha,lotes_blend:(b.items||[]).map(it=>it.codigo)});
       });
     });
     return items;
@@ -172,7 +172,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <tbody>{listosFiltrados.map(r=>(<tr key={r.id}>
           <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.orange,fontSize:11}}>{r.codigo}</td>
           <td style={{...S.td,fontWeight:600}}>{r.producto}</td>
-          <td style={S.td}>{r.tipo==="pendiente"?<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>:<Bdg label="Pool Directo" col={C.teal} bg={C.tealBg}/>}</td>
+          <td style={S.td}>{r.tipo==="pendiente"?<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>:(r.kg<=0?<Bdg label="Consumido" col={C.textDim} bg={C.bg}/>:<Bdg label="Pool Directo" col={C.teal} bg={C.tealBg}/>)}</td>
           <td style={{...S.td,textTransform:"capitalize"}}>{r.mes||"—"}</td>
           <td style={{...S.td,color:C.accent,fontWeight:700}}>{fmt(r.kg,1)} kg</td>
           <td style={{...S.td,color:C.gold}}>{r.valorUnit>0?fmtCOP(r.valorUnit):"—"}</td>
@@ -182,7 +182,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
               <button style={{...S.btn,background:C.orange,fontSize:11,padding:"6px 10px"}} onClick={()=>abrirEditar(r._raw)}>Registrar Tueste</button>
               <button style={{...S.btnG,fontSize:11,padding:"6px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarTueste(r._raw)}>Eliminar</button>
             </>):(<>
-              <button style={{...S.btn,background:C.orange,fontSize:11,padding:"6px 10px"}} onClick={()=>abrirDirecto(r._raw)}>Iniciar Batch</button>
+              <button style={{...S.btn,background:r.kg>0?C.orange:C.textFaint,fontSize:11,padding:"6px 10px",cursor:r.kg>0?"pointer":"not-allowed"}} disabled={r.kg<=0} onClick={()=>r.kg>0&&abrirDirecto(r._raw)}>Iniciar Batch</button>
               {r._raw.kg_consumido===0&&<button style={{...S.btnG,fontSize:11,padding:"6px 10px",color:C.red,borderColor:C.red+"60"}} onClick={()=>revertirSalidaDirecta(r._raw)}>Revertir</button>}
             </>)}
           </div></td>
