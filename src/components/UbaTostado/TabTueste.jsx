@@ -132,10 +132,12 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   ];
   const [filtroProductoListos,setFiltroProductoListos]=useState("");
   const [filtroMesListos,setFiltroMesListos]=useState("todos");
+  const [filtroStockListos,setFiltroStockListos]=useState("todos");
   const mesesListos=[...new Set(listosParaTostar.map(r=>r.mes).filter(Boolean))];
   const listosFiltrados=listosParaTostar.filter(r=>
     (filtroMesListos==="todos"||r.mes===filtroMesListos)&&
-    (!filtroProductoListos||r.producto.toLowerCase().includes(filtroProductoListos.toLowerCase()))
+    (!filtroProductoListos||r.producto.toLowerCase().includes(filtroProductoListos.toLowerCase()))&&
+    (filtroStockListos==="todos"||(filtroStockListos==="con_stock"?r.kg>0:r.kg<=0))
   );
   const [filtroProductoHist,setFiltroProductoHist]=useState("");
   const [filtroMesHist,setFiltroMesHist]=useState("todos");
@@ -145,14 +147,18 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     (filtroMesHist==="todos"||mesDe(t.fecha)===filtroMesHist)&&
     (!filtroProductoHist||(t.nombre_producto||"").toLowerCase().includes(filtroProductoHist.toLowerCase()))
   );
+  const kgDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg,0);
+  const valorDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg*(r.valorUnit||0),0);
+  const valorTotalTostado=blendsTostado.filter(t=>t.kg_cafe_tostado>0).reduce((s,t)=>s+(t.valor_total||0),0);
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Registros de Tueste</div>
       <button style={{...S.btn,background:C.orange}} onClick={abrirNuevo}>+ Nuevo Lote Tostado</button>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Tuestes" value={blendsTostado.length} col={C.navy}/>
-      <KPI label="Pendientes Tostar" value={pendientes.length+poolDirecto.length} col={C.orange}/>
+      <KPI label="Kg Disponibles a Tostar" value={fmt(kgDisponiblesTostar,1)+" kg"} col={C.navy}/>
+      <KPI label="Valor Kg Disponibles" value={fmtCOP(valorDisponiblesTostar)} col={C.orange}/>
+      <KPI label="Valor Total Tostado" value={fmtCOP(valorTotalTostado)} col={C.purple}/>
       <KPI label="kg Cafe Tostado" value={fmt(totalKgTostado,1)+" kg"} col={C.green}/>
       <KPI label="Rendimiento Prom." value={rendProm+"%"} col={C.gold}/>
     </div>
@@ -164,9 +170,22 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
           <option value="todos">Todos los meses</option>
           {mesesListos.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
         </select>
-        {(filtroProductoListos||filtroMesListos!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoListos("");setFiltroMesListos("todos");}}>✕ Limpiar</button>}
+        <select value={filtroStockListos} onChange={e=>setFiltroStockListos(e.target.value)} style={{...S.select,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}}>
+          <option value="todos">Todos los lotes</option>
+          <option value="con_stock">Con Stock (&gt;0)</option>
+          <option value="consumido">Consumidos (=0)</option>
+        </select>
+        {(filtroProductoListos||filtroMesListos!=="todos"||filtroStockListos!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoListos("");setFiltroMesListos("todos");setFiltroStockListos("todos");}}>✕ Limpiar</button>}
         <span style={{fontSize:11,color:C.textFaint}}>{listosFiltrados.length} de {listosParaTostar.length}</span>
       </div>
+      {(filtroProductoListos||filtroMesListos!=="todos"||filtroStockListos!=="todos")&&(()=>{
+        const sumKg=listosFiltrados.reduce((s,r)=>s+(r.kg||0),0);
+        const sumValor=listosFiltrados.reduce((s,r)=>s+(r.kg||0)*(r.valorUnit||0),0);
+        return(<div style={{...S.card,display:"flex",gap:24,alignItems:"center",marginBottom:12,background:C.tealBg||C.bg}}>
+          <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Kg (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.navy}}>{fmt(sumKg,1)} kg</div></div>
+          <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Valor Total (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.gold}}>{fmtCOP(sumValor)}</div></div>
+        </div>);
+      })()}
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse"}}>
         <thead><tr>{["Codigo","Producto","Tipo","Mes","kg","Valor/kg","Origen","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
         <tbody>{listosFiltrados.map(r=>(<tr key={r.id}>
