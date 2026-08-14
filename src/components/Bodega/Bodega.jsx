@@ -13,13 +13,51 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const [selLote,setSelLote]=useState(null);
   const [modalSubPerg,setModalSubPerg]=useState(false);
   const [editSubPergId,setEditSubPergId]=useState(null);
-  const [formSubPerg,setFormSubPerg]=useState({fecha:today(),codigo:"",kg:""});
+  const [formSubPerg,setFormSubPerg]=useState({fecha:today(),codigo:"",kg:"",valor_kg:""});
   const guardarSubPerg=()=>{
     if(!formSubPerg.codigo||!formSubPerg.kg)return;
-    const entry={fecha:formSubPerg.fecha,mes:mesDe(formSubPerg.fecha),semana:semanaISO(formSubPerg.fecha),codigo:formSubPerg.codigo,kg:+formSubPerg.kg};
+    const entry={fecha:formSubPerg.fecha,mes:mesDe(formSubPerg.fecha),semana:semanaISO(formSubPerg.fecha),codigo:formSubPerg.codigo,kg:+formSubPerg.kg,valor_kg:+formSubPerg.valor_kg||0};
     if(editSubPergId){setSubprodPerg(p=>p.map(sp=>sp.id===editSubPergId?{...sp,...entry}:sp));}
-    else{setSubprodPerg(p=>[{id:genId(),...entry},...p]);}
-    setModalSubPerg(false);setEditSubPergId(null);setFormSubPerg({fecha:today(),codigo:"",kg:""});
+    else{setSubprodPerg(p=>[{id:genId(),...entry,salidas:[]},...p]);}
+    setModalSubPerg(false);setEditSubPergId(null);setFormSubPerg({fecha:today(),codigo:"",kg:"",valor_kg:""});
+  };
+  const eliminarSubPerg=(id)=>{
+    if(!window.confirm("¿Eliminar este subproducto pergamino? Esta acción no se puede deshacer."))return;
+    setSubprodPerg(p=>p.filter(sp=>sp.id!==id));
+  };
+  const stockSubPerg=(sp)=>(sp.kg||0)-(sp.salidas||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+  const [modalSalidaSubPerg,setModalSalidaSubPerg]=useState(false);
+  const [selSubPerg,setSelSubPerg]=useState(null);
+  const [formSalidaSubPerg,setFormSalidaSubPerg]=useState({fecha:today(),kg:""});
+  const abrirSalidaSubPerg=(sp)=>{
+    const stock=stockSubPerg(sp);
+    if(stock<=0)return;
+    setSelSubPerg(sp);
+    setFormSalidaSubPerg({fecha:today(),kg:stock});
+    setModalSalidaSubPerg(true);
+  };
+  const confirmarSalidaSubPerg=()=>{
+    const sp=selSubPerg;
+    const kgEnviar=+formSalidaSubPerg.kg||0;
+    const stock=stockSubPerg(sp);
+    if(kgEnviar<=0||kgEnviar>stock){alert("Kg invalido: debe ser mayor a 0 y no superar el stock disponible ("+fmt(stock,1)+" kg).");return;}
+    const vu=+sp.valor_kg||0;
+    const nuevo={
+      id:genId(),fecha_proceso:formSalidaSubPerg.fecha,fecha_recibo:formSalidaSubPerg.fecha,semana:semanaISO(formSalidaSubPerg.fecha),mes:mesDe(formSalidaSubPerg.fecha),
+      tipo:"Manual",producto:sp.codigo||"Subproducto",codigo:sp.codigo,
+      estado:"Bodega",origen_lote:"trilla_directa",
+      cereza:[{finca:"Subproducto Pergamino",kg:kgEnviar,valor_kg:vu,flote:0,kg_proceso:kgEnviar}],
+      kg_producto:kgEnviar,bultos:0,humedad:"",conversion:1,
+      notas:"Trasladado desde Subproductos Pergamino ("+sp.codigo+")",
+      insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},
+      equipo_ferm:"",equipo_secado:"",fecha_lavado:null,fecha_fin_secado:null,
+      salidas_bodega:[{id:genId(),fecha:formSalidaSubPerg.fecha,factura:"SUBPROD",remision:"",cliente:"Trilla",destino_key:"trilla",peso_salida:kgEnviar,valor_kg:vu,valor_total:kgEnviar*vu}],
+      trilla:null,salidas_trilladora:[],pretrilla:null
+    };
+    setLotes(p=>[...p,nuevo]);
+    setSubprodPerg(p=>p.map(x=>x.id===sp.id?{...x,salidas:[...(x.salidas||[]),{id:genId(),fecha:formSalidaSubPerg.fecha,peso_salida:kgEnviar,destino:"Trilla",lote_generado_id:nuevo.id}]}:x));
+    setModalSalidaSubPerg(false);setSelSubPerg(null);
+    alert("Subproducto enviado a Trilla correctamente.");
   };
   const [modalSalida,setModalSalida]=useState(false);
   const [formSalida,setFormSalida]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:""});
@@ -379,14 +417,14 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
       </div>
       <div style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <span style={{fontWeight:600,fontSize:14,color:C.navy}}>Subproductos Pergamino</span>
-        <button style={S.btn} onClick={()=>{setFormSubPerg({fecha:today(),codigo:"",kg:""});setEditSubPergId(null);setModalSubPerg(true);}}>+ Registrar Lote</button>
+        <button style={S.btn} onClick={()=>{setFormSubPerg({fecha:today(),codigo:"",kg:"",valor_kg:""});setEditSubPergId(null);setModalSubPerg(true);}}>+ Registrar Lote</button>
       </div>
       {(subprodPerg||[]).length===0?(
         <div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin subproductos pergamino registrados. Usa el boton para registrar el primer lote.</div>
       ):(
         <div style={S.card}>
           <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>
-            {["Fecha","Mes","Semana","Codigo Subproducto","kg Subproductos",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+            {["Fecha","Mes","Semana","Codigo Subproducto","kg Subproductos","Stock","Valor/kg",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}
           </tr></thead>
           <tbody>{[...(subprodPerg||[])].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).map(sp=>(
             <tr key={sp.id}>
@@ -395,7 +433,13 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
               <td style={S.td}><Bdg label={"S"+sp.semana} col={C.teal} bg={C.tealBg}/></td>
               <td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{sp.codigo}</td>
               <td style={{...S.td,color:C.green,fontWeight:700,fontSize:15}}>{fmt(sp.kg,1)} kg</td>
-              <td style={S.td}><button style={S.btnG} onClick={()=>{setEditSubPergId(sp.id);setFormSubPerg({fecha:sp.fecha,codigo:sp.codigo,kg:sp.kg});setModalSubPerg(true);}}>Editar</button></td>
+              <td style={{...S.td,fontWeight:700,color:stockSubPerg(sp)>0?C.green:C.textDim}}>{fmt(stockSubPerg(sp),1)} kg</td>
+              <td style={{...S.td,color:C.gold}}>{sp.valor_kg>0?fmtCOP(sp.valor_kg):"—"}</td>
+              <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                <button style={S.btnG} onClick={()=>{setEditSubPergId(sp.id);setFormSubPerg({fecha:sp.fecha,codigo:sp.codigo,kg:sp.kg,valor_kg:sp.valor_kg||""});setModalSubPerg(true);}}>Editar</button>
+                <button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarSubPerg(sp.id)}>Eliminar</button>
+                <button style={{...S.btn,background:stockSubPerg(sp)>0?C.purple:C.textFaint,fontSize:12,cursor:stockSubPerg(sp)>0?"pointer":"not-allowed"}} disabled={stockSubPerg(sp)<=0} onClick={()=>abrirSalidaSubPerg(sp)}>→ Trilla</button>
+              </div></td>
             </tr>
           ))}</tbody></table></TablaScrollV>
         </div>
@@ -408,9 +452,19 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
         </div>
         <Fld label="Codigo Subproducto"><input style={S.input} placeholder="Ej: SUB-PERG-001" value={formSubPerg.codigo} onChange={e=>setFormSubPerg(p=>({...p,codigo:e.target.value}))}/></Fld>
         <Fld label="kg Subproductos"><input style={S.input} type="number" min="0" step="0.1" placeholder="kg" value={formSubPerg.kg} onChange={e=>setFormSubPerg(p=>({...p,kg:e.target.value}))}/></Fld>
+        <Fld label="Valor por kg"><input style={S.input} type="number" min="0" placeholder="COP/kg" value={formSubPerg.valor_kg} onChange={e=>setFormSubPerg(p=>({...p,valor_kg:e.target.value}))}/></Fld>
         <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
           <button style={S.btnG} onClick={()=>{setModalSubPerg(false);setEditSubPergId(null);}}>Cancelar</button>
           <button style={S.btn} onClick={guardarSubPerg}>{editSubPergId?"Guardar Cambios":"Registrar"}</button>
+        </div>
+      </Modal>)}
+      {modalSalidaSubPerg&&selSubPerg&&(<Modal title={"Salida a Trilla — "+selSubPerg.codigo} onClose={()=>{setModalSalidaSubPerg(false);setSelSubPerg(null);}}>
+        <div style={{fontSize:12,color:C.textDim,marginBottom:10}}>Stock disponible: <b style={{color:C.navy}}>{fmt(stockSubPerg(selSubPerg),1)} kg</b></div>
+        <Fld label="Fecha"><input style={S.input} type="date" value={formSalidaSubPerg.fecha} onChange={e=>setFormSalidaSubPerg(p=>({...p,fecha:e.target.value}))}/></Fld>
+        <Fld label="Kg a Enviar"><input style={S.input} type="number" min="0" max={stockSubPerg(selSubPerg)} value={formSalidaSubPerg.kg} onChange={e=>setFormSalidaSubPerg(p=>({...p,kg:e.target.value}))}/></Fld>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+          <button style={S.btnG} onClick={()=>{setModalSalidaSubPerg(false);setSelSubPerg(null);}}>Cancelar</button>
+          <button style={S.btn} onClick={confirmarSalidaSubPerg}>Enviar a Trilla</button>
         </div>
       </Modal>)}
     </>)}
