@@ -45,7 +45,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     const nuevo={
       id:genId(),fecha_proceso:formSalidaSubPerg.fecha,fecha_recibo:formSalidaSubPerg.fecha,semana:semanaISO(formSalidaSubPerg.fecha),mes:mesDe(formSalidaSubPerg.fecha),
       tipo:"Manual",producto:sp.codigo||"Subproducto",codigo:sp.codigo,
-      estado:"Bodega",origen_lote:"trilla_directa",
+      estado:"Bodega",origen_lote:"trilla_directa",origen_subprod_id:sp.id,
       cereza:[{finca:"Subproducto Pergamino",kg:kgEnviar,valor_kg:vu,flote:0,kg_proceso:kgEnviar}],
       kg_producto:kgEnviar,bultos:0,humedad:"",conversion:1,
       notas:"Trasladado desde Subproductos Pergamino ("+sp.codigo+")",

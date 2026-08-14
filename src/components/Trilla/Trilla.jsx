@@ -6,7 +6,7 @@ import{semanaISO,mesDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import{Bdg,Fld,KPI,Modal,AutoFitText,TablaScrollV}from"../ui";
-export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
+export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subprodPerg,setSubprodPerg}){
   const blankFormTrilla=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:""});
   const blankManual=()=>({fecha:today(),codigo:"",producto:"",kg:"",valor_unitario:"",notas:""});
   const [selArr,setSelArr]=useState([]);
@@ -23,6 +23,22 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
   const [auditBusq,setAuditBusq]=useState("");
   const disp=lotes.filter(l=>pesoATrilladora(l)>0&&!l.trilla?.kg_excelso);
   const tril=lotes.filter(l=>l.trilla?.kg_excelso>0);
+  const revertirLote=(l)=>{
+    if(l.origen_subprod_id){
+      if(!window.confirm(`¿Revertir este lote y devolver ${fmt(pesoATrilladora(l),1)} kg de stock a Subproductos Pergamino?`))return;
+      setLotes(p=>p.filter(x=>x.id!==l.id));
+      setSubprodPerg(p=>p.map(sp=>sp.id===l.origen_subprod_id?{...sp,salidas:(sp.salidas||[]).filter(s=>s.lote_generado_id!==l.id)}:sp));
+      alert("Lote revertido a Subproductos Pergamino.");
+    }else if(l.origen_lote==="trilla_directa"){
+      if(!window.confirm("Este lote fue creado manualmente en Trilla, sin un origen al cual devolverlo. ¿Eliminarlo por completo? Esta acción no se puede deshacer."))return;
+      setLotes(p=>p.filter(x=>x.id!==l.id));
+      alert("Lote eliminado.");
+    }else{
+      if(!window.confirm("¿Revertir este lote a Bodega Milán? Se eliminará la salida a Trilla y el stock volverá a estar disponible en Bodega Milán."))return;
+      setLotes(p=>p.map(x=>x.id===l.id?{...x,salidas_bodega:(x.salidas_bodega||[]).filter(s=>s.destino_key!=="trilla")}:x));
+      alert("Lote revertido a Bodega Milán.");
+    }
+  };
   // FIX A: opciones de mes/producto incluyen tanto lotes pendientes (l.mes) como ya trillados (mes real de trilla), para que el filtro sirva en ambos paneles
   const mesesD=[...new Set([...disp.map(l=>l.mes),...tril.map(l=>mesDe(l.trilla?.fecha_trilla))].filter(Boolean))].sort();
   const productosD=[...new Set([...disp.map(l=>l.producto),...tril.map(l=>l.producto)].filter(Boolean))].sort();
@@ -226,6 +242,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde}){
           <div style={{color:C.textDim,fontSize:12,marginBottom:4}}>{l.producto} - {[...new Set(l.cereza.map(c=>c.finca))].join(", ")}</div>
           <div style={{color:C.green,fontSize:12,fontWeight:600}}>{fmt(l.kg_producto)} kg{pesoTri>0?" | Enviado: "+fmt(pesoTri)+" kg":""}</div>
           <div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap"}}><Bdg label={l.producto} col={C.navy} bg={C.accentBg}/>{l.origen_lote==="trilla_directa"&&<Bdg label="MANUAL" col={C.orange} bg={C.orangeBg}/>}{l.equipo_ferm&&<Bdg label={l.equipo_ferm} col={C.purple} bg={C.purpleBg}/>}{l.equipo_secado&&<Bdg label={l.equipo_secado} col={C.teal} bg={C.tealBg}/>}{l.pretrilla?.factor_pretrilla?<Bdg label={"FP: "+fmt(l.pretrilla.factor_pretrilla,1)} col={C.gold} bg={C.goldBg}/>:null}</div>
+          <button style={{...S.btnG,color:C.red,borderColor:C.red+"40",fontSize:11,marginTop:6}} onClick={(e)=>{e.stopPropagation();revertirLote(l);}}>↩ Revertir</button>
         </div>);})}
       </div>
       <div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><div style={{fontWeight:600,fontSize:13,color:C.navy}}>{isEditing?"Editar Registro de Trilla":"Registro de Trilla"}</div>{selArr.length>0&&<button style={S.btnG} onClick={limpiarSeleccion}>Limpiar</button>}</div>
