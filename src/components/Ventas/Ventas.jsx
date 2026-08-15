@@ -4,14 +4,14 @@ import{MESES}from"../../data/constants";
 import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
-export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino}){
+export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
   const [filtroTipo,setFiltroTipo]=useState("todos");
   const [busqueda,setBusqueda]=useState("");
   const [clienteSel,setClienteSel]=useState(null);
 
-  const esExterno=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro")&&!s.auto_blend;
+  const esExterno=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;
 
   const todasVentas=useMemo(()=>[
     ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_bodega",origenId:l.id}))),
@@ -20,7 +20,8 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     ...(lotesFino||[]).filter(l=>l.para_trilladora).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Trilladora CF",tipoKey:"trilladora_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_trilladora",origenId:l.id}))),
     ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blends",origenId:b.id}))),
     ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blendsFino",origenId:b.id}))),
-  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino]);
+    ...(subprodVerde||[]).flatMap(sp=>(sp.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||sp.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:sp.codigo||sp.producto||"Subproducto Verde",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"subprodVerde",origenId:sp.id}))),
+  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde]);
 
   const actualizarCampoVenta=(v,campo,valor)=>{
     const patch=(setArr,field)=>{
@@ -40,6 +41,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     else if(v.origenColeccion==="lotesFino_trilladora")patch(setLotesFino,"salidas_trilladora");
     else if(v.origenColeccion==="blends")patch(setBlends,"salidas");
     else if(v.origenColeccion==="blendsFino")patch(setBlendsFino,"salidas");
+    else if(v.origenColeccion==="subprodVerde")patch(setSubprodVerde,"salidas");
   };
 
   const mesesDisp=MESES.filter(m=>todasVentas.some(v=>v.mes===m));
