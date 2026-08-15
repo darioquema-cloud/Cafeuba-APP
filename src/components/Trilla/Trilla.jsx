@@ -149,11 +149,12 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
       pasilla_elec:+form.pasilla_elec||0,catadora_dens:+form.catadora_dens||0,
       inferiores:+form.inferiores||0,cisco:+form.cisco||0,
       total_subproductos:(+form.pasilla_elec||0)+(+form.catadora_dens||0)+(+form.inferiores||0)+(+form.cisco||0),
+      salidas:[],
     };
     if(isEditing){
       setSubprodVerde(p=>{
         const idx=p.findIndex(sp=>sp.lotes_origen&&sp.lotes_origen.length===lotesOrigCodigos.length&&lotesOrigCodigos.every(c=>sp.lotes_origen.includes(c)));
-        if(idx>=0)return p.map((sp,i)=>i===idx?{...sp,...subEntry,id:sp.id}:sp);
+        if(idx>=0)return p.map((sp,i)=>i===idx?{...sp,...subEntry,id:sp.id,salidas:sp.salidas||[]}:sp);
         return[subEntry,...p];
       });
     }else{setSubprodVerde(p=>[subEntry,...p]);}
@@ -198,6 +199,45 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
   // (pesoATrilladora) quedo en 0 — no cuentan en la tarjeta "Kg Trillados" pero si en "Excelso Total".
   // Candidatos a revisar/depurar manualmente; esta vista no borra ni modifica nada.
   const candidatosBasura=tril.filter(l=>pesoATrilladora(l)===0);
+
+  // Inventario Subproductos Verde: editar/eliminar/salida (venta) sobre el registro completo (las 4 categorias juntas, un solo stock)
+  const stockSubVerde=(sp)=>(sp.total_subproductos||0)-(sp.salidas||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+  const [modalEditarSubVerde,setModalEditarSubVerde]=useState(false);
+  const [selSubVerde,setSelSubVerde]=useState(null);
+  const [formSubVerde,setFormSubVerde]=useState({});
+  const abrirEditarSubVerde=(sp)=>{
+    setSelSubVerde(sp);
+    setFormSubVerde({corte:sp.corte,producto:sp.producto,pasilla_elec:sp.pasilla_elec,catadora_dens:sp.catadora_dens,inferiores:sp.inferiores,cisco:sp.cisco});
+    setModalEditarSubVerde(true);
+  };
+  const guardarEditarSubVerde=()=>{
+    const pe=+formSubVerde.pasilla_elec||0,cd=+formSubVerde.catadora_dens||0,inf=+formSubVerde.inferiores||0,ci=+formSubVerde.cisco||0;
+    setSubprodVerde(p=>p.map(sp=>sp.id===selSubVerde.id?{...sp,corte:formSubVerde.corte,producto:formSubVerde.producto,pasilla_elec:pe,catadora_dens:cd,inferiores:inf,cisco:ci,total_subproductos:pe+cd+inf+ci}:sp));
+    setModalEditarSubVerde(false);setSelSubVerde(null);
+  };
+  const eliminarSubVerde=(id)=>{
+    if(!window.confirm("¿Eliminar este registro de Subproductos Verde? Esta acción no se puede deshacer."))return;
+    setSubprodVerde(p=>p.filter(sp=>sp.id!==id));
+  };
+  const [modalSalidaSubVerde,setModalSalidaSubVerde]=useState(false);
+  const [selSalidaSubVerde,setSelSalidaSubVerde]=useState(null);
+  const [formSalidaSubVerde,setFormSalidaSubVerde]=useState({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:"",valor_kg:"",observaciones:""});
+  const abrirSalidaSubVerde=(sp)=>{
+    const stock=stockSubVerde(sp);
+    if(stock<=0)return;
+    setSelSalidaSubVerde(sp);
+    setFormSalidaSubVerde({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:stock,valor_kg:"",observaciones:""});
+    setModalSalidaSubVerde(true);
+  };
+  const confirmarSalidaSubVerde=()=>{
+    const sp=selSalidaSubVerde;
+    const stock=stockSubVerde(sp);
+    const kg=+formSalidaSubVerde.peso_salida||0;
+    if(kg<=0||kg>stock){alert("Kg invalido: debe ser mayor a 0 y no superar el stock disponible ("+fmt(stock,1)+" kg).");return;}
+    const vk=+formSalidaSubVerde.valor_kg||0;
+    setSubprodVerde(p=>p.map(x=>x.id===sp.id?{...x,salidas:[...(x.salidas||[]),{id:genId(),fecha:formSalidaSubVerde.fecha,factura:formSalidaSubVerde.factura,remision:formSalidaSubVerde.remision,cliente:formSalidaSubVerde.cliente,destino_key:"venta",peso_salida:kg,valor_kg:vk,valor_total:kg*vk,observaciones:formSalidaSubVerde.observaciones}]}:x));
+    setModalSalidaSubVerde(false);setSelSalidaSubVerde(null);
+  };
 
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>OPERACION 04</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilla - Excelso / Merma / Pasillas</div></div>
@@ -400,7 +440,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         <div style={S.card}>
           <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario Subproductos Verde</div>
           <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:950}}><thead><tr>
-            {["Fecha Trilla","Mes","Corte","Codigo Subproducto","Producto","Lotes Origen","Pas. Electronica kg","Cat. Densimetrica kg","Inferiores kg","Cisco kg","Total kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+            {["Fecha Trilla","Mes","Corte","Codigo Subproducto","Producto","Lotes Origen","Pas. Electronica kg","Cat. Densimetrica kg","Inferiores kg","Cisco kg","Total kg","Stock","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
           </tr></thead>
           <tbody>{[...subprodVerde].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).map(sp=>(
             <tr key={sp.id}>
@@ -415,10 +455,42 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
               <td style={{...S.td,color:C.teal,fontWeight:600}}>{fmt(sp.inferiores)} kg</td>
               <td style={{...S.td,color:C.red,fontWeight:600}}>{fmt(sp.cisco)} kg</td>
               <td style={{...S.td,color:C.gold,fontWeight:800,fontSize:15}}>{fmt(sp.total_subproductos)} kg</td>
+              <td style={{...S.td,fontWeight:700,color:stockSubVerde(sp)>0?C.green:C.textDim}}>{fmt(stockSubVerde(sp),1)} kg</td>
+              <td style={S.td}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                <button style={S.btnG} onClick={()=>abrirEditarSubVerde(sp)}>Editar</button>
+                <button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarSubVerde(sp.id)}>Eliminar</button>
+                <button style={{...S.btn,background:stockSubVerde(sp)>0?C.accent:C.textFaint,fontSize:11,cursor:stockSubVerde(sp)>0?"pointer":"not-allowed"}} disabled={stockSubVerde(sp)<=0} onClick={()=>abrirSalidaSubVerde(sp)}>+ Salida</button>
+              </div></td>
             </tr>
           ))}</tbody></table></TablaScrollV>
         </div>
       )}
     </>)}
+
+    {modalEditarSubVerde&&selSubVerde&&(<Modal title={"Editar Subproducto — "+selSubVerde.codigo} onClose={()=>{setModalEditarSubVerde(false);setSelSubVerde(null);}}>
+      <Fld label="Pasilla Electronica (kg)"><input style={S.input} type="number" value={formSubVerde.pasilla_elec} onChange={e=>setFormSubVerde(p=>({...p,pasilla_elec:e.target.value}))}/></Fld>
+      <Fld label="Catadora Densimetrica (kg)"><input style={S.input} type="number" value={formSubVerde.catadora_dens} onChange={e=>setFormSubVerde(p=>({...p,catadora_dens:e.target.value}))}/></Fld>
+      <Fld label="Inferiores (kg)"><input style={S.input} type="number" value={formSubVerde.inferiores} onChange={e=>setFormSubVerde(p=>({...p,inferiores:e.target.value}))}/></Fld>
+      <Fld label="Cisco (kg)"><input style={S.input} type="number" value={formSubVerde.cisco} onChange={e=>setFormSubVerde(p=>({...p,cisco:e.target.value}))}/></Fld>
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+        <button style={S.btnG} onClick={()=>{setModalEditarSubVerde(false);setSelSubVerde(null);}}>Cancelar</button>
+        <button style={S.btn} onClick={guardarEditarSubVerde}>Guardar</button>
+      </div>
+    </Modal>)}
+
+    {modalSalidaSubVerde&&selSalidaSubVerde&&(<Modal title={"Salida — "+selSalidaSubVerde.codigo} onClose={()=>{setModalSalidaSubVerde(false);setSelSalidaSubVerde(null);}}>
+      <div style={{fontSize:12,color:C.textDim,marginBottom:10}}>Stock disponible: <b style={{color:C.navy}}>{fmt(stockSubVerde(selSalidaSubVerde),1)} kg</b></div>
+      <Fld label="Fecha" half><input style={S.input} type="date" value={formSalidaSubVerde.fecha} onChange={e=>setFormSalidaSubVerde(p=>({...p,fecha:e.target.value}))}/></Fld>
+      <Fld label="Cliente" half><input style={S.input} value={formSalidaSubVerde.cliente} onChange={e=>setFormSalidaSubVerde(p=>({...p,cliente:e.target.value}))}/></Fld>
+      <Fld label="Factura" half><input style={S.input} value={formSalidaSubVerde.factura} onChange={e=>setFormSalidaSubVerde(p=>({...p,factura:e.target.value}))}/></Fld>
+      <Fld label="Remision" half><input style={S.input} value={formSalidaSubVerde.remision} onChange={e=>setFormSalidaSubVerde(p=>({...p,remision:e.target.value}))}/></Fld>
+      <Fld label="Kg a Enviar" half><input style={S.input} type="number" min="0" max={stockSubVerde(selSalidaSubVerde)} value={formSalidaSubVerde.peso_salida} onChange={e=>setFormSalidaSubVerde(p=>({...p,peso_salida:e.target.value}))}/></Fld>
+      <Fld label="Valor por kg" half><input style={S.input} type="number" min="0" value={formSalidaSubVerde.valor_kg} onChange={e=>setFormSalidaSubVerde(p=>({...p,valor_kg:e.target.value}))}/></Fld>
+      <Fld label="Observaciones"><input style={S.input} value={formSalidaSubVerde.observaciones} onChange={e=>setFormSalidaSubVerde(p=>({...p,observaciones:e.target.value}))}/></Fld>
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+        <button style={S.btnG} onClick={()=>{setModalSalidaSubVerde(false);setSelSalidaSubVerde(null);}}>Cancelar</button>
+        <button style={S.btn} onClick={confirmarSalidaSubVerde}>Registrar Salida</button>
+      </div>
+    </Modal>)}
   </div>);
 }
