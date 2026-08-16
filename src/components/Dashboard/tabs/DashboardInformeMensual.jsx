@@ -3,7 +3,7 @@ import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
-import{calcCostoTri}from"../../../lib/costing";
+import{calcCosto,calcCostoTri}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
 import{KPI}from"../../ui";
 import{jsPDF}from"jspdf";
@@ -54,6 +54,42 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const subprodPergMes=(subprodPerg||[]).filter(sp=>filtroMes==="todos"||sp.mes===filtroMes).reduce((s,sp)=>s+(sp.kg||0),0);
   const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
   const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
+
+  // ---- BLOQUE: Inventarios ----
+  // Stock al cierre del mes filtrado (histórico) — se asume el año actual para construir la
+  // fecha de corte, ya que los meses se guardan como texto ("julio") sin año. Si el informe
+  // se usa para un mes de un año distinto al actual, este cálculo quedaría desalineado.
+  const anioActual=new Date().getFullYear();
+  const idxMesFiltro=MESES.indexOf(filtroMes);
+  const finDeMesCutoff=filtroMes==="todos"||idxMesFiltro<0?null:(()=>{
+    const mesNum=idxMesFiltro+1;
+    const ultimoDia=new Date(anioActual,mesNum,0).getDate();
+    return `${anioActual}-${String(mesNum).padStart(2,"0")}-${String(ultimoDia).padStart(2,"0")}`;
+  })();
+  const kgHastaCutoff=(salidas)=>(salidas||[]).filter(s=>!finDeMesCutoff||s.fecha<=finDeMesCutoff).reduce((s,x)=>s+(x.peso_salida||0),0);
+
+  const lotesConProductoIM=lotes.filter(l=>(l.kg_producto||0)>0);
+  const stockBMkg=lotesConProductoIM.reduce((s,l)=>s+Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
+  const stockBMvalor=lotesConProductoIM.reduce((s,l)=>{const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));const cl=calcCosto(l,costos,lotes);return s+stock*(cl?cl.total:0);},0);
+  const valorUnitBM=stockBMkg>0?stockBMvalor/stockBMkg:0;
+
+  const costoKgExDeIM=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
+  const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0);
+  const stockBTkg=lotesTrilladosIM.reduce((s,l)=>s+Math.max(0,(l.trilla.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora)),0);
+  const stockBTvalor=lotesTrilladosIM.reduce((s,l)=>{const stock=Math.max(0,(l.trilla.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora));return s+stock*costoKgExDeIM(l);},0);
+  const valorUnitBT=stockBTkg>0?stockBTvalor/stockBTkg:0;
+
+  const stockBLkg=(blends||[]).reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
+  const stockBLvalor=(blends||[]).reduce((s,b)=>{const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));return s+stock*(b.costo_kg||0);},0);
+  const valorUnitBL=stockBLkg>0?stockBLvalor/stockBLkg:0;
+
+  // Central de Beneficio: solo estado ACTUAL (no hay historial de cambios de estado por lote)
+  const cbEnProceso=lotes.filter(l=>l.estado==="Proceso");
+  const kgCBProceso=cbEnProceso.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
+  const valorCBProceso=cbEnProceso.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
+  const cbEnSecado=lotes.filter(l=>l.estado==="Secado");
+  const kgCBSecado=cbEnSecado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
+  const valorCBSecado=cbEnSecado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
 
   const esVentaReal=s=>s.destino_key!=="ajuste_inventario";
   const enMes=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
@@ -158,6 +194,23 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     y=doc.lastAutoTable.finalY+16;
 
     doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."]],
+      body:[
+        ["Bodega Milán",fmt(stockBMkg)+" kg",fmtCOP(stockBMvalor),fmtCOP(valorUnitBM)],
+        ["Bodega Trilladora",fmt(stockBTkg)+" kg",fmtCOP(stockBTvalor),fmtCOP(valorUnitBT)],
+        ["Blend",fmt(stockBLkg)+" kg",fmtCOP(stockBLvalor),fmtCOP(valorUnitBL)],
+        ["Central Beneficio - En Proceso (actual)",fmt(kgCBProceso)+" kg",fmtCOP(valorCBProceso),"—"],
+        ["Central Beneficio - En Secado (actual)",fmt(kgCBSecado)+" kg",fmtCOP(valorCBSecado),"—"],
+      ],
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+16;
+
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
     doc.text("Costos y Rentabilidad",14,y);
     autoTable(doc,{
       startY:y+4,
@@ -237,6 +290,23 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       <KPI label="Subproductos Pergamino" value={fmt(subprodPergMes)+" kg"} col={C.teal} icon="📦" autoFit/>
       <KPI label="Subproductos Verde Con Proceso" value={fmt(subprodVerdeConProcesoMes)+" kg"} col={C.accent} icon="🌿" autoFit/>
       <KPI label="Subproductos Verde Sin Proceso" value={fmt(subprodVerdeSinProcesoMes)+" kg"} col={C.orange} icon="🌱" autoFit/>
+    </div>
+
+    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:4}}>Inventarios</div>
+    <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
+    <div style={S.card}>
+      <table style={{width:"100%",borderCollapse:"collapse",marginBottom:14}}>
+        <thead><tr>{["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>
+          <tr><td style={S.td}>Bodega Milán</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBMkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBMvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBM)}</td></tr>
+          <tr><td style={S.td}>Bodega Trilladora</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBTkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBTvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBT)}</td></tr>
+          <tr><td style={S.td}>Blend</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBLkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBLvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBL)}</td></tr>
+        </tbody>
+      </table>
+      <div style={{borderTop:"1px solid "+C.border,paddingTop:10}}>
+        <div style={{fontSize:12,fontWeight:600,color:C.navy,marginBottom:6}}>Central de Beneficio <span style={{fontWeight:400,color:C.textFaint,fontSize:11}}>(estado actual — sin historial de fechas disponible)</span></div>
+        <div style={{fontSize:12,color:C.text}}>En Proceso: <b>{fmt(kgCBProceso)} kg</b> ({fmtCOP(valorCBProceso)}) &nbsp;·&nbsp; En Secado: <b>{fmt(kgCBSecado)} kg</b> ({fmtCOP(valorCBSecado)})</div>
+      </div>
     </div>
 
     <div style={S.card}>
