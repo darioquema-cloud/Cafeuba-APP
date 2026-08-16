@@ -4,6 +4,7 @@ import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
 import{calcCostoTri}from"../../../lib/costing";
+import{pesoATrilladora}from"../../../lib/stock";
 import{KPI}from"../../ui";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
@@ -23,6 +24,28 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const kgExcelsoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   const kgExcelsoTotal=kgExcelsoVerde+kgExcelsoFino;
   const kgTostado=blendsTostado.filter(t=>filtroMes==="todos"||t.mes===filtroMes).reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
+
+  // ---- BLOQUE: Producción y Rendimientos ----
+  const kgCerezaTerminados=lotesTerminadosMes.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
+  const relacionCerezaPergVerde=kgPergamino>0?kgCerezaTerminados/kgPergamino:0;
+  const kgPergTrilladoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
+  const pctMermaTrillaVerde=kgPergTrilladoVerde>0?(1-(kgExcelsoVerde/kgPergTrilladoVerde))*100:0;
+
+  // Factor Rendimiento Industrial Ponderado y Desviación vs. Pretrilla — misma lógica que DashboardTrilla.jsx (líneas ~41-53)
+  const lotesTrillaVerdeMes=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes));
+  const esPlaceholderCargaIM=(l)=>l.trilla?.factor_industrial===0&&l.trilla?.factor_pretrilla_ponderado===0;
+  const ponderarIM=(arr,campo)=>{
+    const con=arr.filter(l=>!esPlaceholderCargaIM(l)&&l.trilla?.[campo]!=null);
+    const peso=con.reduce((s,l)=>s+pesoATrilladora(l),0);
+    return peso>0?con.reduce((s,l)=>s+pesoATrilladora(l)*l.trilla[campo],0)/peso:null;
+  };
+  const factorIndustrialPonderado=ponderarIM(lotesTrillaVerdeMes,"factor_industrial");
+  const factorPretrillaPonderadoIM=ponderarIM(lotesTrillaVerdeMes,"factor_pretrilla_ponderado");
+  const desviacionFactor=(factorIndustrialPonderado!=null&&factorPretrillaPonderadoIM!=null)?(factorIndustrialPonderado-factorPretrillaPonderadoIM):null;
+
+  const kgPergTrilladoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
+  const pctMermaTrillaFino=kgPergTrilladoFino>0?(1-(kgExcelsoFino/kgPergTrilladoFino))*100:0;
+  const pctRendTrillaFino=kgPergTrilladoFino>0?(kgExcelsoFino/kgPergTrilladoFino)*100:0;
 
   const esVentaReal=s=>s.destino_key!=="ajuste_inventario";
   const enMes=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
@@ -93,6 +116,24 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
     let y=doc.lastAutoTable.finalY+12;
     doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Producción y Rendimientos",14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Línea","Indicador","Valor","Referencia"]],
+      body:[
+        ["Verde","Relación Cereza:Pergamino",relacionCerezaPergVerde.toFixed(1)+" : 1","≈4.3–5.2 : 1"],
+        ["Verde","Factor Rendimiento Industrial Ponderado",factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—","Más bajo = mejor calidad"],
+        ["Verde","% Merma en Trilla",pctMermaTrillaVerde.toFixed(1)+"%","≈17.6–18.4%"],
+        ["Verde","Desviación Factor Industrial vs. Pretrilla",desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—","Negativo = trilla rindió mejor"],
+        ["Café Fino","% Merma en Trilla",pctMermaTrillaFino.toFixed(1)+"%","≈17.6–18.4%"],
+        ["Café Fino","% Rendimiento en Trilla",pctRendTrillaFino.toFixed(1)+"%","≈90.6–96%"],
+      ],
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+16;
+
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
     doc.text("Costos y Rentabilidad",14,y);
     autoTable(doc,{
       startY:y+4,
@@ -137,6 +178,33 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       <KPI label="Kg Café Tostado" value={fmt(kgTostado)+" kg"} col={C.purple} icon="🔥" autoFit/>
       <KPI label="Costo Total/kg" value={fmtCOP(promTotal)} col={C.gold} icon="💰" autoFit/>
       <KPI label="Valor Total Vendido" value={fmtCOP(valorTotalVendido)} col={C.green} icon="💵" autoFit/>
+    </div>
+
+    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:10}}>Producción y Rendimientos</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:24}}>
+      <div style={S.card}>
+        <div style={{fontWeight:700,fontSize:13,color:C.teal,marginBottom:12}}>Línea Verde</div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr>{["Indicador","Valor","Referencia (Cenicafé)"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+          <tbody>
+            <tr><td style={S.td}>Relación Cereza:Pergamino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{relacionCerezaPergVerde.toFixed(1)} : 1</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈4.3–5.2 : 1</td></tr>
+            <tr><td style={S.td}>Factor Rendimiento Industrial Ponderado</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—"}</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>Factor CERPER-2, más bajo = mejor calidad</td></tr>
+            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaVerde.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈17.6–18.4%</td></tr>
+            <tr><td style={S.td}>Desviación Factor Industrial vs. Pretrilla</td><td style={{...S.td,fontWeight:700,color:desviacionFactor!=null&&desviacionFactor>0?C.red:C.green}}>{desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—"}</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>Negativo = trilla rindió mejor que lo estimado</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style={S.card}>
+        <div style={{fontWeight:700,fontSize:13,color:C.purple,marginBottom:12}}>Línea Café Fino</div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr>{["Indicador","Valor","Referencia (Cenicafé)"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+          <tbody>
+            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaFino.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈17.6–18.4%</td></tr>
+            <tr><td style={S.td}>% Rendimiento en Trilla</td><td style={{...S.td,fontWeight:700,color:C.green}}>{pctRendTrillaFino.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈90.6–96%</td></tr>
+          </tbody>
+        </table>
+        <div style={{fontSize:11,color:C.textFaint,marginTop:10}}>Café Fino no pasa por etapa de cereza — compra directa de pergamino.</div>
+      </div>
     </div>
 
     <div style={S.card}>
