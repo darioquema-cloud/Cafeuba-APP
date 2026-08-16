@@ -150,6 +150,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
       inferiores:+form.inferiores||0,cisco:+form.cisco||0,
       total_subproductos:(+form.pasilla_elec||0)+(+form.catadora_dens||0)+(+form.inferiores||0)+(+form.cisco||0),
       salidas:[],
+      con_proceso:form.con_proceso,
     };
     if(isEditing){
       setSubprodVerde(p=>{

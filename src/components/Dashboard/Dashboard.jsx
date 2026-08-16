@@ -10,7 +10,7 @@ import{DashboardMaquila}from"./tabs/DashboardMaquila";
 import{DashboardUbaTostado}from"./tabs/DashboardUbaTostado";
 import{DashboardInformeMensual}from"./tabs/DashboardInformeMensual";
 const TABS_DASH=[["central","Central de Procesos"],["bodega_milan","Bodega Milan"],["trilla","Trilla"],["bodega_cf","Bodega Cafe Fino"],["trilladora_cf","Trilladora CF"],["blends","Blends"],["maquila","Maquila"],["uba_tostado","UBA Tostado"],["informe_mensual","Informe Mensual"]];
-export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino,empaques}){
+export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,blendsFino,empaques,subprodPerg,subprodVerde}){
   const [tabDash,setTabDash]=useState("central");
   return(<div>
     <div style={{marginBottom:16}}><div style={{color:C.textDim,fontSize:11,fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>PLAN MILAN - CENTRAL DE BENEFICIO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Dashboard Ejecutivo</div><div style={{color:C.textDim,fontSize:12,marginTop:3}}>{new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</div></div>
@@ -25,6 +25,6 @@ export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,
     {tabDash==="blends"&&<DashboardBlends blends={blends} blendsFino={blendsFino}/>}
     {tabDash==="maquila"&&<DashboardMaquila maquilas={maquilas}/>}
     {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado} empaques={empaques} lotesFino={lotesFino} blendsFino={blendsFino}/>}
-    {tabDash==="informe_mensual"&&<DashboardInformeMensual lotes={lotes} costos={costos} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} blendsTostado={blendsTostado}/>}
+    {tabDash==="informe_mensual"&&<DashboardInformeMensual lotes={lotes} costos={costos} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} blendsTostado={blendsTostado} subprodPerg={subprodPerg} subprodVerde={subprodVerde}/>}
   </div>);
 }

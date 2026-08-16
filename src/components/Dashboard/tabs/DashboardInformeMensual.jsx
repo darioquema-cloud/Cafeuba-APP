@@ -8,7 +8,7 @@ import{pesoATrilladora}from"../../../lib/stock";
 import{KPI}from"../../ui";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
-export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado}){
+export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado,subprodPerg,subprodVerde}){
   const [filtroMes,setFiltroMes]=useState("todos");
   const mesesDisp=MESES.filter(m=>lotes.some(l=>l.mes===m));
   // Excluye cargas directas, trilla directa y registros manuales: no representan cereza
@@ -28,7 +28,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   // ---- BLOQUE: Producción y Rendimientos ----
   const kgCerezaTerminados=lotesTerminadosMes.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const relacionCerezaPergVerde=kgPergamino>0?kgCerezaTerminados/kgPergamino:0;
-  const kgPergTrilladoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
+  const kgPergTrilladoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+pesoATrilladora(l),0);
   const pctMermaTrillaVerde=kgPergTrilladoVerde>0?(1-(kgExcelsoVerde/kgPergTrilladoVerde))*100:0;
 
   // Factor Rendimiento Industrial Ponderado y Desviación vs. Pretrilla — misma lógica que DashboardTrilla.jsx (líneas ~41-53)
@@ -46,6 +46,14 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const kgPergTrilladoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
   const pctMermaTrillaFino=kgPergTrilladoFino>0?(1-(kgExcelsoFino/kgPergTrilladoFino))*100:0;
   const pctRendTrillaFino=kgPergTrilladoFino>0?(kgExcelsoFino/kgPergTrilladoFino)*100:0;
+
+  // ---- BLOQUE: Subproductos ----
+  // subprodPerg/subprodVerde guardan su propio campo "mes" (calculado con mesDe al registrarse,
+  // igual que se muestra en la columna "Mes" de la tabla Subproductos Verde en Trilla.jsx) —
+  // se filtra directo por sp.mes, sin pasar por mesTrillaDe (que espera un lote con l.trilla).
+  const subprodPergMes=(subprodPerg||[]).filter(sp=>filtroMes==="todos"||sp.mes===filtroMes).reduce((s,sp)=>s+(sp.kg||0),0);
+  const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
+  const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
 
   const esVentaReal=s=>s.destino_key!=="ajuste_inventario";
   const enMes=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
@@ -105,6 +113,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       body:[
         ["Kg Cereza Recibida",fmt(kgCereza,1)+" kg"],
         ["Kg Pergamino Producido",fmt(kgPergamino,1)+" kg"],
+        ["Trilla",fmt(kgPergTrilladoVerde,1)+" kg"],
         ["Kg Excelso Producido",fmt(kgExcelsoTotal,1)+" kg"],
         ["Kg Café Tostado",fmt(kgTostado,1)+" kg"],
         ["Costo Total/kg (a+b+c)",fmtCOP(promTotal)],
@@ -127,6 +136,21 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
         ["Verde","Desviación Factor Industrial vs. Pretrilla",desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—","Negativo = trilla rindió mejor"],
         ["Café Fino","% Merma en Trilla",pctMermaTrillaFino.toFixed(1)+"%","≈17.6–18.4%"],
         ["Café Fino","% Rendimiento en Trilla",pctRendTrillaFino.toFixed(1)+"%","≈90.6–96%"],
+      ],
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+16;
+
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("Subproductos",14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Indicador","Valor"]],
+      body:[
+        ["Subproductos Pergamino",fmt(subprodPergMes,1)+" kg"],
+        ["Subproductos Verde Con Proceso",fmt(subprodVerdeConProcesoMes,1)+" kg"],
+        ["Subproductos Verde Sin Proceso",fmt(subprodVerdeSinProcesoMes,1)+" kg"],
       ],
       styles:{fontSize:9},
       headStyles:{fillColor:[30,58,95]},
@@ -174,6 +198,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}>
       <KPI label="Kg Cereza Recibida" value={fmt(kgCereza)+" kg"} col={C.teal} icon="☕" autoFit/>
       <KPI label="Kg Pergamino Producido" value={fmt(kgPergamino)+" kg"} col={C.accent} icon="📦" autoFit/>
+      <KPI label="Trilla" value={fmt(kgPergTrilladoVerde)+" kg"} col={C.orange} icon="⚙️" autoFit/>
       <KPI label="Kg Excelso Producido" value={fmt(kgExcelsoTotal)+" kg"} col={C.navy} icon="⚙️" autoFit/>
       <KPI label="Kg Café Tostado" value={fmt(kgTostado)+" kg"} col={C.purple} icon="🔥" autoFit/>
       <KPI label="Costo Total/kg" value={fmtCOP(promTotal)} col={C.gold} icon="💰" autoFit/>
@@ -205,6 +230,13 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
         </table>
         <div style={{fontSize:11,color:C.textFaint,marginTop:10}}>Café Fino no pasa por etapa de cereza — compra directa de pergamino.</div>
       </div>
+    </div>
+
+    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:10}}>Subproductos</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:24}}>
+      <KPI label="Subproductos Pergamino" value={fmt(subprodPergMes)+" kg"} col={C.teal} icon="📦" autoFit/>
+      <KPI label="Subproductos Verde Con Proceso" value={fmt(subprodVerdeConProcesoMes)+" kg"} col={C.accent} icon="🌿" autoFit/>
+      <KPI label="Subproductos Verde Sin Proceso" value={fmt(subprodVerdeSinProcesoMes)+" kg"} col={C.orange} icon="🌱" autoFit/>
     </div>
 
     <div style={S.card}>
