@@ -5,9 +5,16 @@ import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
-import{KPI}from"../../ui";
+import{DonutChart}from"../../ui/DonutChart";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
+const SeccionTitulo=({n,children})=>(
+  <div style={{display:"flex",alignItems:"center",gap:8,marginTop:24,marginBottom:10}}>
+    <span style={{background:C.accentBg,color:C.accent,fontSize:11,fontWeight:700,width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{n}</span>
+    <span style={{fontWeight:700,fontSize:14,color:C.navy}}>{children}</span>
+  </div>
+);
+
 export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado,subprodPerg,subprodVerde}){
   const [filtroMes,setFiltroMes]=useState("todos");
   const mesesDisp=MESES.filter(m=>lotes.some(l=>l.mes===m));
@@ -91,16 +98,18 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const kgCBSecado=cbEnSecado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const valorCBSecado=cbEnSecado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
 
-  const esVentaReal=s=>s.destino_key!=="ajuste_inventario";
-  const enMes=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
-  const valorExcelso=
-    lotes.flatMap(l=>(l.salidas_trilladora||[]).filter(esVentaReal).filter(enMes)).reduce((s,x)=>s+(x.valor_total||0),0)
-    +lotesFino.flatMap(l=>(l.salidas_trilladora||[]).filter(esVentaReal).filter(enMes)).reduce((s,x)=>s+(x.valor_total||0),0);
-  const valorBlend=
-    blends.flatMap(b=>(b.salidas||[]).filter(esVentaReal).filter(enMes)).reduce((s,x)=>s+(x.valor_total||0),0)
-    +blendsFino.flatMap(b=>(b.salidas||[]).filter(esVentaReal).filter(enMes)).reduce((s,x)=>s+(x.valor_total||0),0);
-  const valorTostado=blendsTostado.flatMap(t=>(t.salidas||[]).filter(esVentaReal).filter(enMes)).reduce((s,x)=>s+(x.valor_total||0),0);
-  const valorTotalVendido=valorExcelso+valorBlend+valorTostado;
+  // Ingreso real facturado — replica esExterno de Ventas.jsx (mismas 7 fuentes, sin blendsTostado)
+  const esExternoIM=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;
+  const enMesIM=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
+  const ingresoDeArrIM=(arr,campo)=>(arr||[]).flatMap(x=>(x[campo]||[]).filter(esExternoIM).filter(enMesIM)).reduce((s,sal)=>s+(sal.peso_salida||0)*(sal.precio_venta_kg||0),0);
+  const ingresoRealMes=
+    ingresoDeArrIM(lotes,"salidas_bodega")+
+    ingresoDeArrIM(lotes,"salidas_trilladora")+
+    ingresoDeArrIM(lotesFino,"salidas_bodega")+
+    ingresoDeArrIM(lotesFino,"salidas_trilladora")+
+    ingresoDeArrIM(blends,"salidas")+
+    ingresoDeArrIM(blendsFino,"salidas")+
+    ingresoDeArrIM(subprodVerde,"salidas");
 
   // ---- BLOQUE 2: Costos y Rentabilidad ----
   // Replica exacta de promA/promB/promC/promTotal de DashboardCentral.jsx (solo lotes terminados)
@@ -136,50 +145,63 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const exportarInformePDF=()=>{
     const mesLabel=filtroMes==="todos"?"Todos los meses":filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1);
     const doc=new jsPDF();
+    doc.setFillColor(30,58,95);
+    doc.rect(0,0,210,32,"F");
+    doc.setTextColor(255,255,255);
     doc.setFont("helvetica","bold");doc.setFontSize(16);
-    doc.text("CafeUba — Central de Beneficio",14,18);
-    doc.setFont("helvetica","normal");doc.setFontSize(12);
-    doc.text("Informe Mensual — "+mesLabel,14,26);
+    doc.text("CafeUba — Central de Beneficio",14,16);
+    doc.setFont("helvetica","normal");doc.setFontSize(11);
+    doc.text("Informe Mensual — "+mesLabel,14,25);
+    doc.setTextColor(0,0,0);
+    let y=42;
+
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(120,120,120);
+    doc.text("COSTO TOTAL/KG",14,y);doc.text("VALOR VENDIDO",84,y);doc.text("KG EXCELSO PRODUCIDO",154,y);
+    doc.setFont("helvetica","bold");doc.setFontSize(15);doc.setTextColor(30,58,95);
+    doc.text(fmtCOP(costoTotalConD),14,y+8);
+    doc.text(fmtCOP(ingresoRealMes),84,y+8);
+    doc.text(fmt(kgExcelsoTotal)+" kg",154,y+8);
+    doc.setTextColor(0,0,0);
+    y+=20;
 
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("Resumen Ejecutivo",14,38);
+    doc.text("1. Producción",14,y);
     autoTable(doc,{
-      startY:42,
+      startY:y+4,
       head:[["Indicador","Valor"]],
       body:[
-        ["Kg Cereza Recibida",fmt(kgCereza,1)+" kg"],
-        ["Kg Pergamino Producido",fmt(kgPergamino,1)+" kg"],
+        ["Cereza Recibida",fmt(kgCereza,1)+" kg"],
+        ["Pergamino Producido",fmt(kgPergamino,1)+" kg"],
         ["Trilla",fmt(kgPergTrilladoVerde,1)+" kg"],
-        ["Kg Excelso Producido",fmt(kgExcelsoTotal,1)+" kg"],
-        ["Kg Café Tostado",fmt(kgTostado,1)+" kg"],
-        ["Costo Total/kg (a+b+c)",fmtCOP(promTotal)],
-        ["Valor Total Vendido",fmtCOP(valorTotalVendido)],
+        ["Café Tostado",fmt(kgTostado,1)+" kg"],
       ],
       styles:{fontSize:9},
       headStyles:{fillColor:[30,58,95]},
     });
+    y=doc.lastAutoTable.finalY+14;
 
-    let y=doc.lastAutoTable.finalY+12;
+    if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("Producción y Rendimientos",14,y);
+    doc.text("2. Rendimientos vs. Referencia Cenicafé",14,y);
     autoTable(doc,{
       startY:y+4,
-      head:[["Línea","Indicador","Valor","Referencia"]],
+      head:[["Línea","Indicador","Valor"]],
       body:[
-        ["Verde","Relación Cereza:Pergamino",relacionCerezaPergVerde.toFixed(1)+" : 1","≈4.3–5.2 : 1"],
-        ["Verde","Factor Rendimiento Industrial Ponderado",factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—","Más bajo = mejor calidad"],
-        ["Verde","% Merma en Trilla",pctMermaTrillaVerde.toFixed(1)+"%","≈17.6–18.4%"],
-        ["Verde","Desviación Factor Industrial vs. Pretrilla",desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—","Negativo = trilla rindió mejor"],
-        ["Café Fino","% Merma en Trilla",pctMermaTrillaFino.toFixed(1)+"%","≈17.6–18.4%"],
-        ["Café Fino","% Rendimiento en Trilla",pctRendTrillaFino.toFixed(1)+"%","≈90.6–96%"],
+        ["Verde","Relación Cereza:Pergamino",relacionCerezaPergVerde.toFixed(1)+" : 1"],
+        ["Verde","Factor Rendimiento Industrial Ponderado",factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—"],
+        ["Verde","% Merma en Trilla",pctMermaTrillaVerde.toFixed(1)+"%"],
+        ["Verde","Desviación Factor Industrial vs. Pretrilla",desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—"],
+        ["Café Fino","% Merma en Trilla",pctMermaTrillaFino.toFixed(1)+"%"],
+        ["Café Fino","% Rendimiento en Trilla",pctRendTrillaFino.toFixed(1)+"%"],
       ],
       styles:{fontSize:9},
       headStyles:{fillColor:[30,58,95]},
     });
     y=doc.lastAutoTable.finalY+16;
 
+    if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("Subproductos",14,y);
+    doc.text("3. Subproductos",14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Indicador","Valor"]],
@@ -193,8 +215,9 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     });
     y=doc.lastAutoTable.finalY+16;
 
+    if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
+    doc.text("4. Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."]],
@@ -210,22 +233,26 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     });
     y=doc.lastAutoTable.finalY+16;
 
+    if(y>250){doc.addPage();y=20;}
+    const totalBarra=promA+promB+promC+D;
+    if(totalBarra>0){
+      const anchoTotal=180;let xBarra=14;
+      const partes=[[promA,[216,90,48]],[promB,[239,159,39]],[promC,[55,138,221]],[D,[29,158,117]]];
+      partes.forEach(([val,[r,g,b]])=>{
+        const w=(val/totalBarra)*anchoTotal;
+        doc.setFillColor(r,g,b);
+        doc.rect(xBarra,y,w,6,"F");
+        xBarra+=w;
+      });
+      y+=12;
+      doc.setFontSize(8);doc.setTextColor(100,100,100);
+      doc.text("Materia Prima · Insumos · Central de Beneficio · Trilladora",14,y);
+      doc.setTextColor(0,0,0);
+      y+=10;
+    }
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("Costos y Rentabilidad",14,y);
-    autoTable(doc,{
-      startY:y+4,
-      head:[["Componente","Valor por kg","Descripción"]],
-      body:[
-        ["a",fmtCOP(promA),"Materia Prima"],
-        ["b",fmtCOP(promB),"Insumos"],
-        ["c",fmtCOP(promC),"Central de Beneficio"],
-        ["D",fmtCOP(D)+(filtroMes==="todos"?" (prom. ponderado)":""),"Trilladora"],
-        ["Total",fmtCOP(costoTotalConD),"Costo total por kg (a+b+c+D)"],
-      ],
-      styles:{fontSize:9},
-      headStyles:{fillColor:[30,58,95]},
-    });
-    y=doc.lastAutoTable.finalY+16;
+    doc.text("5. Costos y Rentabilidad",14,y);
+    y+=16;
 
     if(y>270){doc.addPage();y=20;}
     doc.setFont("helvetica","normal");doc.setFontSize(9);
@@ -247,52 +274,63 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       {filtroMes!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</span>}
     </div>
 
-    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:10}}>Resumen Ejecutivo</div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}>
-      <KPI label="Kg Cereza Recibida" value={fmt(kgCereza)+" kg"} col={C.teal} icon="☕" autoFit/>
-      <KPI label="Kg Pergamino Producido" value={fmt(kgPergamino)+" kg"} col={C.accent} icon="📦" autoFit/>
-      <KPI label="Trilla" value={fmt(kgPergTrilladoVerde)+" kg"} col={C.orange} icon="⚙️" autoFit/>
-      <KPI label="Kg Excelso Producido" value={fmt(kgExcelsoTotal)+" kg"} col={C.navy} icon="⚙️" autoFit/>
-      <KPI label="Kg Café Tostado" value={fmt(kgTostado)+" kg"} col={C.purple} icon="🔥" autoFit/>
-      <KPI label="Costo Total/kg" value={fmtCOP(promTotal)} col={C.gold} icon="💰" autoFit/>
-      <KPI label="Valor Total Vendido" value={fmtCOP(valorTotalVendido)} col={C.green} icon="💵" autoFit/>
+    <div style={{...S.card,marginBottom:20}}>
+      <div style={{fontSize:11,color:C.textDim,marginBottom:10}}>📅 {filtroMes==="todos"?"Todos los meses":filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:20}}>
+        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Costo Total/kg</div><div style={{fontSize:26,fontWeight:700,color:C.navy}}>{fmtCOP(costoTotalConD)}</div></div>
+        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Valor Vendido</div><div style={{fontSize:26,fontWeight:700,color:C.green}}>{fmtCOP(ingresoRealMes)}</div></div>
+        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Kg Excelso Producido</div><div style={{fontSize:26,fontWeight:700,color:C.navy}}>{fmt(kgExcelsoTotal)} kg</div></div>
+      </div>
     </div>
 
-    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:10}}>Producción y Rendimientos</div>
+    <SeccionTitulo n={1}>Producción</SeccionTitulo>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:24}}>
+      {[["Cereza Recibida",kgCereza],["Pergamino Producido",kgPergamino],["Trilla",kgPergTrilladoVerde],["Café Tostado",kgTostado]].map(([label,val])=>(
+        <div key={label} style={{background:C.panel,borderRadius:8,padding:10}}>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:3}}>{label}</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.navy}}>{fmt(val)} kg</div>
+        </div>
+      ))}
+    </div>
+
+    <SeccionTitulo n={2}>Rendimientos vs. Referencia Cenicafé</SeccionTitulo>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:24}}>
       <div style={S.card}>
         <div style={{fontWeight:700,fontSize:13,color:C.teal,marginBottom:12}}>Línea Verde</div>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr>{["Indicador","Valor","Referencia (Cenicafé)"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+          <thead><tr>{["Indicador","Valor"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
           <tbody>
-            <tr><td style={S.td}>Relación Cereza:Pergamino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{relacionCerezaPergVerde.toFixed(1)} : 1</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈4.3–5.2 : 1</td></tr>
-            <tr><td style={S.td}>Factor Rendimiento Industrial Ponderado</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—"}</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>Factor CERPER-2, más bajo = mejor calidad</td></tr>
-            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaVerde.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈17.6–18.4%</td></tr>
-            <tr><td style={S.td}>Desviación Factor Industrial vs. Pretrilla</td><td style={{...S.td,fontWeight:700,color:desviacionFactor!=null&&desviacionFactor>0?C.red:C.green}}>{desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—"}</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>Negativo = trilla rindió mejor que lo estimado</td></tr>
+            <tr><td style={S.td}>Relación Cereza:Pergamino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{relacionCerezaPergVerde.toFixed(1)} : 1</td></tr>
+            <tr><td style={S.td}>Factor Rendimiento Industrial Ponderado</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{factorIndustrialPonderado!=null?factorIndustrialPonderado.toFixed(2):"—"}</td></tr>
+            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaVerde.toFixed(1)}%</td></tr>
+            <tr><td style={S.td}>Desviación Factor Industrial vs. Pretrilla</td><td style={{...S.td,fontWeight:700,color:desviacionFactor!=null&&desviacionFactor>0?C.red:C.green}}>{desviacionFactor!=null?(desviacionFactor>0?"+":"")+desviacionFactor.toFixed(2):"—"}</td></tr>
           </tbody>
         </table>
       </div>
       <div style={S.card}>
         <div style={{fontWeight:700,fontSize:13,color:C.purple,marginBottom:12}}>Línea Café Fino</div>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr>{["Indicador","Valor","Referencia (Cenicafé)"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+          <thead><tr>{["Indicador","Valor"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
           <tbody>
-            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaFino.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈17.6–18.4%</td></tr>
-            <tr><td style={S.td}>% Rendimiento en Trilla</td><td style={{...S.td,fontWeight:700,color:C.green}}>{pctRendTrillaFino.toFixed(1)}%</td><td style={{...S.td,color:C.textFaint,fontSize:11}}>≈90.6–96%</td></tr>
+            <tr><td style={S.td}>% Merma en Trilla</td><td style={{...S.td,fontWeight:700,color:C.orange}}>{pctMermaTrillaFino.toFixed(1)}%</td></tr>
+            <tr><td style={S.td}>% Rendimiento en Trilla</td><td style={{...S.td,fontWeight:700,color:C.green}}>{pctRendTrillaFino.toFixed(1)}%</td></tr>
           </tbody>
         </table>
         <div style={{fontSize:11,color:C.textFaint,marginTop:10}}>Café Fino no pasa por etapa de cereza — compra directa de pergamino.</div>
       </div>
     </div>
 
-    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:10}}>Subproductos</div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:24}}>
-      <KPI label="Subproductos Pergamino" value={fmt(subprodPergMes)+" kg"} col={C.teal} icon="📦" autoFit/>
-      <KPI label="Subproductos Verde Con Proceso" value={fmt(subprodVerdeConProcesoMes)+" kg"} col={C.accent} icon="🌿" autoFit/>
-      <KPI label="Subproductos Verde Sin Proceso" value={fmt(subprodVerdeSinProcesoMes)+" kg"} col={C.orange} icon="🌱" autoFit/>
+    <SeccionTitulo n={3}>Subproductos</SeccionTitulo>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:24}}>
+      {[["Pergamino",subprodPergMes],["Verde Con Proceso",subprodVerdeConProcesoMes],["Verde Sin Proceso",subprodVerdeSinProcesoMes]].map(([label,val])=>(
+        <div key={label} style={{background:C.panel,borderRadius:8,padding:10}}>
+          <div style={{fontSize:11,color:C.textDim,marginBottom:3}}>{label}</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.navy}}>{fmt(val)} kg</div>
+        </div>
+      ))}
     </div>
 
-    <div style={{fontWeight:700,fontSize:14,color:C.navy,marginTop:24,marginBottom:4}}>Inventarios</div>
+    <SeccionTitulo n={4}>Inventarios</SeccionTitulo>
     <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
     <div style={S.card}>
       <table style={{width:"100%",borderCollapse:"collapse",marginBottom:14}}>
@@ -309,18 +347,9 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       </div>
     </div>
 
+    <SeccionTitulo n={5}>Costos por Kilogramo</SeccionTitulo>
     <div style={S.card}>
-      <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:14}}>Costos y Rentabilidad</div>
-      <table style={{width:"100%",borderCollapse:"collapse"}}>
-        <thead><tr>{["Componente","Valor por kg","Descripción"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-        <tbody>
-          <tr><td style={{...S.td,fontWeight:700,color:C.gold}}>a</td><td style={{...S.td,fontWeight:600}}>{fmtCOP(promA)}</td><td style={S.td}>Materia Prima</td></tr>
-          <tr><td style={{...S.td,fontWeight:700,color:C.purple}}>b</td><td style={{...S.td,fontWeight:600}}>{fmtCOP(promB)}</td><td style={S.td}>Insumos</td></tr>
-          <tr><td style={{...S.td,fontWeight:700,color:C.orange}}>c</td><td style={{...S.td,fontWeight:600}}>{fmtCOP(promC)}</td><td style={S.td}>Central de Beneficio</td></tr>
-          <tr><td style={{...S.td,fontWeight:700,color:C.teal}}>D</td><td style={{...S.td,fontWeight:600}}>{fmtCOP(D)}{filtroMes==="todos"&&<span style={{color:C.textFaint,fontSize:10}}> (prom. ponderado)</span>}</td><td style={S.td}>Trilladora</td></tr>
-          <tr style={{background:C.accentBg}}><td style={{...S.td,fontWeight:800,color:C.navy}}>Total</td><td style={{...S.td,fontWeight:800,color:C.navy}}>{fmtCOP(costoTotalConD)}</td><td style={{...S.td,fontWeight:700,color:C.navy}}>Costo total por kg (a+b+c+D)</td></tr>
-        </tbody>
-      </table>
+      <DonutChart data={[{tipo:"Materia Prima",val:promA},{tipo:"Insumos",val:promB},{tipo:"Central de Beneficio",val:promC},{tipo:"Trilladora",val:D}]} labelKey="tipo" valueKey="val" centerLabel="valor/kg" fmtSecondary={d=>fmtCOP(d.val)}/>
     </div>
   </div>);
 }
