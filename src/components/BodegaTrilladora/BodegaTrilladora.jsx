@@ -49,6 +49,14 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
   const totalValorSalidasT=trilledLotes.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
   const totalKgSalidasT=trilledLotes.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(b=>b.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.peso_salida||0),0),0);
   const stockActual=trilledLotes.reduce((s,l)=>{const stock=stockTrilladora(l);const costoKg=costoKgExDe(l);return {kg:s.kg+stock,val:s.val+(costoKg*stock)};},{kg:0,val:0});
+  // Costo Prom/kg Ex: excluye lotes con stock<=0 o costoKg<=0 (dato de costo roto/incompleto),
+  // para que no bajen artificialmente el promedio. Solo para esta tarjeta — NO usar para Stock Disponible.
+  const stockPonderadoValido=trilledLotes.reduce((s,l)=>{
+    const stock=stockTrilladora(l);
+    const costoKg=costoKgExDe(l);
+    if(stock<=0||costoKg<=0)return s;
+    return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
+  },{kg:0,val:0});
   // Costo Total/kg ponderado del grupo (mismo calculo usado en la tabla principal) — se reutiliza
   // tal cual en el Acta de Inventario (PDF) para que el valor no se recalcule con otra formula.
   const costoKgGrupoDe=(grupo)=>{
@@ -305,7 +313,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
       <KPI label="Excelso Total" value={fmt(totalExcelso)+" kg"} col={C.green}/>
       <KPIDoble label="Stock Disponible" kgVal={fmt(stockActual.kg)+" kg"} valorVal={fmtCOP(stockActual.val)} col={C.accent}/>
       <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasT)+" kg"} valorVal={fmtCOP(totalValorSalidasT)} col={C.purple}/>
-      <KPI label="Costo Prom/kg Ex" value={stockActual.kg>0?fmtCOP(Math.round(stockActual.val/stockActual.kg)):"—"} col={C.teal}/>
+      <KPI label="Costo Prom/kg Ex" value={stockPonderadoValido.kg>0?fmtCOP(Math.round(stockPonderadoValido.val/stockPonderadoValido.kg)):"—"} col={C.teal}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
       {[["inventario","Inventario"],["historico","Historico de Salidas"],["inventario_mensual","Inventario Mensual"]].map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tab===k?600:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
