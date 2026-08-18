@@ -78,7 +78,16 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const lotesConProductoIM=lotes.filter(l=>(l.kg_producto||0)>0);
   const stockBMkg=lotesConProductoIM.reduce((s,l)=>s+Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
   const stockBMvalor=lotesConProductoIM.reduce((s,l)=>{const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));const cl=calcCosto(l,costos,lotes);return s+stock*(cl?cl.total:0);},0);
-  const valorUnitBM=stockBMkg>0?stockBMvalor/stockBMkg:0;
+  // Valor/kg Prom.: excluye lotes con stock<=0 o costo<=0 (dato roto/incompleto) del promedio ponderado.
+  // stockBMkg/stockBMvalor NO cambian — siguen siendo el total real.
+  const ponderadoValidoBM=lotesConProductoIM.reduce((s,l)=>{
+    const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));
+    const cl=calcCosto(l,costos,lotes);
+    const costo=cl?cl.total:0;
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
+  },{kg:0,val:0});
+  const valorUnitBM=ponderadoValidoBM.kg>0?ponderadoValidoBM.val/ponderadoValidoBM.kg:0;
 
   const costoKgExDeIM=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
   const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0);
@@ -89,11 +98,23 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   },{kg:0,val:0});
   const stockBTkg=stockActualIM.kg;
   const stockBTvalor=stockActualIM.val;
-  const valorUnitBT=stockBTkg>0?stockBTvalor/stockBTkg:0;
+  const ponderadoValidoBT=lotesTrilladosIM.reduce((s,l)=>{
+    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
+    const costoKg=costoKgExDeIM(l);
+    if(stock<=0||costoKg<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costoKg};
+  },{kg:0,val:0});
+  const valorUnitBT=ponderadoValidoBT.kg>0?ponderadoValidoBT.val/ponderadoValidoBT.kg:0;
 
   const stockBLkg=(blends||[]).reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
   const stockBLvalor=(blends||[]).reduce((s,b)=>{const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));return s+stock*(b.costo_kg||0);},0);
-  const valorUnitBL=stockBLkg>0?stockBLvalor/stockBLkg:0;
+  const ponderadoValidoBL=(blends||[]).reduce((s,b)=>{
+    const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));
+    const costo=b.costo_kg||0;
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
+  },{kg:0,val:0});
+  const valorUnitBL=ponderadoValidoBL.kg>0?ponderadoValidoBL.val/ponderadoValidoBL.kg:0;
 
   // Central de Beneficio: solo estado ACTUAL (no hay historial de cambios de estado por lote)
   const cbEnProceso=lotes.filter(l=>l.estado==="Proceso");
