@@ -82,8 +82,13 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
   const costoKgExDeIM=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
   const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0);
-  const stockBTkg=lotesTrilladosIM.reduce((s,l)=>s+Math.max(0,(l.trilla.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora)),0);
-  const stockBTvalor=lotesTrilladosIM.reduce((s,l)=>{const stock=Math.max(0,(l.trilla.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora));return s+stock*costoKgExDeIM(l);},0);
+  const stockActualIM=lotesTrilladosIM.reduce((s,l)=>{
+    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
+    const costoKg=costoKgExDeIM(l);
+    return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
+  },{kg:0,val:0});
+  const stockBTkg=stockActualIM.kg;
+  const stockBTvalor=stockActualIM.val;
   const valorUnitBT=stockBTkg>0?stockBTvalor/stockBTkg:0;
 
   const stockBLkg=(blends||[]).reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
