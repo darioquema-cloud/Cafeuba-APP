@@ -4,7 +4,7 @@ import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../../lib/costing";
-import{pesoATrilladora}from"../../../lib/stock";
+import{pesoATrilladora,pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{DonutChart}from"../../ui/DonutChart";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
@@ -15,7 +15,7 @@ const SeccionTitulo=({n,children})=>(
   </div>
 );
 
-export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado,subprodPerg,subprodVerde}){
+export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado,empaques,subprodPerg,subprodVerde}){
   const [filtroMes,setFiltroMes]=useState("todos");
   const mesesDisp=MESES.filter(m=>lotes.some(l=>l.mes===m));
   // Excluye cargas directas, trilla directa y registros manuales: no representan cereza
@@ -117,6 +117,68 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   },{kg:0,val:0});
   const valorUnitBL=ponderadoValidoBL.kg>0?ponderadoValidoBL.val/ponderadoValidoBL.kg:0;
 
+  // Bodega Café Fino (excluye lotes para_trilladora, usa costo_compra_kg directo)
+  const lotesFinoBodegaIM=(lotesFino||[]).filter(l=>!l.para_trilladora&&(l.kg_producto||0)>0&&(!finDeMesCutoff||(l.fecha||"")<=finDeMesCutoff));
+  const stockBCFkg=lotesFinoBodegaIM.reduce((s,l)=>s+Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
+  const stockBCFvalor=lotesFinoBodegaIM.reduce((s,l)=>{const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));return s+stock*(l.costo_compra_kg||0);},0);
+  const ponderadoValidoBCF=lotesFinoBodegaIM.reduce((s,l)=>{
+    const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));
+    const costo=l.costo_compra_kg||0;
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
+  },{kg:0,val:0});
+  const valorUnitBCF=ponderadoValidoBCF.kg>0?ponderadoValidoBCF.val/ponderadoValidoBCF.kg:0;
+
+  // Bodega Trilladora Café Fino — replica local de calcCostoTri para el centro "Bodega Cafe Fino"
+  // (mismo patrón usado en DashboardTrilladoraCF.jsx; calcCostoTri está fija al centro "Trilladora").
+  const calcCostoTriCFIM=(mes,costosArr,lotesFinoArr)=>{
+    const costosTri=(costosArr||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
+    const kgEx=(lotesFinoArr||[]).filter(l=>l.para_trilladora&&mesTrillaDe(l)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
+    return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
+  };
+  const costoKgExDeIMFino=(l)=>{const cl=calcCosto(l,costos,lotesFino);const t=l.trilla;const D=calcCostoTriCFIM(mesTrillaDe(l),costos,lotesFino).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladoraCafeFino(l))/t.kg_excelso)+Math.round(D):0;};
+  const lotesTrilladosFinoIM=(lotesFino||[]).filter(l=>l.para_trilladora&&l.trilla?.kg_excelso>0&&(!finDeMesCutoff||(l.trilla.fecha_trilla||"")<=finDeMesCutoff));
+  const stockActualFinoIM=lotesTrilladosFinoIM.reduce((s,l)=>{
+    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
+    const costoKg=costoKgExDeIMFino(l);
+    return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
+  },{kg:0,val:0});
+  const stockBTCFkg=stockActualFinoIM.kg;
+  const stockBTCFvalor=stockActualFinoIM.val;
+  const ponderadoValidoBTCF=lotesTrilladosFinoIM.reduce((s,l)=>{
+    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
+    const costoKg=costoKgExDeIMFino(l);
+    if(stock<=0||costoKg<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costoKg};
+  },{kg:0,val:0});
+  const valorUnitBTCF=ponderadoValidoBTCF.kg>0?ponderadoValidoBTCF.val/ponderadoValidoBTCF.kg:0;
+
+  // Blend Café Fino
+  const blendsFinoExistentesIM=(blendsFino||[]).filter(b=>!finDeMesCutoff||(b.fecha||"")<=finDeMesCutoff);
+  const stockBLCFkg=blendsFinoExistentesIM.reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
+  const stockBLCFvalor=blendsFinoExistentesIM.reduce((s,b)=>{const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));return s+stock*(b.costo_kg||0);},0);
+  const ponderadoValidoBLCF=blendsFinoExistentesIM.reduce((s,b)=>{
+    const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));
+    const costo=b.costo_kg||0;
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
+  },{kg:0,val:0});
+  const valorUnitBLCF=ponderadoValidoBLCF.kg>0?ponderadoValidoBLCF.val/ponderadoValidoBLCF.kg:0;
+
+  // Kg Tostados — stock en granel (kg_cafe_tostado - salidas directas - empacado), mismo cálculo que stockGranel en TabTueste.jsx/TabEmpaque.jsx
+  const kgEmpacadoHastaCutoff=(tostadoId)=>(empaques||[]).filter(e=>e.lote_tostado_id===tostadoId&&(!finDeMesCutoff||(e.fecha||"")<=finDeMesCutoff)).reduce((s,e)=>s+(e.kg_cafe_total||0),0);
+  const tostadosExistentesIM=(blendsTostado||[]).filter(t=>(t.kg_cafe_tostado||0)>0&&(!finDeMesCutoff||(t.fecha||"")<=finDeMesCutoff));
+  const costoKgTostadoIM=(t)=>t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?t.valor_total/t.kg_cafe_tostado:0);
+  const stockTOSTkg=tostadosExistentesIM.reduce((s,t)=>s+Math.max(0,(t.kg_cafe_tostado||0)-kgHastaCutoff(t.salidas)-kgEmpacadoHastaCutoff(t.id)),0);
+  const stockTOSTvalor=tostadosExistentesIM.reduce((s,t)=>{const stock=Math.max(0,(t.kg_cafe_tostado||0)-kgHastaCutoff(t.salidas)-kgEmpacadoHastaCutoff(t.id));return s+stock*costoKgTostadoIM(t);},0);
+  const ponderadoValidoTOST=tostadosExistentesIM.reduce((s,t)=>{
+    const stock=Math.max(0,(t.kg_cafe_tostado||0)-kgHastaCutoff(t.salidas)-kgEmpacadoHastaCutoff(t.id));
+    const costo=costoKgTostadoIM(t);
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
+  },{kg:0,val:0});
+  const valorUnitTOST=ponderadoValidoTOST.kg>0?ponderadoValidoTOST.val/ponderadoValidoTOST.kg:0;
+
   // Central de Beneficio: solo estado ACTUAL (no hay historial de cambios de estado por lote)
   const cbEnProceso=lotes.filter(l=>l.estado==="Proceso");
   const kgCBProceso=cbEnProceso.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
@@ -137,6 +199,16 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     ingresoDeArrIM(blends,"salidas")+
     ingresoDeArrIM(blendsFino,"salidas")+
     ingresoDeArrIM(subprodVerde,"salidas");
+
+  // ---- BLOQUE: Ventas (excluye Subproducto Verde — muestras/pasilla — a diferencia de ingresoRealMes) ----
+  const kgDeArrIM=(arr,campo)=>(arr||[]).flatMap(x=>(x[campo]||[]).filter(esExternoIM).filter(enMesIM)).reduce((s,sal)=>s+(sal.peso_salida||0),0);
+  const valorTotalDeArrIM=(arr,campo)=>(arr||[]).flatMap(x=>(x[campo]||[]).filter(esExternoIM).filter(enMesIM)).reduce((s,sal)=>s+(sal.valor_total||0),0);
+
+  const kgVendidosMes=kgDeArrIM(lotes,"salidas_bodega")+kgDeArrIM(lotes,"salidas_trilladora")+kgDeArrIM(lotesFino,"salidas_bodega")+kgDeArrIM(lotesFino,"salidas_trilladora")+kgDeArrIM(blends,"salidas")+kgDeArrIM(blendsFino,"salidas");
+
+  const valorFacturadoMes=ingresoDeArrIM(lotes,"salidas_bodega")+ingresoDeArrIM(lotes,"salidas_trilladora")+ingresoDeArrIM(lotesFino,"salidas_bodega")+ingresoDeArrIM(lotesFino,"salidas_trilladora")+ingresoDeArrIM(blends,"salidas")+ingresoDeArrIM(blendsFino,"salidas");
+
+  const costoDeVentaMes=valorTotalDeArrIM(lotes,"salidas_bodega")+valorTotalDeArrIM(lotes,"salidas_trilladora")+valorTotalDeArrIM(lotesFino,"salidas_bodega")+valorTotalDeArrIM(lotesFino,"salidas_trilladora")+valorTotalDeArrIM(blends,"salidas")+valorTotalDeArrIM(blendsFino,"salidas");
 
   // ---- BLOQUE 2: Costos y Rentabilidad ----
   // Replica exacta de promA/promB/promC/promTotal de DashboardCentral.jsx (solo lotes terminados)
@@ -183,7 +255,66 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     let y=42;
 
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("1. Producción",14,y);
+    doc.text("1. Ventas",14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Indicador","Valor"]],
+      body:[
+        ["Kg Vendidos (sin muestras ni pasilla)",fmt(kgVendidosMes,1)+" kg"],
+        ["Valor Facturado",fmtCOP(valorFacturadoMes)],
+        ["Costo de Venta",fmtCOP(costoDeVentaMes)],
+      ],
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+14;
+
+    if(y>250){doc.addPage();y=20;}
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("2. Costos y Rentabilidad",14,y);
+    y+=6;
+    const totalBarra=promA+promB+promC+D;
+    if(totalBarra>0){
+      const anchoTotal=180;let xBarra=14;
+      const partes=[[promA,[216,90,48]],[promB,[239,159,39]],[promC,[55,138,221]],[D,[29,158,117]]];
+      partes.forEach(([val,[r,g,b]])=>{
+        const w=(val/totalBarra)*anchoTotal;
+        doc.setFillColor(r,g,b);
+        doc.rect(xBarra,y,w,6,"F");
+        xBarra+=w;
+      });
+      y+=12;
+      doc.setFontSize(8);doc.setTextColor(100,100,100);
+      doc.text("Materia Prima · Insumos · Central de Beneficio · Trilladora",14,y);
+      doc.setTextColor(0,0,0);
+      y+=14;
+    }
+
+    if(y>250){doc.addPage();y=20;}
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("3. Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
+    autoTable(doc,{
+      startY:y+4,
+      head:[["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."]],
+      body:[
+        ["Bodega Milán",fmt(stockBMkg)+" kg",fmtCOP(stockBMvalor),fmtCOP(valorUnitBM)],
+        ["Bodega Trilladora",fmt(stockBTkg)+" kg",fmtCOP(stockBTvalor),fmtCOP(valorUnitBT)],
+        ["Blend",fmt(stockBLkg)+" kg",fmtCOP(stockBLvalor),fmtCOP(valorUnitBL)],
+        ["Bodega Café Fino",fmt(stockBCFkg)+" kg",fmtCOP(stockBCFvalor),fmtCOP(valorUnitBCF)],
+        ["Bodega Trilladora Café Fino",fmt(stockBTCFkg)+" kg",fmtCOP(stockBTCFvalor),fmtCOP(valorUnitBTCF)],
+        ["Blend Café Fino",fmt(stockBLCFkg)+" kg",fmtCOP(stockBLCFvalor),fmtCOP(valorUnitBLCF)],
+        ["Kg Tostados",fmt(stockTOSTkg)+" kg",fmtCOP(stockTOSTvalor),fmtCOP(valorUnitTOST)],
+        ["Central Beneficio - En Proceso (actual)",fmt(kgCBProceso)+" kg",fmtCOP(valorCBProceso),"—"],
+        ["Central Beneficio - En Secado (actual)",fmt(kgCBSecado)+" kg",fmtCOP(valorCBSecado),"—"],
+      ],
+      styles:{fontSize:9},
+      headStyles:{fillColor:[30,58,95]},
+    });
+    y=doc.lastAutoTable.finalY+16;
+
+    if(y>250){doc.addPage();y=20;}
+    doc.setFont("helvetica","bold");doc.setFontSize(11);
+    doc.text("4. Producción",14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Indicador","Valor"]],
@@ -200,7 +331,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
     if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("2. Rendimientos vs. Referencia Cenicafé",14,y);
+    doc.text("5. Rendimientos vs. Referencia Cenicafé",14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Línea","Indicador","Valor"]],
@@ -219,7 +350,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
     if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("3. Subproductos",14,y);
+    doc.text("6. Subproductos",14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Indicador","Valor"]],
@@ -232,45 +363,6 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       headStyles:{fillColor:[30,58,95]},
     });
     y=doc.lastAutoTable.finalY+16;
-
-    if(y>250){doc.addPage();y=20;}
-    doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("4. Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
-    autoTable(doc,{
-      startY:y+4,
-      head:[["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."]],
-      body:[
-        ["Bodega Milán",fmt(stockBMkg)+" kg",fmtCOP(stockBMvalor),fmtCOP(valorUnitBM)],
-        ["Bodega Trilladora",fmt(stockBTkg)+" kg",fmtCOP(stockBTvalor),fmtCOP(valorUnitBT)],
-        ["Blend",fmt(stockBLkg)+" kg",fmtCOP(stockBLvalor),fmtCOP(valorUnitBL)],
-        ["Central Beneficio - En Proceso (actual)",fmt(kgCBProceso)+" kg",fmtCOP(valorCBProceso),"—"],
-        ["Central Beneficio - En Secado (actual)",fmt(kgCBSecado)+" kg",fmtCOP(valorCBSecado),"—"],
-      ],
-      styles:{fontSize:9},
-      headStyles:{fillColor:[30,58,95]},
-    });
-    y=doc.lastAutoTable.finalY+16;
-
-    if(y>250){doc.addPage();y=20;}
-    const totalBarra=promA+promB+promC+D;
-    if(totalBarra>0){
-      const anchoTotal=180;let xBarra=14;
-      const partes=[[promA,[216,90,48]],[promB,[239,159,39]],[promC,[55,138,221]],[D,[29,158,117]]];
-      partes.forEach(([val,[r,g,b]])=>{
-        const w=(val/totalBarra)*anchoTotal;
-        doc.setFillColor(r,g,b);
-        doc.rect(xBarra,y,w,6,"F");
-        xBarra+=w;
-      });
-      y+=12;
-      doc.setFontSize(8);doc.setTextColor(100,100,100);
-      doc.text("Materia Prima · Insumos · Central de Beneficio · Trilladora",14,y);
-      doc.setTextColor(0,0,0);
-      y+=10;
-    }
-    doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("5. Costos y Rentabilidad",14,y);
-    y+=16;
 
     if(y>270){doc.addPage();y=20;}
     doc.setFont("helvetica","normal");doc.setFontSize(9);
@@ -292,7 +384,40 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       {filtroMes!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</span>}
     </div>
 
-    <SeccionTitulo n={1}>Producción</SeccionTitulo>
+    <SeccionTitulo n={1}>Ventas</SeccionTitulo>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14,marginBottom:24}}>
+      <div style={{...S.card}}><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Kg Vendidos</div><div style={{fontSize:22,fontWeight:700,color:C.navy}}>{fmt(kgVendidosMes)} kg</div><div style={{fontSize:10,color:C.textFaint,marginTop:2}}>sin muestras ni pasilla</div></div>
+      <div style={{...S.card}}><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Valor Facturado</div><div style={{fontSize:22,fontWeight:700,color:C.green}}>{fmtCOP(valorFacturadoMes)}</div></div>
+      <div style={{...S.card}}><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Costo de Venta</div><div style={{fontSize:22,fontWeight:700,color:C.orange}}>{fmtCOP(costoDeVentaMes)}</div></div>
+    </div>
+
+    <SeccionTitulo n={2}>Costos y Rentabilidad</SeccionTitulo>
+    <div style={S.card}>
+      <DonutChart data={[{tipo:"Materia Prima",val:promA},{tipo:"Insumos",val:promB},{tipo:"Central de Beneficio",val:promC},{tipo:"Trilladora",val:D}]} labelKey="tipo" valueKey="val" centerLabel="valor/kg" fmtSecondary={d=>fmtCOP(d.val)}/>
+    </div>
+
+    <SeccionTitulo n={3}>Inventarios</SeccionTitulo>
+    <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
+    <div style={S.card}>
+      <table style={{width:"100%",borderCollapse:"collapse",marginBottom:14}}>
+        <thead><tr>{["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>
+          <tr><td style={S.td}>Bodega Milán</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBMkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBMvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBM)}</td></tr>
+          <tr><td style={S.td}>Bodega Trilladora</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBTkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBTvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBT)}</td></tr>
+          <tr><td style={S.td}>Blend</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBLkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBLvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBL)}</td></tr>
+          <tr><td style={S.td}>Bodega Café Fino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBCFkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBCFvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBCF)}</td></tr>
+          <tr><td style={S.td}>Bodega Trilladora Café Fino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBTCFkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBTCFvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBTCF)}</td></tr>
+          <tr><td style={S.td}>Blend Café Fino</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBLCFkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBLCFvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBLCF)}</td></tr>
+          <tr><td style={S.td}>Kg Tostados</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockTOSTkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockTOSTvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitTOST)}</td></tr>
+        </tbody>
+      </table>
+      <div style={{borderTop:"1px solid "+C.border,paddingTop:10}}>
+        <div style={{fontSize:12,fontWeight:600,color:C.navy,marginBottom:6}}>Central de Beneficio <span style={{fontWeight:400,color:C.textFaint,fontSize:11}}>(estado actual — sin historial de fechas disponible)</span></div>
+        <div style={{fontSize:12,color:C.text}}>En Proceso: <b>{fmt(kgCBProceso)} kg</b> ({fmtCOP(valorCBProceso)}) &nbsp;·&nbsp; En Secado: <b>{fmt(kgCBSecado)} kg</b> ({fmtCOP(valorCBSecado)})</div>
+      </div>
+    </div>
+
+    <SeccionTitulo n={4}>Producción</SeccionTitulo>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:24}}>
       {[["Cereza Recibida",kgCereza],["Pergamino Producido",kgPergamino],["Trilla",kgPergTrilladoVerde],["Café Tostado",kgTostado]].map(([label,val])=>(
         <div key={label} style={{background:C.panel,borderRadius:8,padding:10}}>
@@ -302,7 +427,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       ))}
     </div>
 
-    <SeccionTitulo n={2}>Rendimientos vs. Referencia Cenicafé</SeccionTitulo>
+    <SeccionTitulo n={5}>Rendimientos vs. Referencia Cenicafé</SeccionTitulo>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:24}}>
       <div style={S.card}>
         <div style={{fontWeight:700,fontSize:13,color:C.teal,marginBottom:12}}>Línea Verde</div>
@@ -329,7 +454,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
       </div>
     </div>
 
-    <SeccionTitulo n={3}>Subproductos</SeccionTitulo>
+    <SeccionTitulo n={6}>Subproductos</SeccionTitulo>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:24}}>
       {[["Pergamino",subprodPergMes],["Verde Con Proceso",subprodVerdeConProcesoMes],["Verde Sin Proceso",subprodVerdeSinProcesoMes]].map(([label,val])=>(
         <div key={label} style={{background:C.panel,borderRadius:8,padding:10}}>
@@ -337,28 +462,6 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
           <div style={{fontSize:16,fontWeight:700,color:C.navy}}>{fmt(val)} kg</div>
         </div>
       ))}
-    </div>
-
-    <SeccionTitulo n={4}>Inventarios</SeccionTitulo>
-    <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
-    <div style={S.card}>
-      <table style={{width:"100%",borderCollapse:"collapse",marginBottom:14}}>
-        <thead><tr>{["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-        <tbody>
-          <tr><td style={S.td}>Bodega Milán</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBMkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBMvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBM)}</td></tr>
-          <tr><td style={S.td}>Bodega Trilladora</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBTkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBTvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBT)}</td></tr>
-          <tr><td style={S.td}>Blend</td><td style={{...S.td,fontWeight:700,color:C.navy}}>{fmt(stockBLkg)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(stockBLvalor)}</td><td style={{...S.td,color:C.textDim}}>{fmtCOP(valorUnitBL)}</td></tr>
-        </tbody>
-      </table>
-      <div style={{borderTop:"1px solid "+C.border,paddingTop:10}}>
-        <div style={{fontSize:12,fontWeight:600,color:C.navy,marginBottom:6}}>Central de Beneficio <span style={{fontWeight:400,color:C.textFaint,fontSize:11}}>(estado actual — sin historial de fechas disponible)</span></div>
-        <div style={{fontSize:12,color:C.text}}>En Proceso: <b>{fmt(kgCBProceso)} kg</b> ({fmtCOP(valorCBProceso)}) &nbsp;·&nbsp; En Secado: <b>{fmt(kgCBSecado)} kg</b> ({fmtCOP(valorCBSecado)})</div>
-      </div>
-    </div>
-
-    <SeccionTitulo n={5}>Costos por Kilogramo</SeccionTitulo>
-    <div style={S.card}>
-      <DonutChart data={[{tipo:"Materia Prima",val:promA},{tipo:"Insumos",val:promB},{tipo:"Central de Beneficio",val:promC},{tipo:"Trilladora",val:D}]} labelKey="tipo" valueKey="val" centerLabel="valor/kg" fmtSecondary={d=>fmtCOP(d.val)}/>
     </div>
   </div>);
 }

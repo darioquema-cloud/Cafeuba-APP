@@ -25,6 +25,6 @@ export function Dashboard({lotes,costos,lotesFino,maquilas,blendsTostado,blends,
     {tabDash==="blends"&&<DashboardBlends blends={blends} blendsFino={blendsFino}/>}
     {tabDash==="maquila"&&<DashboardMaquila maquilas={maquilas}/>}
     {tabDash==="uba_tostado"&&<DashboardUbaTostado blendsTostado={blendsTostado} empaques={empaques} lotesFino={lotesFino} blendsFino={blendsFino}/>}
-    {tabDash==="informe_mensual"&&<DashboardInformeMensual lotes={lotes} costos={costos} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} blendsTostado={blendsTostado} subprodPerg={subprodPerg} subprodVerde={subprodVerde}/>}
+    {tabDash==="informe_mensual"&&<DashboardInformeMensual lotes={lotes} costos={costos} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} blendsTostado={blendsTostado} empaques={empaques} subprodPerg={subprodPerg} subprodVerde={subprodVerde}/>}
   </div>);
 }
