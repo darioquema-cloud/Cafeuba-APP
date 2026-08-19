@@ -182,15 +182,6 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     doc.setTextColor(0,0,0);
     let y=42;
 
-    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(120,120,120);
-    doc.text("COSTO TOTAL/KG",14,y);doc.text("VALOR VENDIDO",84,y);doc.text("KG EXCELSO PRODUCIDO",154,y);
-    doc.setFont("helvetica","bold");doc.setFontSize(15);doc.setTextColor(30,58,95);
-    doc.text(fmtCOP(costoTotalConD),14,y+8);
-    doc.text(fmtCOP(ingresoRealMes),84,y+8);
-    doc.text(fmt(kgExcelsoTotal)+" kg",154,y+8);
-    doc.setTextColor(0,0,0);
-    y+=20;
-
     doc.setFont("helvetica","bold");doc.setFontSize(11);
     doc.text("1. Producción",14,y);
     autoTable(doc,{
@@ -299,15 +290,6 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
         {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMes(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMes===m?C.navy:C.border),background:filtroMes===m?C.navy:"transparent",color:filtroMes===m?"#fff":C.text,fontSize:11,fontWeight:filtroMes===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
       </div>
       {filtroMes!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</span>}
-    </div>
-
-    <div style={{...S.card,marginBottom:20}}>
-      <div style={{fontSize:11,color:C.textDim,marginBottom:10}}>📅 {filtroMes==="todos"?"Todos los meses":filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:20}}>
-        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Costo Total/kg</div><div style={{fontSize:26,fontWeight:700,color:C.navy}}>{fmtCOP(costoTotalConD)}</div></div>
-        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Valor Vendido</div><div style={{fontSize:26,fontWeight:700,color:C.green}}>{fmtCOP(ingresoRealMes)}</div></div>
-        <div><div style={{fontSize:12,color:C.textDim,marginBottom:4}}>Kg Excelso Producido</div><div style={{fontSize:26,fontWeight:700,color:C.navy}}>{fmt(kgExcelsoTotal)} kg</div></div>
-      </div>
     </div>
 
     <SeccionTitulo n={1}>Producción</SeccionTitulo>
