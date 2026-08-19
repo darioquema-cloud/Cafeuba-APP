@@ -75,7 +75,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   })();
   const kgHastaCutoff=(salidas)=>(salidas||[]).filter(s=>!finDeMesCutoff||s.fecha<=finDeMesCutoff).reduce((s,x)=>s+(x.peso_salida||0),0);
 
-  const lotesConProductoIM=lotes.filter(l=>(l.kg_producto||0)>0);
+  const lotesConProductoIM=lotes.filter(l=>(l.kg_producto||0)>0&&(!finDeMesCutoff||(l.fecha_fin_secado||"")<=finDeMesCutoff));
   const stockBMkg=lotesConProductoIM.reduce((s,l)=>s+Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
   const stockBMvalor=lotesConProductoIM.reduce((s,l)=>{const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));const cl=calcCosto(l,costos,lotes);return s+stock*(cl?cl.total:0);},0);
   // Valor/kg Prom.: excluye lotes con stock<=0 o costo<=0 (dato roto/incompleto) del promedio ponderado.
@@ -90,7 +90,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const valorUnitBM=ponderadoValidoBM.kg>0?ponderadoValidoBM.val/ponderadoValidoBM.kg:0;
 
   const costoKgExDeIM=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
-  const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0);
+  const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0&&(!finDeMesCutoff||(l.trilla.fecha_trilla||"")<=finDeMesCutoff));
   const stockActualIM=lotesTrilladosIM.reduce((s,l)=>{
     const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
     const costoKg=costoKgExDeIM(l);
@@ -106,9 +106,10 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   },{kg:0,val:0});
   const valorUnitBT=ponderadoValidoBT.kg>0?ponderadoValidoBT.val/ponderadoValidoBT.kg:0;
 
-  const stockBLkg=(blends||[]).reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
-  const stockBLvalor=(blends||[]).reduce((s,b)=>{const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));return s+stock*(b.costo_kg||0);},0);
-  const ponderadoValidoBL=(blends||[]).reduce((s,b)=>{
+  const blendsExistentesIM=(blends||[]).filter(b=>!finDeMesCutoff||(b.fecha||"")<=finDeMesCutoff);
+  const stockBLkg=blendsExistentesIM.reduce((s,b)=>s+Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas)),0);
+  const stockBLvalor=blendsExistentesIM.reduce((s,b)=>{const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));return s+stock*(b.costo_kg||0);},0);
+  const ponderadoValidoBL=blendsExistentesIM.reduce((s,b)=>{
     const stock=Math.max(0,(b.kg_total||0)-kgHastaCutoff(b.salidas));
     const costo=b.costo_kg||0;
     if(stock<=0||costo<=0)return s;
