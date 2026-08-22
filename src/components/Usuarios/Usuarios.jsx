@@ -10,7 +10,7 @@ const SECS_PERM=[
   {k:"bodega_fino",l:"Bodega Cafe Fino"},{k:"trilladora_fino",l:"Trilladora CF"},{k:"bodega_tri_fino",l:"Bodega Tri. CF"},
   {k:"blend_fino",l:"Blend Cafe Fino"},{k:"maquila",l:"Maquila"},{k:"uba_tostado",l:"UBA Tostado"},
   {k:"ventas",l:"Ventas"},{k:"pedidos",l:"Pedidos"},{k:"crm",l:"CRM"},{k:"trazabilidad",l:"Trazabilidad"},{k:"costos",l:"Reg. Costos"},
-  {k:"usuarios",l:"Usuarios"},{k:"carga_inicial",l:"Carga Inicial"},
+  {k:"usuarios",l:"Usuarios"},
 ];
 const ROL_ABREV={"Gerente":"Gerente","Gerente Produccion":"G. Prod.","Gerente Financiero":"G. Fin.","Gerente Comercial":"G. Com.","Gerente Administrativo":"G. Admin.","Analista de Calidad":"A. Calidad","Analista Calidad + Trilla":"A.C.+Trilla","Operario Cafe Fino":"Op. CF","Coordinador Tostado":"Coord. Tost."};
 
