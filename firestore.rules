@@ -2,11 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Solo usuarios autenticados pueden leer y escribir.
+    // Solo usuarios autenticados con correo @cafeuba.com.co pueden leer y escribir.
+    // request.auth.token.email viene del token verificado por Google/Firebase,
+    // no es falsificable por el cliente.
     // El control de secciones (views/readOnly) se gestiona en la app.
     // Para endurecer a nivel servidor, reemplazar por reglas por coleccion.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.email.matches('.*@cafeuba[.]com[.]co$');
     }
 
     // ─── Reglas mas granulares (descomenta cuando se implemente auth por rol) ───

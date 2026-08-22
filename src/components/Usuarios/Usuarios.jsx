@@ -3,9 +3,6 @@ import{C,S}from"../../theme";
 import{Modal,Fld,Bdg,TablaScrollV}from"../ui";
 import{PERMISOS_SEED}from"../../data/constants";
 import{genId}from"../../lib/format";
-import{auth,cfg}from"../../firebase";
-import{sendPasswordResetEmail,createUserWithEmailAndPassword,getAuth as fbGetAuth}from"firebase/auth";
-import{initializeApp as fbInitApp,deleteApp as fbDeleteApp}from"firebase/app";
 const ROLES_SISTEMA=["Gerente Produccion","Gerente Financiero","Gerente Comercial","Gerente Administrativo","Analista de Calidad","Analista Calidad + Trilla","Operario Cafe Fino","Coordinador Tostado"];
 const SECS_PERM=[
   {k:"dashboard",l:"Dashboard"},{k:"procesamiento",l:"Procesamiento"},{k:"bodega",l:"Bodega Milan"},
@@ -19,7 +16,6 @@ const ROL_ABREV={"Gerente":"Gerente","Gerente Produccion":"G. Prod.","Gerente Fi
 
 export function Usuarios({usuarios,setUsuarios,permisosConfig,setPermisosConfig}){
   const [modal,setModal]=useState(false);const [editId,setEditId]=useState(null);const [form,setForm]=useState({nombre:"",email:"",rol:ROLES_SISTEMA[0]});const [err,setErr]=useState("");
-  const [invLoading,setInvLoading]=useState(null);const [invMsgs,setInvMsgs]=useState({});
   const [tabU,setTabU]=useState("usuarios");
   const blankFormU=()=>({nombre:"",email:"",rol:ROLES_SISTEMA[0]});
   const abrirNuevoU=()=>{setEditId(null);setForm(blankFormU());setErr("");setModal(true);};
@@ -32,35 +28,6 @@ export function Usuarios({usuarios,setUsuarios,permisosConfig,setPermisosConfig}
     else{setUsuarios(p=>[...p,{...form,id:genId(),activo:true}]);}
     setModal(false);setErr("");setForm(blankFormU());
   };
-  const invitar=async(u)=>{
-    setInvLoading(u.id);setInvMsgs(p=>({...p,[u.id]:""}));
-    try{
-      const secApp=fbInitApp(cfg,"inv-"+Date.now());
-      const secAuth=fbGetAuth(secApp);
-      const tp=Math.random().toString(36).slice(-8)+"Aa1!";
-      try{await createUserWithEmailAndPassword(secAuth,u.email,tp);}
-      catch(e){
-        if(e.code==="auth/email-already-in-use"){
-          await fbDeleteApp(secApp);
-          try{await sendPasswordResetEmail(auth,u.email);setInvMsgs(p=>({...p,[u.id]:"✓ Enlace enviado a "+u.email}));}
-          catch(e2){setInvMsgs(p=>({...p,[u.id]:"Este correo usa Google. El usuario puede ingresar con Google directamente."}));}
-          setInvLoading(null);return;
-        }
-        throw e;
-      }
-      await fbDeleteApp(secApp);
-      await sendPasswordResetEmail(auth,u.email);
-      setInvMsgs(p=>({...p,[u.id]:"✓ Invitacion enviada a "+u.email}));
-    }catch(e){setInvMsgs(p=>({...p,[u.id]:"Error: "+(e.message||e.code)}));}
-    setInvLoading(null);
-  };
-  const resetClave=async(u)=>{
-    setInvLoading(u.id);setInvMsgs(p=>({...p,[u.id]:""}));
-    try{await sendPasswordResetEmail(auth,u.email);setInvMsgs(p=>({...p,[u.id]:"✓ Email de reset enviado a "+u.email}));}
-    catch(e){setInvMsgs(p=>({...p,[u.id]:"Error: "+(e.message||e.code)}));}
-    setInvLoading(null);
-  };
-
   const getEstado=(rol,sec)=>{
     const p=permisosConfig.find(x=>x.id===rol);
     if(!p||(p.views||[]).indexOf(sec)===-1)return 0;
@@ -97,7 +64,7 @@ export function Usuarios({usuarios,setUsuarios,permisosConfig,setPermisosConfig}
     </div>
 
     {tabU==="usuarios"&&(<>
-      <div style={S.card}><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["#","Nombre","Email","Rol","Estado","Acciones","Acceso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{usuarios.map(u=>(<tr key={u.id}><td style={{...S.td,color:C.textFaint,fontSize:11}}>{u.id}</td><td style={{...S.td,fontWeight:600,color:C.navy}}>{u.nombre}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{u.email}</td><td style={S.td}><Bdg label={u.rol} col={C.accent} bg={C.accentBg}/></td><td style={S.td}><Bdg label={u.activo?"Activo":"Inactivo"} col={u.activo?C.green:C.red} bg={u.activo?C.greenBg:C.redBg}/></td><td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={S.btnG} onClick={()=>setUsuarios(p=>p.map(x=>x.id===u.id?{...x,activo:!x.activo}:x))}>{u.activo?"Desactivar":"Activar"}</button><button style={S.btnG} onClick={()=>abrirEditarU(u)}>Editar</button><button style={S.btnG} onClick={()=>resetClave(u)} disabled={invLoading===u.id}>Reset Clave</button></div></td><td style={S.td}><div style={{display:"flex",flexDirection:"column",gap:4,minWidth:100}}><button style={{background:C.green,border:"none",borderRadius:6,color:C.white,cursor:"pointer",fontSize:11,fontWeight:600,padding:"5px 10px",opacity:invLoading===u.id?0.6:1}} onClick={()=>invitar(u)} disabled={invLoading===u.id}>{invLoading===u.id?"Enviando...":"Invitar"}</button>{invMsgs[u.id]&&<div style={{color:invMsgs[u.id].startsWith("✓")?C.green:C.red,fontSize:10,lineHeight:1.3}}>{invMsgs[u.id]}</div>}</div></td></tr>))}</tbody></table></TablaScrollV></div>
+      <div style={S.card}><TablaScrollV minWidth={700}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr>{["#","Nombre","Email","Rol","Estado","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{usuarios.map(u=>(<tr key={u.id}><td style={{...S.td,color:C.textFaint,fontSize:11}}>{u.id}</td><td style={{...S.td,fontWeight:600,color:C.navy}}>{u.nombre}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{u.email}</td><td style={S.td}><Bdg label={u.rol} col={C.accent} bg={C.accentBg}/></td><td style={S.td}><Bdg label={u.activo?"Activo":"Inactivo"} col={u.activo?C.green:C.red} bg={u.activo?C.greenBg:C.redBg}/></td><td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button style={S.btnG} onClick={()=>setUsuarios(p=>p.map(x=>x.id===u.id?{...x,activo:!x.activo}:x))}>{u.activo?"Desactivar":"Activar"}</button><button style={S.btnG} onClick={()=>abrirEditarU(u)}>Editar</button></div></td></tr>))}</tbody></table></TablaScrollV></div>
     </>)}
 
     {tabU==="permisos"&&(<>
@@ -133,6 +100,6 @@ export function Usuarios({usuarios,setUsuarios,permisosConfig,setPermisosConfig}
       </div>
     </>)}
 
-    {modal&&(<Modal title={editId?"Editar Usuario":"Nuevo Usuario"} onClose={()=>{setModal(false);setErr("");}}><div style={{color:C.textDim,fontSize:12,marginBottom:14,padding:"8px 12px",background:C.accentBg,borderRadius:6}}>Despues de agregar el usuario usa el boton "Invitar" para enviarle el correo de acceso a la plataforma.</div><Fld label="Nombre Completo"><input style={S.input} value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></Fld><Fld label="Correo Electronico"><input style={S.input} type="email" placeholder="usuario@empresa.com" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value.toLowerCase()}))}/></Fld><Fld label="Rol del Sistema"><select style={S.select} value={form.rol} onChange={e=>setForm(p=>({...p,rol:e.target.value}))}>{ROLES_SISTEMA.map(r=>(<option key={r}>{r}</option>))}</select></Fld>{err&&<div style={{color:C.red,fontSize:12,marginBottom:10,padding:"8px 12px",background:C.redBg,borderRadius:4}}>{err}</div>}<div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModal(false);setErr("");}}>Cancelar</button><button style={S.btn} onClick={agregar}>{editId?"Guardar Cambios":"Agregar Usuario"}</button></div></Modal>)}
+    {modal&&(<Modal title={editId?"Editar Usuario":"Nuevo Usuario"} onClose={()=>{setModal(false);setErr("");}}><div style={{color:C.textDim,fontSize:12,marginBottom:14,padding:"8px 12px",background:C.accentBg,borderRadius:6}}>El usuario podra ingresar directo con "Continuar con Google" usando este correo @cafeuba.com.co.</div><Fld label="Nombre Completo"><input style={S.input} value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></Fld><Fld label="Correo Electronico"><input style={S.input} type="email" placeholder="usuario@empresa.com" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value.toLowerCase()}))}/></Fld><Fld label="Rol del Sistema"><select style={S.select} value={form.rol} onChange={e=>setForm(p=>({...p,rol:e.target.value}))}>{ROLES_SISTEMA.map(r=>(<option key={r}>{r}</option>))}</select></Fld>{err&&<div style={{color:C.red,fontSize:12,marginBottom:10,padding:"8px 12px",background:C.redBg,borderRadius:4}}>{err}</div>}<div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}><button style={S.btnG} onClick={()=>{setModal(false);setErr("");}}>Cancelar</button><button style={S.btn} onClick={agregar}>{editId?"Guardar Cambios":"Agregar Usuario"}</button></div></Modal>)}
   </div>);
 }
