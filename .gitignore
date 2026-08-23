@@ -4,3 +4,6 @@ dist/
 *.local
 
 .vercel
+
+firebase-service-account.json
+respaldos/
