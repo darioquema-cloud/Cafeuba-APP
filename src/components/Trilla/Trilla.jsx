@@ -340,7 +340,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     </div>
 
     {/* FIX 6,10: Historico consolidado (una fila por grupo de lotes trillados juntos) */}
-    {gruposHistorico.length>0&&(<div style={{...S.card,marginTop:4}}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Historico Trilla</div><TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1100}}><thead><tr>{["Fecha Trilla","Mes","Corte","Lotes","Producto","Cod. Trillado","Proceso","Perg. kg (a trilladora)","Excelso kg","Merma kg","P.Elec","Cat.Dens","Inf.","Cisco","% Merma","FI","Dif. vs FP","Rend.","Costo /kg Ex",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+    {gruposHistorico.length>0&&(<div style={{...S.card,marginTop:4}}><div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Historico Trilla</div><TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1100}}><thead><tr>{["Fecha Trilla","Mes","Corte","Lotes","Producto","Cod. Trillado","Proceso","Perg. kg (a trilladora)","Excelso kg","Merma kg","P.Elec","Cat.Dens","Inf.","Cisco","% Merma","FI","Dif. vs FP","Costo /kg Ex",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
     <tbody>{gruposHistorico.map(grupo=>{
       const repr=grupo[0];const t=repr.trilla;
       const entrada=grupo.reduce((s,x)=>s+pesoATrilladora(x),0);
@@ -371,7 +371,6 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         <td style={{...S.td,color:C.red,fontWeight:600}}>{entrada?((merma/entrada)*100).toFixed(1)+"%":"?"}</td>
         <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.factor_industrial!=null?fmt(t.factor_industrial,1):"?"}</td>
         <td style={{...S.td,color:dif!=null&&Math.abs(dif)<3?C.gold:C.red,fontWeight:600}}>{dif!=null?fmt(dif,1):"—"}</td>
-        <td style={{...S.td,color:C.green,fontWeight:600}}>{entrada?((excelso/entrada)*100).toFixed(1)+"%":"?"}</td>
         <td style={{...S.td,color:C.purple,fontWeight:700}}>{costoEx?fmtCOP(costoEx):"?"}</td>
         <td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarGrupo(repr)}>Editar</button></td>
       </tr>);
