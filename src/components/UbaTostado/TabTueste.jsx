@@ -7,10 +7,10 @@ import{Bdg,Fld,KPI,Modal,TablaScrollV,SelectDestino}from"../ui";
 export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
-  const blankForm=()=>({fecha:today(),nombre_producto:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[],origen_tipo:"",origen_salida_id:""});
+  const blankForm=()=>({fecha:today(),nombre_producto:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",numero_baches:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[],origen_tipo:"",origen_salida_id:""});
   const [form,setForm]=useState(blankForm());
   const abrirNuevo=()=>{setEditId(null);setForm(blankForm());setModal(true);};
-  const abrirEditar=(t)=>{setEditId(t.id);setForm({fecha:t.fecha,nombre_producto:t.nombre_producto||"",kg_a_tostar:t.kg_a_tostar,valor_unitario:t.valor_unitario,valor_total:t.valor_total,temperatura:t.temperatura||"",tiempo:t.tiempo||"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:t.kg_cafe_tostado||"",catacion:t.catacion||"",responsable:t.responsable||"",codigo_lote_origen:t.codigo_lote_origen||"",fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||"",fuentes:t.fuentes||[],origen_tipo:t.origen_tipo||"",origen_salida_id:t.origen_salida_id||""});setModal(true);};
+  const abrirEditar=(t)=>{setEditId(t.id);setForm({fecha:t.fecha,nombre_producto:t.nombre_producto||"",kg_a_tostar:t.kg_a_tostar,valor_unitario:t.valor_unitario,valor_total:t.valor_total,numero_baches:t.numero_baches||"",tipo_tostion:t.tipo_tostion||TIPOS_TOSTION[0],kg_cafe_tostado:t.kg_cafe_tostado||"",catacion:t.catacion||"",responsable:t.responsable||"",codigo_lote_origen:t.codigo_lote_origen||"",fecha_proceso:t.fecha_proceso||"",fecha_trilla:t.fecha_trilla||"",fecha_secado:t.fecha_secado||"",fuentes:t.fuentes||[],origen_tipo:t.origen_tipo||"",origen_salida_id:t.origen_salida_id||""});setModal(true);};
   const stockGranel=(t)=>(t.kg_cafe_tostado||0)-(t.salidas||[]).reduce((a,s)=>a+s.peso_salida,0)-empaques.filter(e=>e.lote_tostado_id===t.id).reduce((s,e)=>s+(e.kg_cafe_total||0),0);
   const [modalSalidaUBA,setModalSalidaUBA]=useState(false);
   const [selTost,setSelTost]=useState(null);
@@ -44,10 +44,10 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     const origenTipoFinal=form.fuentes.length>0?"":form.origen_tipo;
     const origenSalidaIdFinal=form.fuentes.length>0?"":form.origen_salida_id;
     if(editId){
-      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld.length>0?lotesBld:t.lotes_blend||[],origen_tipo:form.fuentes.length>0?"":t.origen_tipo,origen_salida_id:form.fuentes.length>0?"":t.origen_salida_id}:t));
+      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld.length>0?lotesBld:t.lotes_blend||[],origen_tipo:form.fuentes.length>0?"":t.origen_tipo,origen_salida_id:form.fuentes.length>0?"":t.origen_salida_id}:t));
     }else{
       const cod="UBA-"+form.nombre_producto.replace(/\s+/g,"")+"-"+dateToCode(form.fecha);
-      const newRec={id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,temperatura:form.temperatura,tiempo:form.tiempo,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld,origen_tipo:origenTipoFinal,origen_salida_id:origenSalidaIdFinal};
+      const newRec={id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld,origen_tipo:origenTipoFinal,origen_salida_id:origenSalidaIdFinal};
       setBlendsTostado(p=>[newRec,...p]);
     }
     setModal(false);
@@ -227,7 +227,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
           <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Valor Total (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.gold}}>{fmtCOP(sumValor)}</div></div>
         </div>);
       })()}
-      <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","Temp.","Tiempo","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","N° Baches","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
       <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
@@ -244,8 +244,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <td style={{...S.td,color:C.accent,fontWeight:600}}>{fmt(t.kg_a_tostar,1)} kg</td>
         <td style={{...S.td,color:C.gold}}>{fmtCOP(t.valor_unitario)}</td>
         <td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(t.valor_total)}</td>
-        <td style={S.td}>{t.temperatura?t.temperatura+"°C":"-"}</td>
-        <td style={S.td}>{t.tiempo||"-"}</td>
+        <td style={S.td}>{t.numero_baches||"-"}</td>
         <td style={S.td}><Bdg label={t.tipo_tostion||"-"} col={C.orange} bg={C.orangeBg}/></td>
         <td style={{...S.td,color:C.green,fontWeight:700}}>{t.kg_cafe_tostado?fmt(t.kg_cafe_tostado,1)+" kg":<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>}</td>
         <td style={{...S.td,color:C.purple,fontWeight:700}}>{vkgTostado?fmtCOP(vkgTostado):<span style={{color:C.textFaint}}>—</span>}</td>
@@ -304,8 +303,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <Fld label="kg a Tostar (este batch)" half>{form.fuentes.length>0?<div style={{...S.input,background:C.panel2,color:C.accent,fontWeight:700,display:"flex",alignItems:"center"}}>{fmt(+form.kg_a_tostar||0,1)} kg<span style={{color:C.textFaint,fontSize:10,marginLeft:8}}>{form.fuentes.length} {form.fuentes.length===1?"lote":"lotes"}</span></div>:<input style={S.input} type="number" value={form.kg_a_tostar} onChange={e=>setForm(p=>({...p,kg_a_tostar:e.target.value,valor_total:(+e.target.value||0)*(+p.valor_unitario||0)||""}))}/>}</Fld>
         <Fld label="Valor Unitario ($/kg)" half><input style={S.input} type="number" value={form.valor_unitario} onChange={e=>setForm(p=>({...p,valor_unitario:e.target.value,valor_total:(+form.kg_a_tostar||0)*(+e.target.value||0)||""}))}/></Fld>
         <Fld label="Valor Total" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} type="number" value={form.valor_total} onChange={e=>setForm(p=>({...p,valor_total:e.target.value}))}/></Fld>
-        <Fld label="Temperatura (°C)" half><input style={S.input} type="number" value={form.temperatura} onChange={e=>setForm(p=>({...p,temperatura:e.target.value}))}/></Fld>
-        <Fld label="Tiempo (min)" half><input style={S.input} type="number" value={form.tiempo} onChange={e=>setForm(p=>({...p,tiempo:e.target.value}))}/></Fld>
+        <Fld label="N° de Baches"><input style={S.input} type="number" min="1" value={form.numero_baches} onChange={e=>setForm(p=>({...p,numero_baches:e.target.value}))}/></Fld>
         <Fld label="Tipo de Tueste" half><select style={S.select} value={form.tipo_tostion} onChange={e=>setForm(p=>({...p,tipo_tostion:e.target.value}))}>{TIPOS_TOSTION.map(t=>(<option key={t}>{t}</option>))}</select></Fld>
         <Fld label="kg Cafe Tostado (resultado)" half><input style={S.input} type="number" value={form.kg_cafe_tostado} onChange={e=>setForm(p=>({...p,kg_cafe_tostado:e.target.value}))}/>{form.kg_cafe_tostado&&form.kg_a_tostar&&<div style={{color:C.teal,fontSize:11,marginTop:4}}>Rendimiento: {((+form.kg_cafe_tostado/+form.kg_a_tostar)*100).toFixed(1)}%</div>}</Fld>
         <Fld label="Responsable" half><input style={S.input} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/></Fld>
