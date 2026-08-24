@@ -130,7 +130,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     // Auto-transferencia a Bodega Café Fino cuando destino = "café fino" — conserva el codigo original (item 3) y trazabilidad (item 5)
     if(formSalidaT.destino_key==="bodega_cf"){
       const fSalT=formSalidaT.fecha||today();
-      setLotesFino(p=>[{id:genId(),codigo:selLoteT?.codigo||("CF-"+dateToCode(fSalT)),fecha:fSalT,mes:mesDe(fSalT),semana:semanaISO(fSalT),producto:selLoteT?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:vkg||0,valor_total:vtotal,notas:"Transferido desde Bodega Trilladora — "+selLoteT?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],trazabilidad:{codigo_lote_origen:selLoteT?.codigo||"",fecha_proceso:selLoteT?.fecha_proceso||"",fecha_trilla:selLoteT?.trilla?.fecha_trilla||"",fecha_secado:selLoteT?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selLoteT?.trilla?.nombre_trillado||selLoteT?.codigo||("CF-"+dateToCode(fSalT)),fecha:fSalT,mes:mesDe(fSalT),semana:semanaISO(fSalT),producto:selLoteT?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:vkg||0,valor_total:vtotal,notas:"Transferido desde Bodega Trilladora — "+(selLoteT?.trilla?.nombre_trillado||selLoteT?.codigo),salidas_bodega:[],trilla:null,salidas_trilladora:[],trazabilidad:{codigo_lote_origen:selLoteT?.codigo||"",fecha_proceso:selLoteT?.fecha_proceso||"",fecha_trilla:selLoteT?.trilla?.fecha_trilla||"",fecha_secado:selLoteT?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
     }
     setModalSalidaT(false);setEditSalidaTId(null);setErrSalidaT("");
   };
