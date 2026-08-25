@@ -1,5 +1,7 @@
 import{SEED_COSTOS_TRI}from"../data/constants";
 import{mesDe}from"./dates";
+import{mesTrillaDe}from"./dates";
+import{pesoATrilladora,pesoATrilladoraCafeFino}from"./stock";
 export const getSeedCostoTri=(codigo,kgProducto)=>{const byKg=SEED_COSTOS_TRI.find(r=>r.codigo===codigo&&Math.abs(r.kg-(kgProducto||0))<1);return byKg?.costo||(SEED_COSTOS_TRI.find(r=>r.codigo===codigo)?.costo||0);};
 export const calcCosto=(lote,costos,lotes)=>{
   if(!lote.kg_producto||lote.kg_producto===0)return null;
@@ -22,3 +24,33 @@ export const calcCostoTri=(mes,costos,lotes)=>{
   const kgEx=lotes.filter(l=>mesDe(l.trilla?.fecha_trilla)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
 };
+
+export const costoKgExDe=(l,costos,lotes)=>{
+  const cl=calcCosto(l,costos,lotes);
+  const t=l.trilla;
+  const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;
+  return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;
+};
+
+export const calcCostoTriCF=(mes,costos,lotesFino)=>{
+  const costosTri=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
+  const kgEx=(lotesFino||[]).filter(l=>l.para_trilladora&&mesTrillaDe(l)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
+  return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
+};
+
+export const costoKgExDeCafeFino=(l,costos,lotesFino)=>{
+  const cl=calcCosto(l,costos,lotesFino);
+  const t=l.trilla;
+  const D=calcCostoTriCF(mesTrillaDe(l),costos,lotesFino).costoTriKg;
+  return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladoraCafeFino(l))/t.kg_excelso)+Math.round(D):0;
+};
+
+export const esPlaceholderCarga=(l)=>l.trilla?.factor_industrial===0&&l.trilla?.factor_pretrilla_ponderado===0;
+
+export const ponderarFactor=(arr,campo)=>{
+  const con=arr.filter(l=>!esPlaceholderCarga(l)&&l.trilla?.[campo]!=null);
+  const peso=con.reduce((s,l)=>s+pesoATrilladora(l),0);
+  return peso>0?con.reduce((s,l)=>s+pesoATrilladora(l)*l.trilla[campo],0)/peso:null;
+};
+
+export const esVentaExterna=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;

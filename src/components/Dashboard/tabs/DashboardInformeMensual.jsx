@@ -3,7 +3,7 @@ import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
-import{calcCosto,calcCostoTri}from"../../../lib/costing";
+import{calcCosto,calcCostoTri,costoKgExDe,calcCostoTriCF,costoKgExDeCafeFino,ponderarFactor,esVentaExterna}from"../../../lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{DonutChart}from"../../ui/DonutChart";
 import{jsPDF}from"jspdf";
@@ -40,12 +40,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
   // Factor Rendimiento Industrial Ponderado y Desviación vs. Pretrilla — misma lógica que DashboardTrilla.jsx (líneas ~41-53)
   const lotesTrillaVerdeMes=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes));
-  const esPlaceholderCargaIM=(l)=>l.trilla?.factor_industrial===0&&l.trilla?.factor_pretrilla_ponderado===0;
-  const ponderarIM=(arr,campo)=>{
-    const con=arr.filter(l=>!esPlaceholderCargaIM(l)&&l.trilla?.[campo]!=null);
-    const peso=con.reduce((s,l)=>s+pesoATrilladora(l),0);
-    return peso>0?con.reduce((s,l)=>s+pesoATrilladora(l)*l.trilla[campo],0)/peso:null;
-  };
+  const ponderarIM=(arr,campo)=>ponderarFactor(arr,campo);
   const factorIndustrialPonderado=ponderarIM(lotesTrillaVerdeMes,"factor_industrial");
   const factorPretrillaPonderadoIM=ponderarIM(lotesTrillaVerdeMes,"factor_pretrilla_ponderado");
   const desviacionFactor=(factorIndustrialPonderado!=null&&factorPretrillaPonderadoIM!=null)?(factorIndustrialPonderado-factorPretrillaPonderadoIM):null;
@@ -89,7 +84,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   },{kg:0,val:0});
   const valorUnitBM=ponderadoValidoBM.kg>0?ponderadoValidoBM.val/ponderadoValidoBM.kg:0;
 
-  const costoKgExDeIM=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
+  const costoKgExDeIM=(l)=>costoKgExDe(l,costos,lotes);
   const lotesTrilladosIM=lotes.filter(l=>l.trilla?.kg_excelso>0&&(!finDeMesCutoff||(l.trilla.fecha_trilla||"")<=finDeMesCutoff));
   const stockActualIM=lotesTrilladosIM.reduce((s,l)=>{
     const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
@@ -118,9 +113,9 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const valorUnitBL=ponderadoValidoBL.kg>0?ponderadoValidoBL.val/ponderadoValidoBL.kg:0;
 
   // Bodega Café Fino (excluye lotes para_trilladora, usa costo_compra_kg directo)
-  const lotesFinoBodegaIM=(lotesFino||[]).filter(l=>!l.para_trilladora&&(l.kg_producto||0)>0&&(!finDeMesCutoff||(l.fecha||"")<=finDeMesCutoff));
-  const stockBCFkg=lotesFinoBodegaIM.reduce((s,l)=>s+Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
-  const stockBCFvalor=lotesFinoBodegaIM.reduce((s,l)=>{const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));return s+stock*(l.costo_compra_kg||0);},0);
+  const lotesFinoBodegaIM=(lotesFino||[]).filter(l=>!l.para_trilladora&&(!finDeMesCutoff||(l.fecha||"")<=finDeMesCutoff));
+  const stockBCFkg=lotesFinoBodegaIM.reduce((s,l)=>s+((l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega)),0);
+  const stockBCFvalor=lotesFinoBodegaIM.reduce((s,l)=>{const stock=(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega);return s+stock*(l.costo_compra_kg||0);},0);
   const ponderadoValidoBCF=lotesFinoBodegaIM.reduce((s,l)=>{
     const stock=Math.max(0,(l.kg_producto||0)-kgHastaCutoff(l.salidas_bodega));
     const costo=l.costo_compra_kg||0;
@@ -131,12 +126,8 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
   // Bodega Trilladora Café Fino — replica local de calcCostoTri para el centro "Bodega Cafe Fino"
   // (mismo patrón usado en DashboardTrilladoraCF.jsx; calcCostoTri está fija al centro "Trilladora").
-  const calcCostoTriCFIM=(mes,costosArr,lotesFinoArr)=>{
-    const costosTri=(costosArr||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
-    const kgEx=(lotesFinoArr||[]).filter(l=>l.para_trilladora&&mesTrillaDe(l)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
-    return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
-  };
-  const costoKgExDeIMFino=(l)=>{const cl=calcCosto(l,costos,lotesFino);const t=l.trilla;const D=calcCostoTriCFIM(mesTrillaDe(l),costos,lotesFino).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladoraCafeFino(l))/t.kg_excelso)+Math.round(D):0;};
+  const calcCostoTriCFIM=(mes,costosArr,lotesFinoArr)=>calcCostoTriCF(mes,costosArr,lotesFinoArr);
+  const costoKgExDeIMFino=(l)=>costoKgExDeCafeFino(l,costos,lotesFino);
   const lotesTrilladosFinoIM=(lotesFino||[]).filter(l=>l.para_trilladora&&l.trilla?.kg_excelso>0&&(!finDeMesCutoff||(l.trilla.fecha_trilla||"")<=finDeMesCutoff));
   const stockActualFinoIM=lotesTrilladosFinoIM.reduce((s,l)=>{
     const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
@@ -188,7 +179,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const valorCBSecado=cbEnSecado.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
 
   // Ingreso real facturado — replica esExterno de Ventas.jsx (mismas 7 fuentes, sin blendsTostado)
-  const esExternoIM=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;
+  const esExternoIM=esVentaExterna;
   const enMesIM=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
   const ingresoDeArrIM=(arr,campo)=>(arr||[]).flatMap(x=>(x[campo]||[]).filter(esExternoIM).filter(enMesIM)).reduce((s,sal)=>s+(sal.peso_salida||0)*(sal.precio_venta_kg||0),0);
   const ingresoRealMes=

@@ -3,6 +3,7 @@ import{C,S,tg}from"../../theme";
 import{MESES}from"../../data/constants";
 import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
+import{esVentaExterna as esExterno}from"../../lib/costing";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
 export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde}){
   const [tab,setTab]=useState("consolidado");
@@ -11,7 +12,6 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
   const [busqueda,setBusqueda]=useState("");
   const [clienteSel,setClienteSel]=useState(null);
 
-  const esExterno=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;
 
   const todasVentas=useMemo(()=>[
     ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_bodega",origenId:l.id}))),

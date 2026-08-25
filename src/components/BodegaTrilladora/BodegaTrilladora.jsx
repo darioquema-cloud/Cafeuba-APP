@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{semanaISO,mesDe,mesTrillaDe}from"../../lib/dates";
-import{calcCosto,calcCostoTri,getSeedCostoTri}from"../../lib/costing";
+import{calcCosto,calcCostoTri,getSeedCostoTri,costoKgExDe as costoKgExDeLib}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
@@ -41,7 +41,7 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     if(busqueda&&!grupo.some(l=>l.codigo.toLowerCase().includes(busqueda.toLowerCase())))return false;
     return true;
   });
-  const costoKgExDe=(l)=>{const cl=calcCosto(l,costos,lotes);const t=l.trilla;const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;return cl&&t?.kg_excelso>0?Math.round((cl.total*pesoATrilladora(l))/t.kg_excelso)+Math.round(D):0;};
+  const costoKgExDe=(l)=>costoKgExDeLib(l,costos,lotes);
   const stockTrilladora=(l)=>(l.trilla?.kg_excelso||0)-(l.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0);
   const totalExcelso=trilledLotes.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
   // Excluye "ajuste_inventario" de las salidas "reales" — el ajuste corrige el stock pero no es

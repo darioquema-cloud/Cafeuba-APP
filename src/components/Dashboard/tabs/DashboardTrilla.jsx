@@ -3,7 +3,7 @@ import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
 import{mesDe,semanaISO,mesTrillaDe}from"../../../lib/dates";
-import{calcCosto,calcCostoTri}from"../../../lib/costing";
+import{calcCosto,calcCostoTri,ponderarFactor as ponderar}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
@@ -42,12 +42,6 @@ export function DashboardTrilla({lotes,costos}){
   // a la vez — un lote real jamas tiene ambos factores exactamente en 0. No aportan factor real, asi
   // que tampoco cuentan en el denominador (peso) de la ponderacion. Si siguen contando en los demas
   // tiles (Kg Trillados, Excelso Total, etc.) porque esos no dependen del factor.
-  const esPlaceholderCarga=(l)=>l.trilla?.factor_industrial===0&&l.trilla?.factor_pretrilla_ponderado===0;
-  const ponderar=(arr,campo)=>{
-    const con=arr.filter(l=>!esPlaceholderCarga(l)&&l.trilla?.[campo]!=null);
-    const peso=con.reduce((s,l)=>s+pesoATrilladora(l),0);
-    return peso>0?con.reduce((s,l)=>s+pesoATrilladora(l)*l.trilla[campo],0)/peso:null;
-  };
   const fiPonderado=ponderar(lotesTF,"factor_industrial");
   const fpPonderado=ponderar(lotesTF,"factor_pretrilla_ponderado");
   const difFactores=(fiPonderado!=null&&fpPonderado!=null)?(fiPonderado-fpPonderado):null;

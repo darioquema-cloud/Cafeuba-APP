@@ -3,18 +3,10 @@ import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
 import{semanaISO,mesTrillaDe}from"../../../lib/dates";
-import{calcCosto}from"../../../lib/costing";
+import{calcCosto,calcCostoTriCF}from"../../../lib/costing";
 import{pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
-
-// Replica local de calcCostoTri (lib/costing.js) pero para el centro "Bodega Cafe Fino" —
-// calcCostoTri esta fija al centro "Trilladora" (Linea Verde), no se toca esa funcion compartida.
-const calcCostoTriCF=(mes,costos,lotesFino)=>{
-  const costosTri=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
-  const kgEx=lotesFino.filter(l=>l.para_trilladora&&mesTrillaDe(l)===mes&&l.trilla?.kg_excelso>0).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
-  return{costosTri,kgEx,costoTriKg:kgEx>0?costosTri/kgEx:0};
-};
 
 export function DashboardTrilladoraCF({lotesFino,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
