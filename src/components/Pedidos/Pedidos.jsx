@@ -1,4 +1,4 @@
-import{useState}from"react";
+import{useState,Fragment}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
@@ -207,6 +207,20 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     return true;
   }).sort((a,b)=>b.fecha_registro.localeCompare(a.fecha_registro));
 
+  const [clienteExpandido,setClienteExpandido]=useState(null);
+  const clientesAgrupados=(()=>{
+    const map={};
+    pedidosFiltrados.forEach(p=>{
+      if(!map[p.cliente])map[p.cliente]={cliente:p.cliente,totalKg:0,count:0,pendientes:0,entregados:0,valorTotal:0,pedidos:[]};
+      map[p.cliente].totalKg+=p.kg_solicitados||0;
+      map[p.cliente].valorTotal+=p.valor_estimado||0;
+      map[p.cliente].count++;
+      if(p.entregado)map[p.cliente].entregados++;else map[p.cliente].pendientes++;
+      map[p.cliente].pedidos.push(p);
+    });
+    return Object.values(map).sort((a,b)=>b.totalKg-a.totalKg);
+  })();
+
   const totalPedidos=pedidos.length;
   const pendientes=pedidos.filter(p=>!p.entregado).length;
   const valorEstimadoPendientes=pedidos.filter(p=>!p.entregado).reduce((s,p)=>s+(p.valor_estimado||0),0);
@@ -241,27 +255,46 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     </div>
     <div style={S.card}>
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Pedidos Registrados</div>
-      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}><thead><tr>
-        {["Fecha","Cliente","Producto","Kg Solicitados","Disponible","Valor Estimado","Fecha Entrega","Entregado","Notas","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+      <thead><tr>
+        {["","Cliente","Total Kg","N° Pedidos","Pendientes","Entregados","Valor Total"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
       </tr></thead>
-      <tbody>{pedidosFiltrados.map(p=>{
-        const dispInfo=p.producto_comercial?disponibleDeProducto(p.producto_comercial):null;
-        const disponible=dispInfo?dispInfo.total:(p.producto_comercial?null:stockActualLegacy(p));
-        const excede=disponible!=null&&p.kg_solicitados>disponible;
-        return(<tr key={p.id}>
-          <td style={{...S.td,color:C.textDim}}>{fmtFecha(p.fecha_registro)}</td>
-          <td style={{...S.td,fontWeight:600}}>{p.cliente}</td>
-          <td style={S.td}><Bdg label={p.producto_comercial||p.ref_codigo||"—"} col={C.gold} bg={C.goldBg}/></td>
-          <td style={{...S.td,fontWeight:700,color:excede?C.red:C.navy}}>{fmt(p.kg_solicitados)} kg</td>
-          <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}{dispInfo&&dispInfo.count>1&&(<span style={{color:C.textFaint,fontWeight:400,fontSize:11}}> ({dispInfo.count} lotes)</span>)}</span>)}</td>
-          <td style={{...S.td,color:C.gold,fontWeight:700}}>{p.valor_estimado>0?fmtCOP(p.valor_estimado):"—"}</td>
-          <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}{p.faltante_kg>0&&p.fecha_estimada_sistema&&(<div style={{color:C.orange,fontSize:10,fontWeight:600,marginTop:2}}>Est. sistema: {fmtFecha(p.fecha_estimada_sistema)}</div>)}</td>
-          <td style={S.td}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.textFaint,fontWeight:600,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
-          <td style={{...S.td,color:C.textDim,fontSize:12}}>{p.notas||"-"}</td>
-          <td style={S.td}><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarPedido(p.id)}>Eliminar</button></td>
-        </tr>);
+      <tbody>{clientesAgrupados.map(c=>{
+        const expandido=clienteExpandido===c.cliente;
+        return(<Fragment key={c.cliente}>
+          <tr style={{cursor:"pointer",background:expandido?C.accentBg:"transparent"}} onClick={()=>setClienteExpandido(expandido?null:c.cliente)}>
+            <td style={{...S.td,width:24,textAlign:"center",color:C.textDim}}>{expandido?"▾":"▸"}</td>
+            <td style={{...S.td,fontWeight:700,color:C.navy}}>{c.cliente}</td>
+            <td style={{...S.td,fontWeight:700}}>{fmt(c.totalKg)} kg</td>
+            <td style={S.td}>{c.count}</td>
+            <td style={{...S.td,color:c.pendientes>0?C.gold:C.textFaint,fontWeight:c.pendientes>0?700:400}}>{c.pendientes}</td>
+            <td style={{...S.td,color:C.green,fontWeight:700}}>{c.entregados}</td>
+            <td style={{...S.td,color:C.gold,fontWeight:700}}>{c.valorTotal>0?fmtCOP(c.valorTotal):"—"}</td>
+          </tr>
+          {expandido&&(<tr><td colSpan={7} style={{padding:"14px 20px",background:C.bg,borderBottom:"1px solid "+C.border}}>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:1000}}><thead><tr>
+              {["Fecha","Producto","Kg Solicitados","Disponible","Valor Estimado","Fecha Entrega","Entregado","Notas","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+            </tr></thead>
+            <tbody>{c.pedidos.map(p=>{
+              const dispInfo=p.producto_comercial?disponibleDeProducto(p.producto_comercial):null;
+              const disponible=dispInfo?dispInfo.total:(p.producto_comercial?null:stockActualLegacy(p));
+              const excede=disponible!=null&&p.kg_solicitados>disponible;
+              return(<tr key={p.id}>
+                <td style={{...S.td,color:C.textDim}}>{fmtFecha(p.fecha_registro)}</td>
+                <td style={S.td}><Bdg label={p.producto_comercial||p.ref_codigo||"—"} col={C.gold} bg={C.goldBg}/></td>
+                <td style={{...S.td,fontWeight:700,color:excede?C.red:C.navy}}>{fmt(p.kg_solicitados)} kg</td>
+                <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}{dispInfo&&dispInfo.count>1&&(<span style={{color:C.textFaint,fontWeight:400,fontSize:11}}> ({dispInfo.count} lotes)</span>)}</span>)}</td>
+                <td style={{...S.td,color:C.gold,fontWeight:700}}>{p.valor_estimado>0?fmtCOP(p.valor_estimado):"—"}</td>
+                <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}{p.faltante_kg>0&&p.fecha_estimada_sistema&&(<div style={{color:C.orange,fontSize:10,fontWeight:600,marginTop:2}}>Est. sistema: {fmtFecha(p.fecha_estimada_sistema)}</div>)}</td>
+                <td style={S.td} onClick={e=>e.stopPropagation()}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.textFaint,fontWeight:600,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
+                <td style={{...S.td,color:C.textDim,fontSize:12}}>{p.notas||"-"}</td>
+                <td style={S.td} onClick={e=>e.stopPropagation()}><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarPedido(p.id)}>Eliminar</button></td>
+              </tr>);
+            })}</tbody></table>
+          </td></tr>)}
+        </Fragment>);
       })}</tbody></table></TablaScrollV>
-      {pedidosFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{pedidos.length===0?"Sin pedidos registrados todavia.":"Ningun pedido coincide con el filtro."}</div>}
+      {clientesAgrupados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{pedidos.length===0?"Sin pedidos registrados todavia.":"Ningun pedido coincide con el filtro."}</div>}
     </div>
 
     {modal&&(<Modal title="Nuevo Pedido" onClose={()=>setModal(false)}>
