@@ -54,3 +54,23 @@ export const ponderarFactor=(arr,campo)=>{
 };
 
 export const esVentaExterna=s=>(!s.destino_key||s.destino_key===""||s.destino_key==="otro"||s.destino_key==="venta")&&!s.auto_blend;
+
+export const grupoDeBTF=(l,lotesFino)=>[l,...(lotesFino||[]).filter(x=>(l.trilla?.lotes_combinados||[]).includes(x.id))];
+
+export const construirGruposBTF=(arr,lotesFino)=>{
+  const vistos=new Set();const gs=[];
+  arr.forEach(l=>{if(vistos.has(l.id))return;const g=grupoDeBTF(l,lotesFino);g.forEach(x=>vistos.add(x.id));gs.push(g);});
+  return gs;
+};
+
+export const stockGrupoBTF=(grupo,cutoff)=>{
+  const exc=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
+  const sal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).filter(sd=>!cutoff||sd.fecha<=cutoff).reduce((a,b)=>a+b.peso_salida,0),0);
+  return exc-sal;
+};
+
+export const costoKgExFinoDe=(grupo)=>{
+  for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}
+  for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}
+  return 0;
+};

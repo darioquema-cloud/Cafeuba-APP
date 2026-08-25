@@ -3,7 +3,7 @@ import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
 import{mesDe,mesTrillaDe}from"../../../lib/dates";
-import{calcCosto,calcCostoTri,costoKgExDe,calcCostoTriCF,costoKgExDeCafeFino,ponderarFactor,esVentaExterna}from"../../../lib/costing";
+import{calcCosto,calcCostoTri,costoKgExDe,ponderarFactor,esVentaExterna,construirGruposBTF,stockGrupoBTF,costoKgExFinoDe}from"../../../lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{DonutChart}from"../../ui/DonutChart";
 import{jsPDF}from"jspdf";
@@ -124,23 +124,18 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   },{kg:0,val:0});
   const valorUnitBCF=ponderadoValidoBCF.kg>0?ponderadoValidoBCF.val/ponderadoValidoBCF.kg:0;
 
-  // Bodega Trilladora Café Fino — replica local de calcCostoTri para el centro "Bodega Cafe Fino"
-  // (mismo patrón usado en DashboardTrilladoraCF.jsx; calcCostoTri está fija al centro "Trilladora").
-  const calcCostoTriCFIM=(mes,costosArr,lotesFinoArr)=>calcCostoTriCF(mes,costosArr,lotesFinoArr);
-  const costoKgExDeIMFino=(l)=>costoKgExDeCafeFino(l,costos,lotesFino);
-  const lotesTrilladosFinoIM=(lotesFino||[]).filter(l=>l.para_trilladora&&l.trilla?.kg_excelso>0&&(!finDeMesCutoff||(l.trilla.fecha_trilla||"")<=finDeMesCutoff));
-  const stockActualFinoIM=lotesTrilladosFinoIM.reduce((s,l)=>{
-    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
-    const costoKg=costoKgExDeIMFino(l);
-    return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
-  },{kg:0,val:0});
-  const stockBTCFkg=stockActualFinoIM.kg;
-  const stockBTCFvalor=stockActualFinoIM.val;
-  const ponderadoValidoBTCF=lotesTrilladosFinoIM.reduce((s,l)=>{
-    const stock=(l.trilla?.kg_excelso||0)-kgHastaCutoff(l.salidas_trilladora);
-    const costoKg=costoKgExDeIMFino(l);
-    if(stock<=0||costoKg<=0)return s;
-    return {kg:s.kg+stock,val:s.val+stock*costoKg};
+  // Bodega Trilladora Café Fino — usa las funciones compartidas de lib/costing.js (mismo codigo
+  // que ejecuta la pantalla real BodegaTrilladoraFino.jsx), agrupando por corte trillado en vez
+  // de por lote individual, con costo congelado (trilla.costo_kg_excelso / costo_compra_kg).
+  const lotesTrilladosCFIM=(lotesFino||[]).filter(l=>l.trilla?.kg_excelso>0);
+  const gruposBTFIM=construirGruposBTF(lotesTrilladosCFIM,lotesFino);
+  const stockBTCFkg=gruposBTFIM.reduce((s,g)=>s+stockGrupoBTF(g,finDeMesCutoff),0);
+  const stockBTCFvalor=gruposBTFIM.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g,finDeMesCutoff),0);
+  const ponderadoValidoBTCF=gruposBTFIM.reduce((s,g)=>{
+    const stock=stockGrupoBTF(g,finDeMesCutoff);
+    const costo=costoKgExFinoDe(g);
+    if(stock<=0||costo<=0)return s;
+    return {kg:s.kg+stock,val:s.val+stock*costo};
   },{kg:0,val:0});
   const valorUnitBTCF=ponderadoValidoBTCF.kg>0?ponderadoValidoBTCF.val/ponderadoValidoBTCF.kg:0;
 

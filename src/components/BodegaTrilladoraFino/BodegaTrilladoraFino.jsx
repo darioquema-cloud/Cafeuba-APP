@@ -3,6 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
+import{construirGruposBTF,stockGrupoBTF,costoKgExFinoDe}from"../../lib/costing";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
@@ -23,10 +24,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
   const trilledFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
   const mesesBTF=[...new Set(trilledFino.map(l=>mesDe(l.trilla?.fecha_trilla||"")).filter(Boolean))].sort();
   const productosBTF=[...new Set(trilledFino.map(l=>l.producto).filter(Boolean))].sort();
-  const grupoDeBTF=(l)=>[l,...lotesFino.filter(x=>(l.trilla?.lotes_combinados||[]).includes(x.id))];
-  const stockGrupoBTF=(grupo)=>{const exc=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);const sal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);return exc-sal;};
-  const construirGruposBTF=(arr)=>{const vistos=new Set();const gs=[];arr.forEach(l=>{if(vistos.has(l.id))return;const g=grupoDeBTF(l);g.forEach(x=>vistos.add(x.id));gs.push(g);});return gs;};
-  const costoKgExFinoDe=(grupo)=>{for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}return 0;};
+  const construirGruposBTFC=(arr)=>construirGruposBTF(arr,lotesFino);
   const guardarCostoBTF=(grupo,val)=>{const c=+val||0;setLotesFino(p=>p.map(l=>grupo.some(g=>g.id===l.id)?{...l,trilla:{...l.trilla,costo_kg_excelso:c}}:l));setEditCostoId(null);setEditCostoVal("");};
 
   // ═══ Inventario Mensual (mismo patron de Bodega Milan / Bodega Trilladora / Blend / Bodega CF) ═══
@@ -51,7 +49,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
   };
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
-    const gruposActivos=construirGruposBTF(trilledFino); // todos los grupos, sin filtro de busqueda
+    const gruposActivos=construirGruposBTFC(trilledFino); // todos los grupos, sin filtro de busqueda
     const detalle=gruposActivos.map(grupo=>{
       const repr=grupo[0];
       const t=repr.trilla;
@@ -119,7 +117,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
     const kgFisicoTotal=detalle.reduce((s,d)=>s+(d.stock_fisico||0),0);
     const kgTeoricoTotal=detalle.reduce((s,d)=>s+d.stock_teorico,0);
     const difTotalKg=kgFisicoTotal-kgTeoricoTotal;
-    const gruposActuales=construirGruposBTF(trilledFino);
+    const gruposActuales=construirGruposBTFC(trilledFino);
     const valorTotal=detalle.reduce((s,d)=>{
       const grupo=gruposActuales.find(g=>g[0].id===d.grupo_repr_id);
       const costoKg=grupo?costoKgExFinoDe(grupo):0;
@@ -192,7 +190,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,estado:"borrador"}:x));
   };
 
-  const todosGrupos=construirGruposBTF(trilledFino);
+  const todosGrupos=construirGruposBTFC(trilledFino);
   const gruposFiltrados=todosGrupos.filter(grupo=>{
     if(filtroMes&&mesDe(grupo[0].trilla?.fecha_trilla||"")!==filtroMes)return false;
     if(filtroProducto&&!grupo.some(l=>l.producto===filtroProducto))return false;
@@ -405,7 +403,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
         </>);
       })()}
       {modalNuevoInv&&(<Modal title="Nuevo Inventario Mensual" onClose={()=>setModalNuevoInv(false)}>
-        <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:14,fontSize:12,color:C.textDim}}>Se creara un borrador con el stock teorico actual de los {construirGruposBTF(trilledFino).length} grupos activos de Bodega Trilladora Fino. El conteo fisico y las notas se completan despues.</div>
+        <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:14,fontSize:12,color:C.textDim}}>Se creara un borrador con el stock teorico actual de los {construirGruposBTFC(trilledFino).length} grupos activos de Bodega Trilladora Fino. El conteo fisico y las notas se completan despues.</div>
         <Fld label="Fecha de Conteo"><input style={S.input} type="date" value={formNuevoInv.fecha_conteo} onChange={e=>setFormNuevoInv(p=>({...p,fecha_conteo:e.target.value}))}/></Fld>
         <Fld label="Usuario que Cuenta"><input style={S.input} placeholder="Nombre de quien realiza el conteo" value={formNuevoInv.usuario_conteo} onChange={e=>setFormNuevoInv(p=>({...p,usuario_conteo:e.target.value}))}/></Fld>
         <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
