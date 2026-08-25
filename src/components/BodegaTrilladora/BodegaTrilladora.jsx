@@ -309,10 +309,11 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
       </div>
       <button style={{...S.btnG,fontSize:12}} onClick={recalcularCostosTrilla}>↻ Recalcular Costos de Trilla (mes correcto)</button>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"minmax(120px,160px) repeat(3,1fr)",gap:12,marginBottom:20,alignItems:"stretch"}}>
-      <KPI label="Excelso Total" value={fmt(totalExcelso)+" kg"} col={C.green}/>
-      <KPIDoble label="Stock Disponible" kgVal={fmt(stockActual.kg)+" kg"} valorVal={fmtCOP(stockActual.val)} col={C.accent}/>
-      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasT)+" kg"} valorVal={fmtCOP(totalValorSalidasT)} col={C.purple}/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20,alignItems:"stretch"}}>
+      <KPI label="Lotes Trillados" value={trilledLotes.length} col={C.navy}/>
+      <KPIDoble label="Entradas (Excelso)" kgVal={fmt(totalExcelso)+" kg"} valorVal={fmtCOP(trilledLotes.reduce((s,l)=>s+(l.trilla?.kg_excelso||0)*costoKgExDe(l),0))} col={C.green}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasT)+" kg"} valorVal={fmtCOP(totalValorSalidasT)} col={C.orange}/>
+      <KPIDoble label="Stock Actual" kgVal={fmt(stockActual.kg)+" kg"} valorVal={fmtCOP(stockActual.val)} col={C.gold}/>
       <KPI label="Costo Prom/kg Ex" value={stockPonderadoValido.kg>0?fmtCOP(Math.round(stockPonderadoValido.val/stockPonderadoValido.kg)):"—"} col={C.teal}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>

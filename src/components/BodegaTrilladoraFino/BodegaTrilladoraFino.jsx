@@ -1,6 +1,6 @@
 import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
-import{KPI,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
+import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import*as XLSX from"xlsx";
@@ -207,6 +207,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
   const totalSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+b.peso_salida,0),0);
   const totalValorSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
   const valorStockBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g),0);
+  const valorEntradaBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g)*g.reduce((a,l)=>a+(l.trilla?.kg_excelso||0),0),0);
 
   const abrirSalidaBTF=(grupo)=>{
     const reprId=grupo[0].id;
@@ -252,10 +253,10 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
       <div style={{color:C.textDim,fontSize:12,marginTop:2}}>Inventario de cafe excelso fino trillado</div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-      <KPI label="Excelso Total kg" value={fmt(totalExcelsoBTF)+" kg"} col={C.green}/>
-      <KPI label="Stock Disponible kg" value={fmt(stockTotalBTF)+" kg"} col={C.accent}/>
-      <KPI label="Valor Stock Disponible" value={fmtCOP(Math.round(valorStockBTF))} col={C.gold}/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValorSalidasBTF)} col={C.purple}/>
+      <KPI label="Cortes Trillados" value={todosGrupos.length} col={C.navy}/>
+      <KPIDoble label="Entradas (Excelso)" kgVal={fmt(totalExcelsoBTF)+" kg"} valorVal={fmtCOP(valorEntradaBTF)} col={C.green}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalSalidasBTF)+" kg"} valorVal={fmtCOP(totalValorSalidasBTF)} col={C.orange}/>
+      <KPIDoble label="Stock Actual" kgVal={fmt(stockTotalBTF)+" kg"} valorVal={fmtCOP(valorStockBTF)} col={C.gold}/>
       <KPI label="Costo Prom/kg Ex" value={stockTotalBTF>0?fmtCOP(Math.round(valorStockBTF/stockTotalBTF)):"—"} col={C.teal}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>

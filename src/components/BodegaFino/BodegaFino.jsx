@@ -1,6 +1,6 @@
 import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
-import{KPI,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
+import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{semanaISO,mesDe}from"../../lib/dates";
 import*as XLSX from"xlsx";
@@ -103,6 +103,8 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
   const totalValor=lotesBodega.reduce((s,l)=>s+stockDe(l)*(l.costo_compra_kg||0),0);
   const totalSalidas=lotesBodega.reduce((s,l)=>s+(l.salidas_bodega||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+b.peso_salida,0),0);
   const totalValorSalidas=lotesBodega.reduce((s,l)=>s+(l.salidas_bodega||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
+  const totalEntradaKgCF=lotesBodega.reduce((s,l)=>s+(l.kg_producto||0),0);
+  const totalEntradaValorCF=lotesBodega.reduce((s,l)=>s+(l.kg_producto||0)*(l.costo_compra_kg||0),0);
 
   // ═══ Inventario Mensual (mismo patron de Bodega Milan / Bodega Trilladora / Blend) ═══
   // La entidad del arqueo es el LOTE individual (identificado por l.codigo), igual que en
@@ -254,10 +256,9 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
     <div style={{marginBottom:22}}><div style={{color:C.navy,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>INVENTARIO CAFE FINO</div><div style={{color:C.navy,fontSize:22,fontWeight:700,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Bodega Cafe Fino</span><button style={S.btn} onClick={abrirNuevo}>+ Nuevo Lote</button></div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Lotes en Bodega" value={lotesBodega.length} col={C.navy}/>
-      <KPI label="Stock Total" value={fmt(totalKg)+" kg"} col={C.accent}/>
-      <KPI label="Valor Stock" value={fmtCOP(totalValor)} col={C.gold}/>
-      <KPI label="kg con Salida" value={fmt(totalSalidas)+" kg"} col={C.orange}/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValorSalidas)} col={C.green}/>
+      <KPIDoble label="Entradas" kgVal={fmt(totalEntradaKgCF)+" kg"} valorVal={fmtCOP(totalEntradaValorCF)} col={C.green}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalSalidas)+" kg"} valorVal={fmtCOP(totalValorSalidas)} col={C.orange}/>
+      <KPIDoble label="Stock Actual" kgVal={fmt(totalKg)+" kg"} valorVal={fmtCOP(totalValor)} col={C.gold}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
       {[["inventario","Inventario"],["historico","Historico de Salidas"],["inventario_mensual","Inventario Mensual"]].map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tab===k?600:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}

@@ -1,8 +1,9 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
-import{Bdg,Fld}from"../ui";
+import{KPI,KPIDoble,Bdg,Fld}from"../ui";
 import{NORMAS}from"../../data/constants";
-import{fmt,dateToCode}from"../../lib/format";
+import{fmt,fmtCOP,dateToCode}from"../../lib/format";
+import{costoKgExDeCafeFino}from"../../lib/costing";
 export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const MAX_LOTES=8;
   const blankForm=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:"",costoKgExcelso:""});
@@ -13,6 +14,15 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const stockDe=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);
   const disp=lotesFino.filter(l=>l.para_trilladora&&!l.trilla?.kg_excelso&&stockDe(l)>0);
   const tril=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
+  const totalKgSalidasTF=tril.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.peso_salida||0),0),0);
+  const totalValorSalidasTF=tril.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),0),0);
+  const totalExcelsoTF=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
+  const totalValorEntradaTF=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0)*costoKgExDeCafeFino(l,costos,lotesFino),0);
+  const stockActualTF=tril.reduce((s,l)=>{
+    const stock=(l.trilla?.kg_excelso||0)-(l.salidas_trilladora||[]).reduce((a,x)=>a+(x.peso_salida||0),0);
+    const costoKg=costoKgExDeCafeFino(l,costos,lotesFino);
+    return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
+  },{kg:0,val:0});
 
   const toggleSel=(l)=>{
     if(isEditing)return;
@@ -101,6 +111,12 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
 
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>TRILLA CAFE FINO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilladora Cafe Fino</div></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14,marginBottom:20}}>
+      <KPI label="Lotes Trillados" value={tril.length} col={C.navy}/>
+      <KPIDoble label="Entradas (Excelso)" kgVal={fmt(totalExcelsoTF)+" kg"} valorVal={fmtCOP(totalValorEntradaTF)} col={C.green}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasTF)+" kg"} valorVal={fmtCOP(totalValorSalidasTF)} col={C.orange}/>
+      <KPIDoble label="Stock Actual" kgVal={fmt(stockActualTF.kg)+" kg"} valorVal={fmtCOP(stockActualTF.val)} col={C.gold}/>
+    </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
       <div>{disp.length===0&&<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin lotes disponibles en Bodega Cafe Fino.</div>}
         <div style={{color:C.textFaint,fontSize:11,marginBottom:8}}>Selecciona de 1 a {MAX_LOTES} lotes para trillar juntos.</div>

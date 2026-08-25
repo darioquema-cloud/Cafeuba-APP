@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{TIPOS_TOSTION}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
-import{Bdg,Fld,KPI,Modal,TablaScrollV,SelectDestino}from"../ui";
+import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
@@ -307,16 +307,19 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
   const totalKgBlends=blendsFino.reduce((s,b)=>s+b.kg_total,0);
   const totalValBlends=blendsFino.reduce((s,b)=>s+b.valor_total,0);
   const totalValSalidasB=blendsFino.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),0),0);
+  const totalKgSalidasB=blendsFino.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.peso_salida||0),0),0);
+  const totalKgStockB=blendsFino.reduce((s,b)=>s+stockBlend(b),0);
+  const totalValStockB=blendsFino.reduce((s,b)=>s+stockBlend(b)*(b.costo_kg||0),0);
   const poolExterno=poolAll.filter(p=>p.tipo==="finolote"||p.tipo==="bodegabf");
 
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22,flexWrap:"wrap",gap:12}}><div><div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>MEZCLAS CAFE FINO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Blend Cafe Fino</div></div><button style={{...S.btn,background:C.purple}} onClick={abrirNuevo}>+ Nuevo Blend</button></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Blends Creados" value={blendsFino.length} col={C.navy}/>
+      <KPIDoble label="Entradas (Mezclado)" kgVal={fmt(totalKgBlends,1)+" kg"} valorVal={fmtCOP(totalValBlends)} col={C.green}/>
+      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasB,1)+" kg"} valorVal={fmtCOP(totalValSalidasB)} col={C.orange}/>
+      <KPIDoble label="Stock Actual" kgVal={fmt(totalKgStockB,1)+" kg"} valorVal={fmtCOP(totalValStockB)} col={C.gold}/>
       <KPI label="Pool Disponible" value={fmt(totalKgDisponiblePool,1)+" kg"} col={C.teal}/>
-      <KPI label="kg en Blends" value={fmt(totalKgBlends,1)+" kg"} col={C.accent}/>
-      <KPI label="Valor en Blends" value={fmtCOP(totalValBlends)} col={C.gold}/>
-      <KPI label="Valor Salidas" value={fmtCOP(totalValSalidasB)} col={C.green}/>
     </div>
     {poolExterno.length>0&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.teal}}>
       <div style={{fontWeight:600,fontSize:13,color:C.teal,marginBottom:10}}>Insumos disponibles para Blend (desde Bodega CF y Trilladora CF)</div>
