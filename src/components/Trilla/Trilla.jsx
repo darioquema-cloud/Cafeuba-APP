@@ -1,4 +1,4 @@
-import{useState,useMemo}from"react";
+import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
 import{NORMAS,MESES}from"../../data/constants";
 import{fmtCOP,fmt,today,genId,dateToCode,fmtFecha}from"../../lib/format";
@@ -7,7 +7,7 @@ import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import{Bdg,Fld,KPI,Modal,AutoFitText,TablaScrollV}from"../ui";
 export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subprodPerg,setSubprodPerg}){
-  const blankFormTrilla=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:""});
+  const blankFormTrilla=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:"",producto_manual:""});
   const blankManual=()=>({fecha:today(),codigo:"",producto:"",kg:"",valor_unitario:"",notas:""});
   const [selArr,setSelArr]=useState([]);
   const [modalManual,setModalManual]=useState(false);
@@ -21,6 +21,12 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
   const [busqueda,setBusqueda]=useState("");
   const [tabTrilla,setTabTrilla]=useState("registro");
   const [auditBusq,setAuditBusq]=useState("");
+  useEffect(()=>{
+    if(selArr.length>0&&!form.producto_manual){
+      const auto=[...new Set(selArr.map(l=>l.producto).filter(Boolean))].join("+");
+      if(auto)setForm(p=>({...p,producto_manual:auto}));
+    }
+  },[selArr]);
   const disp=lotes.filter(l=>pesoATrilladora(l)>0&&!l.trilla?.kg_excelso);
   const tril=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const revertirLote=(l)=>{
@@ -67,7 +73,8 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
   const genNombreTrillado=()=>{
     if(!selArr.length)return"";
     const corte=form.codigo_corte||"";
-    const producto=[...new Set(selArr.map(l=>l.producto).filter(Boolean))].join("+");
+    const productoAuto=[...new Set(selArr.map(l=>l.producto).filter(Boolean))].join("+");
+    const producto=form.producto_manual||productoAuto;
     const fecha=form.fecha_trilla?dateToCode(form.fecha_trilla):"";
     if(corte&&producto&&fecha)return`${corte}-${producto}-${fecha}`;
     if(corte&&fecha)return`${corte}-${fecha}`;
@@ -102,7 +109,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     setIsEditing(true);
     setErrTrilla("");
     const sum=(k)=>grupo.reduce((s,x)=>s+(x.trilla?.[k]||0),0);
-    setForm({excelso:sum("kg_excelso"),pasilla_elec:sum("pasilla_elec"),catadora_dens:sum("catadora_dens"),inferiores:sum("inferiores"),cisco:sum("cisco"),humedad:l.trilla.humedad_salida||"",norma:l.trilla.norma||NORMAS[0],fecha_trilla:l.trilla.fecha_trilla||"",codigo_corte:l.trilla.codigo_corte||"",con_proceso:l.trilla.con_proceso||"Con Proceso",obs:l.trilla.obs||""});
+    setForm({excelso:sum("kg_excelso"),pasilla_elec:sum("pasilla_elec"),catadora_dens:sum("catadora_dens"),inferiores:sum("inferiores"),cisco:sum("cisco"),humedad:l.trilla.humedad_salida||"",norma:l.trilla.norma||NORMAS[0],fecha_trilla:l.trilla.fecha_trilla||"",codigo_corte:l.trilla.codigo_corte||"",con_proceso:l.trilla.con_proceso||"Con Proceso",obs:l.trilla.obs||"",producto_manual:l.trilla.producto_manual||""});
   };
 
   const reg=()=>{
@@ -131,7 +138,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         kg_excelso:excelsoParts[idx],kg_merma:mermaParts[idx],kg_pasillas:pasillasParts[idx],
         pasilla_elec:pasillaElecParts[idx],catadora_dens:catadoraParts[idx],inferiores:inferioresParts[idx],cisco:ciscoParts[idx],
         humedad_salida:+form.humedad,norma:form.norma,fecha_trilla:form.fecha_trilla,codigo_corte:form.codigo_corte,con_proceso:form.con_proceso,
-        nombre_trillado:nombreTr,obs:form.obs,
+        nombre_trillado:nombreTr,obs:form.obs,producto_manual:form.producto_manual||"",
         lotes_combinados:idsGrupo.filter(id=>id!==l.id),
         factor_pretrilla_ponderado:factorPretrillaPonderado,
         factor_industrial:factorIndustrial,
@@ -296,6 +303,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
             <div><label style={S.lbl}>Fecha de Trilla</label><input style={S.input} type="date" value={form.fecha_trilla} onChange={e=>setForm(p=>({...p,fecha_trilla:e.target.value}))}/></div>
             <div><label style={S.lbl}>Codigo de Corte</label><input style={S.input} placeholder="Ej: M-540" value={form.codigo_corte} onChange={e=>setForm(p=>({...p,codigo_corte:e.target.value}))}/></div>
+            <div><label style={S.lbl}>Producto (para código)</label><input style={S.input} placeholder="Ej: DR" value={form.producto_manual} onChange={e=>setForm(p=>({...p,producto_manual:e.target.value}))}/></div>
           </div>
           {/* FIX 2: Nombre modificado automático */}
           {(form.fecha_trilla||form.codigo_corte)&&(<div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",marginBottom:12,fontSize:12}}><span style={{color:C.textDim}}>Codigo Trillado: </span><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{genNombreTrillado()}</span></div>)}
