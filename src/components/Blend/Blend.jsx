@@ -11,7 +11,7 @@ const poolBlend=(lotes,costos)=>{
   const pool=[];
   lotes.forEach(l=>(l.salidas_trilladora||[]).forEach(s=>{
     if(s.destino_key==="blend"){
-      pool.push({key:"sal:"+s.id,salidaId:s.id,reprId:l.id,codigo:l.codigo,producto:l.producto,kg_total:s.peso_salida,valor_kg:s.valor_kg,fecha:s.fecha,esStockDirecto:false});
+      pool.push({key:"sal:"+s.id,salidaId:s.id,reprId:l.id,codigo:l.trilla?.nombre_trillado||l.codigo,producto:l.producto,kg_total:s.peso_salida,valor_kg:s.valor_kg,fecha:s.fecha,esStockDirecto:false});
     }
   }));
   return pool;
