@@ -5,6 +5,12 @@ import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{Bdg,Fld,KPI,Modal,TablaScrollV,SelectDestino}from"../ui";
 export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques}){
+  const filaCampo=(label,children)=>(
+    <tr>
+      <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text,width:"38%",background:C.panel2,fontWeight:600}}>{label}</td>
+      <td style={{border:"1px solid "+C.border,padding:2}}>{children}</td>
+    </tr>
+  );
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
   const blankForm=()=>({fecha:today(),nombre_producto:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",numero_baches:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[],origen_tipo:"",origen_salida_id:""});
@@ -274,9 +280,11 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     </Modal>)}
     {modal&&(<Modal title={editId?"Completar / Editar Tueste":"Nuevo Lote Tostado"} onClose={()=>setModal(false)} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
-        <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/></Fld>
-        <Fld label="Nombre Producto Comercial" half><input style={S.input} value={form.nombre_producto} onChange={e=>setForm(p=>({...p,nombre_producto:e.target.value}))}/></Fld>
-        <Fld label="Codigo de Lote Origen" half><input style={S.input} value={form.codigo_lote_origen} onChange={e=>setForm(p=>({...p,codigo_lote_origen:e.target.value}))}/></Fld>
+        <table style={{width:"100%",borderCollapse:"collapse",marginBottom:12}}><tbody>
+          {filaCampo("Fecha",<input style={{...S.input,border:"none"}} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/>)}
+          {filaCampo("Nombre Producto Comercial",<input style={{...S.input,border:"none"}} value={form.nombre_producto} onChange={e=>setForm(p=>({...p,nombre_producto:e.target.value}))}/>)}
+          {filaCampo("Codigo de Lote Origen",<input style={{...S.input,border:"none"}} value={form.codigo_lote_origen} onChange={e=>setForm(p=>({...p,codigo_lote_origen:e.target.value}))}/>)}
+        </tbody></table>
         {(form.fecha_proceso||form.fecha_trilla||form.fecha_secado)&&(<div style={{width:"100%",background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"10px 14px",marginBottom:8,fontSize:12,display:"flex",gap:16,flexWrap:"wrap"}}>
           <span style={{color:C.textDim,fontWeight:600}}>Trazabilidad:</span>
           {form.fecha_proceso&&<span style={{color:C.textDim}}>Proceso: <b>{fmtFecha(form.fecha_proceso)}</b></span>}
@@ -300,13 +308,18 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{poolDirecto.filter(p=>!form.fuentes.some(f=>f.salidaId===p.salidaId)).map(item=>(<button key={item.origen_tipo+"_"+item.salidaId} style={{...S.btnG,fontSize:11,color:C.accent,borderColor:C.accent+"60",padding:"5px 10px"}} onClick={()=>setForm(p=>{const vt=Math.round(item.kg_disponible*(item.valor_unitario||0));const nf=[...p.fuentes,{salidaId:item.salidaId,origen_tipo:item.origen_tipo,lote_id:item.lote_id,blendCodigo:item.lote_codigo,nombre_producto:item.nombre,kg_tomados:item.kg_disponible,valor_unitario:item.valor_unitario,valor_total_fuente:vt,lotes_blend:item.lotes_blend||[]}];const tk=nf.reduce((s,f)=>s+(+f.kg_tomados||0),0);const tv=nf.reduce((s,f)=>s+(f.valor_total_fuente||0),0);return{...p,fuentes:nf,kg_a_tostar:tk||"",valor_total:tv||"",valor_unitario:tk>0?Math.round(tv/tk):p.valor_unitario,codigo_lote_origen:nf.map(f=>f.blendCodigo).join(", ")};})}>+ {item.lote_codigo} · {fmt(item.kg_disponible,1)} kg</button>))}</div>
           </div>)}
         </div>)}
-        <Fld label="kg a Tostar (este batch)" half>{form.fuentes.length>0?<div style={{...S.input,background:C.panel2,color:C.accent,fontWeight:700,display:"flex",alignItems:"center"}}>{fmt(+form.kg_a_tostar||0,1)} kg<span style={{color:C.textFaint,fontSize:10,marginLeft:8}}>{form.fuentes.length} {form.fuentes.length===1?"lote":"lotes"}</span></div>:<input style={S.input} type="number" value={form.kg_a_tostar} onChange={e=>setForm(p=>({...p,kg_a_tostar:e.target.value,valor_total:(+e.target.value||0)*(+p.valor_unitario||0)||""}))}/>}</Fld>
-        <Fld label="Valor Unitario ($/kg)" half><input style={S.input} type="number" value={form.valor_unitario} onChange={e=>setForm(p=>({...p,valor_unitario:e.target.value,valor_total:(+form.kg_a_tostar||0)*(+e.target.value||0)||""}))}/></Fld>
-        <Fld label="Valor Total" half><input style={{...S.input,background:C.panel2,color:C.gold,fontWeight:600}} type="number" value={form.valor_total} onChange={e=>setForm(p=>({...p,valor_total:e.target.value}))}/></Fld>
-        <Fld label="N° de Baches"><input style={S.input} type="number" min="1" value={form.numero_baches} onChange={e=>setForm(p=>({...p,numero_baches:e.target.value}))}/></Fld>
-        <Fld label="Tipo de Tueste" half><select style={S.select} value={form.tipo_tostion} onChange={e=>setForm(p=>({...p,tipo_tostion:e.target.value}))}>{TIPOS_TOSTION.map(t=>(<option key={t}>{t}</option>))}</select></Fld>
-        <Fld label="kg Cafe Tostado (resultado)" half><input style={S.input} type="number" value={form.kg_cafe_tostado} onChange={e=>setForm(p=>({...p,kg_cafe_tostado:e.target.value}))}/>{form.kg_cafe_tostado&&form.kg_a_tostar&&<div style={{color:C.teal,fontSize:11,marginTop:4}}>Rendimiento: {((+form.kg_cafe_tostado/+form.kg_a_tostar)*100).toFixed(1)}%</div>}</Fld>
-        <Fld label="Responsable" half><input style={S.input} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/></Fld>
+        <table style={{width:"100%",borderCollapse:"collapse",marginBottom:12}}><tbody>
+          {filaCampo("kg a Tostar (este batch)",form.fuentes.length>0?<div style={{padding:"6px 8px",color:C.accent,fontWeight:700}}>{fmt(+form.kg_a_tostar||0,1)} kg<span style={{color:C.textFaint,fontSize:10,marginLeft:8}}>{form.fuentes.length} {form.fuentes.length===1?"lote":"lotes"}</span></div>:<input style={{...S.input,border:"none"}} type="number" value={form.kg_a_tostar} onChange={e=>setForm(p=>({...p,kg_a_tostar:e.target.value,valor_total:(+e.target.value||0)*(+p.valor_unitario||0)||""}))}/>)}
+          {filaCampo("Valor Unitario ($/kg)",<input style={{...S.input,border:"none"}} type="number" value={form.valor_unitario} onChange={e=>setForm(p=>({...p,valor_unitario:e.target.value,valor_total:(+form.kg_a_tostar||0)*(+e.target.value||0)||""}))}/>)}
+          {filaCampo("Valor Total",<input style={{...S.input,border:"none",color:C.gold,fontWeight:600}} type="number" value={form.valor_total} onChange={e=>setForm(p=>({...p,valor_total:e.target.value}))}/>)}
+          {filaCampo("N° de Baches",<input style={{...S.input,border:"none"}} type="number" min="1" value={form.numero_baches} onChange={e=>setForm(p=>({...p,numero_baches:e.target.value}))}/>)}
+          {filaCampo("Tipo de Tueste",<select style={{...S.select,border:"none"}} value={form.tipo_tostion} onChange={e=>setForm(p=>({...p,tipo_tostion:e.target.value}))}>{TIPOS_TOSTION.map(t=>(<option key={t}>{t}</option>))}</select>)}
+          {filaCampo("kg Cafe Tostado (resultado)",<>
+            <input style={{...S.input,border:"none"}} type="number" value={form.kg_cafe_tostado} onChange={e=>setForm(p=>({...p,kg_cafe_tostado:e.target.value}))}/>
+            {form.kg_cafe_tostado&&form.kg_a_tostar&&<div style={{color:C.teal,fontSize:11,marginTop:4,paddingLeft:8}}>Rendimiento: {((+form.kg_cafe_tostado/+form.kg_a_tostar)*100).toFixed(1)}%</div>}
+          </>)}
+          {filaCampo("Responsable",<input style={{...S.input,border:"none"}} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/>)}
+        </tbody></table>
       </div>
       <Fld label="Catacion"><textarea style={{...S.input,minHeight:55,resize:"vertical"}} value={form.catacion} onChange={e=>setForm(p=>({...p,catacion:e.target.value}))}/></Fld>
       {errReg&&<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:8,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errReg}</div>}
