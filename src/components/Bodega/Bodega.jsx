@@ -92,6 +92,31 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     if(busqueda&&!l.codigo.toLowerCase().includes(busqueda.toLowerCase()))return false;
     return true;
   });
+  const [modalLoteManual,setModalLoteManual]=useState(false);
+  const [formLoteManual,setFormLoteManual]=useState({fecha:today(),proveedor:"",codigo:"",producto:"",kg:"",costo_kg:"",notas:""});
+  const guardarLoteManual=()=>{
+    const kg=+formLoteManual.kg||0;
+    const costoKg=+formLoteManual.costo_kg||0;
+    if(kg<=0){alert("Los kg de pergamino deben ser mayores a 0.");return;}
+    if(costoKg<=0){alert("El costo por kg debe ser mayor a 0.");return;}
+    const nuevo={
+      id:genId(),fecha_proceso:formLoteManual.fecha,fecha_recibo:formLoteManual.fecha,semana:semanaISO(formLoteManual.fecha),mes:mesDe(formLoteManual.fecha),
+      producto:formLoteManual.producto||"",codigo:formLoteManual.codigo||("MAN-"+dateToCode(formLoteManual.fecha)),
+      estado:"Bodega",origen_lote:"carga_directa",
+      cereza:[],
+      kg_producto:kg,bultos:0,humedad:"",conversion:1,
+      costo_directo_kg:costoKg,
+      proveedor:formLoteManual.proveedor||"",
+      notas:formLoteManual.notas||("Compra directa de pergamino"+(formLoteManual.proveedor?" - "+formLoteManual.proveedor:"")),
+      insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},
+      equipo_ferm:"",equipo_secado:"",fecha_lavado:null,fecha_fin_secado:formLoteManual.fecha,
+      salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:null
+    };
+    setLotes(p=>[...p,nuevo]);
+    setModalLoteManual(false);
+    setFormLoteManual({fecha:today(),proveedor:"",codigo:"",producto:"",kg:"",costo_kg:"",notas:""});
+    alert("Lote manual registrado correctamente.");
+  };
   const stockDisponible=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,b)=>a+b.peso_salida,0);
 
   // ═══ Inventario Mensual (piloto Bodega Milan) ═══
@@ -360,6 +385,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
       <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosB.map(p=>(<option key={p}>{p}</option>))}</select>
       {(filtroMes||filtroProducto||busqueda)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("");setFiltroProducto("");setBusqueda("");}}>✕ Limpiar</button>}
       <span style={{color:C.textFaint,fontSize:12,alignSelf:"center"}}>{lotesBFiltrados.length} de {lotesB.length} lotes</span>
+      <button style={S.btnG} onClick={()=>setModalLoteManual(true)}>+ Lote Manual (Compra Directa)</button>
     </div>
     {(filtroMes||filtroProducto||busqueda)&&(()=>{
       const sumBMEnt=lotesBFiltrados.reduce((s,l)=>s+l.kg_producto,0);
@@ -685,6 +711,24 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
         </div>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}><button style={S.btnG} onClick={()=>setModalPre(false)}>Cancelar</button><button style={{...S.btn,background:C.purple}} onClick={guardarPre}>Guardar Pre-Trilla</button></div>
+    </Modal>)}
+
+    {modalLoteManual&&(<Modal title="Registrar Lote Manual — Compra Directa de Pergamino" onClose={()=>setModalLoteManual(false)}>
+      <div style={{background:C.accentBg,border:"1px solid "+C.accent+"30",borderRadius:6,padding:"8px 12px",marginBottom:12,fontSize:12,color:C.textDim}}>
+        Este pergamino no pasó por Central de Beneficio propia — su costo se registra directo
+        por kg, y no afecta el prorrateo de costos de Central de Beneficio de los demás lotes.
+      </div>
+      <Fld label="Fecha" half><input style={S.input} type="date" value={formLoteManual.fecha} onChange={e=>setFormLoteManual(p=>({...p,fecha:e.target.value}))}/></Fld>
+      <Fld label="Proveedor" half><input style={S.input} value={formLoteManual.proveedor} onChange={e=>setFormLoteManual(p=>({...p,proveedor:e.target.value}))}/></Fld>
+      <Fld label="Código (opcional)" half><input style={S.input} placeholder="Se genera automatico si se deja vacio" value={formLoteManual.codigo} onChange={e=>setFormLoteManual(p=>({...p,codigo:e.target.value}))}/></Fld>
+      <Fld label="Producto / Finca" half><input style={S.input} value={formLoteManual.producto} onChange={e=>setFormLoteManual(p=>({...p,producto:e.target.value}))}/></Fld>
+      <Fld label="Kg Pergamino" half><input style={S.input} type="number" min="0" value={formLoteManual.kg} onChange={e=>setFormLoteManual(p=>({...p,kg:e.target.value}))}/></Fld>
+      <Fld label="Costo por Kg" half><input style={S.input} type="number" min="0" value={formLoteManual.costo_kg} onChange={e=>setFormLoteManual(p=>({...p,costo_kg:e.target.value}))}/></Fld>
+      <Fld label="Notas"><input style={S.input} value={formLoteManual.notas} onChange={e=>setFormLoteManual(p=>({...p,notas:e.target.value}))}/></Fld>
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:12}}>
+        <button style={S.btnG} onClick={()=>setModalLoteManual(false)}>Cancelar</button>
+        <button style={S.btn} onClick={guardarLoteManual}>Registrar Lote</button>
+      </div>
     </Modal>)}
   </div>);
 }
