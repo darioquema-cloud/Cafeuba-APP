@@ -206,10 +206,11 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     const ajustesPorGrupo={};
     inv.detalle.forEach(d=>{if(d.diferencia_kg!==0)ajustesPorGrupo[d.grupo_repr_id]=d.diferencia_kg;});
     setLotes(p=>p.map(l=>{
-      if(!(l.id in ajustesPorGrupo))return l;
+      const salidasSinAjusteViejo=(l.salidas_trilladora||[]).filter(s=>!(s.destino_key==="ajuste_inventario"&&s.factura===factura));
+      if(!(l.id in ajustesPorGrupo))return{...l,salidas_trilladora:salidasSinAjusteViejo};
       const pesoAjuste=-ajustesPorGrupo[l.id];
       const nuevaSalida={id:genId(),fecha:fechaCierre,factura,remision:"",cliente:"Ajuste de Inventario",destino_key:"ajuste_inventario",peso_salida:pesoAjuste,valor_kg:0,valor_total:0};
-      return{...l,salidas_trilladora:[...(l.salidas_trilladora||[]),nuevaSalida]};
+      return{...l,salidas_trilladora:[...salidasSinAjusteViejo,nuevaSalida]};
     }));
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,detalle:inv.detalle,estado:"cerrado",fecha_cierre:fechaCierre}:x));
   };
@@ -294,9 +295,10 @@ export function BodegaTrilladora({lotes,setLotes,costos,setLotesFino,inventarios
     doc.save("Acta-Inventario-Trilladora-"+(inv.mes||"")+"-"+inv.anio+".pdf");
   };
   // Reabrir NO revierte el ajuste de stock ya generado al cerrar — solo vuelve el documento a
-  // "borrador" para poder corregir datos. Si se vuelve a cerrar, se genera un ajuste ADICIONAL.
+  // "borrador" para poder corregir datos. Si se vuelve a cerrar, cerrarInventario reemplaza
+  // el ajuste anterior (misma factura AJUSTE-INV-MM-AAAA) por el nuevo, en vez de duplicarlo.
   const reabrirInventario=(inv)=>{
-    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar generara un ajuste ADICIONAL, no un reemplazo. ¿Continuar?"))return;
+    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar REEMPLAZARA ese ajuste por el nuevo resultado del conteo. ¿Continuar?"))return;
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,estado:"borrador"}:x));
   };
 

@@ -181,9 +181,13 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     const ajustesPorLote={};
     inv.detalle.forEach(d=>{if(d.diferencia_kg!==0)ajustesPorLote[d.lote_id]=d.diferencia_kg;});
     setLotes(p=>p.map(l=>{
-      if(!(l.id in ajustesPorLote))return l;
+      const salidasSinAjusteViejo=(l.salidas_bodega||[]).filter(s=>!(s.destino_key==="ajuste_inventario"&&s.factura===factura));
+      if(!(l.id in ajustesPorLote)){
+        const stockNew=l.kg_producto-salidasSinAjusteViejo.reduce((s,x)=>s+x.peso_salida,0);
+        return{...l,salidas_bodega:salidasSinAjusteViejo,estado:stockNew>0?"Bodega":"Finalizado"};
+      }
       const pesoAjuste=-ajustesPorLote[l.id];
-      const sal=[...(l.salidas_bodega||[]),{id:genId(),fecha:fechaCierre,factura,remision:"",cliente:"Ajuste de Inventario",destino_key:"ajuste_inventario",peso_salida:pesoAjuste,valor_kg:0,valor_total:0}];
+      const sal=[...salidasSinAjusteViejo,{id:genId(),fecha:fechaCierre,factura,remision:"",cliente:"Ajuste de Inventario",destino_key:"ajuste_inventario",peso_salida:pesoAjuste,valor_kg:0,valor_total:0}];
       const stockNew=l.kg_producto-sal.reduce((s,x)=>s+x.peso_salida,0);
       return{...l,salidas_bodega:sal,estado:stockNew>0?"Bodega":"Finalizado"};
     }));
@@ -272,10 +276,10 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     doc.save("Acta-Inventario-"+(inv.mes||"")+"-"+inv.anio+".pdf");
   };
   // Reabrir NO revierte el ajuste de stock ya generado al cerrar — solo vuelve el documento a
-  // "borrador" para poder corregir datos. Si se vuelve a cerrar, se genera un ajuste ADICIONAL
-  // (no un reemplazo del anterior). El usuario decide bajo su propio criterio, con advertencia explicita.
+  // "borrador" para poder corregir datos. Si se vuelve a cerrar, cerrarInventario reemplaza
+  // el ajuste anterior (misma factura AJUSTE-INV-MM-AAAA) por el nuevo, en vez de duplicarlo.
   const reabrirInventario=(inv)=>{
-    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar generara un ajuste ADICIONAL, no un reemplazo. ¿Continuar?"))return;
+    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar REEMPLAZARA ese ajuste por el nuevo resultado del conteo. ¿Continuar?"))return;
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,estado:"borrador"}:x));
   };
   const DESTI_LABEL_B={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro",ajuste_inventario:"Ajuste Inventario"};

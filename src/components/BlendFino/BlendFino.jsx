@@ -102,10 +102,11 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
     const ajustesPorBlend={};
     inv.detalle.forEach(d=>{if(d.diferencia_kg!==0)ajustesPorBlend[d.lote_id]=d.diferencia_kg;});
     setBlendsFino(p=>p.map(b=>{
-      if(!(b.id in ajustesPorBlend))return b;
+      const salidasSinAjusteViejo=(b.salidas||[]).filter(s=>!(s.destino_key==="ajuste_inventario"&&s.factura===factura));
+      if(!(b.id in ajustesPorBlend))return{...b,salidas:salidasSinAjusteViejo};
       const pesoAjuste=-ajustesPorBlend[b.id];
       const nuevaSalida={id:genId(),fecha:fechaCierre,factura,remision:"",cliente:"Ajuste de Inventario",destino_key:"ajuste_inventario",peso_salida:pesoAjuste,valor_kg:0,valor_total:0,observaciones:""};
-      return{...b,salidas:[...(b.salidas||[]),nuevaSalida]};
+      return{...b,salidas:[...salidasSinAjusteViejo,nuevaSalida]};
     }));
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,detalle:inv.detalle,estado:"cerrado",fecha_cierre:fechaCierre}:x));
   };
@@ -188,9 +189,10 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
     doc.save("Acta-Inventario-BlendCF-"+(inv.mes||"")+"-"+inv.anio+".pdf");
   };
   // Reabrir NO revierte el ajuste de stock ya generado al cerrar — solo vuelve el documento a
-  // "borrador" para poder corregir datos. Si se vuelve a cerrar, se genera un ajuste ADICIONAL.
+  // "borrador" para poder corregir datos. Si se vuelve a cerrar, cerrarInventario reemplaza
+  // el ajuste anterior (misma factura AJUSTE-INV-MM-AAAA) por el nuevo, en vez de duplicarlo.
   const reabrirInventario=(inv)=>{
-    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar generara un ajuste ADICIONAL, no un reemplazo. ¿Continuar?"))return;
+    if(!window.confirm("Este inventario ya genero un ajuste de stock. Reabrir y volver a cerrar REEMPLAZARA ese ajuste por el nuevo resultado del conteo. ¿Continuar?"))return;
     setInventariosMensuales(p=>p.map(x=>x.id===inv.id?{...x,estado:"borrador"}:x));
   };
 
