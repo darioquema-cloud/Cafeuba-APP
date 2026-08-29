@@ -3,8 +3,9 @@ import{C,S}from"../../theme";
 import{TabTueste}from"./TabTueste";
 import{TabEmpaque}from"./TabEmpaque";
 import{TabVentasTostado}from"./TabVentasTostado";
-const TABS=[["tueste","Tueste"],["empaque","Empaque"],["ventas","Ventas Tostado"]];
-export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,setEmpaques,ventasTostado,setVentasTostado,configEmpaque,setConfigEmpaque}){
+import{TabNecesidades}from"./TabNecesidades";
+const TABS=[["tueste","Tueste"],["empaque","Empaque"],["ventas","Ventas Tostado"],["necesidades","Necesidades"]];
+export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,setEmpaques,ventasTostado,setVentasTostado,configEmpaque,setConfigEmpaque,necesidadesTostado,setNecesidadesTostado}){
   const [tab,setTab]=useState("tueste");
   return(<div>
     <div style={{marginBottom:16}}>
@@ -17,5 +18,6 @@ export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,
     {tab==="tueste"&&<TabTueste blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino} lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} empaques={empaques}/>}
     {tab==="empaque"&&<TabEmpaque blendsTostado={blendsTostado} empaques={empaques} setEmpaques={setEmpaques} configEmpaque={configEmpaque} setConfigEmpaque={setConfigEmpaque}/>}
     {tab==="ventas"&&<TabVentasTostado empaques={empaques} ventasTostado={ventasTostado} setVentasTostado={setVentasTostado} configEmpaque={configEmpaque}/>}
+    {tab==="necesidades"&&<TabNecesidades necesidadesTostado={necesidadesTostado} setNecesidadesTostado={setNecesidadesTostado}/>}
   </div>);
 }
