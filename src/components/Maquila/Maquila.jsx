@@ -20,12 +20,20 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
     setModal(false);
   };
   const enviarTrilla=(m)=>{setMaquilas(p=>p.map(x=>x.id===m.id?{...x,estado_pipeline:"en_trilla"}:x));setTab("trilla");};
+  const [filtroMesMQ,setFiltroMesMQ]=useState("todos");
+  const [busquedaClienteMQ,setBusquedaClienteMQ]=useState("");
+  const mesesMQ=[...new Set(maquilas.map(m=>m.mes).filter(Boolean))];
+  const maquilasFiltradas=maquilas.filter(m=>
+    (filtroMesMQ==="todos"||m.mes===filtroMesMQ)&&
+    (!busquedaClienteMQ||(m.cliente||"").toLowerCase().includes(busquedaClienteMQ.toLowerCase()))
+  );
+  const kgFiltrados=maquilasFiltradas.reduce((s,m)=>s+(m.kg_recibidos||0),0);
   const [selT,setSelT]=useState(null);
   const blankT=()=>({fecha_trilla:today(),codigo_corte:"",kg_excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],con_proceso:"Con Proceso",obs:""});
   const [formT,setFormT]=useState(blankT());
   const [errT,setErrT]=useState("");
-  const pendTrilla=maquilas.filter(m=>m.estado_pipeline==="en_trilla"&&!m.trilla_mq);
-  const histTrilla=maquilas.filter(m=>m.trilla_mq);
+  const pendTrilla=maquilasFiltradas.filter(m=>m.estado_pipeline==="en_trilla"&&!m.trilla_mq);
+  const histTrilla=maquilasFiltradas.filter(m=>m.trilla_mq);
   const entT=selT?.kg_recibidos||0;
   const mermaT=+formT.cisco||0;
   const pasillasT=(+formT.pasilla_elec||0)+(+formT.catadora_dens||0)+(+formT.inferiores||0);
@@ -42,8 +50,8 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
   const blankC=()=>({fecha:today(),nombre_producto:"",kg_cafe_tostado:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],catacion:"",responsable:""});
   const [formC,setFormC]=useState(blankC());
   const [errC,setErrC]=useState("");
-  const pendTostado=maquilas.filter(m=>m.estado_pipeline==="en_tostado"&&!m.tostado_mq);
-  const histTostado=maquilas.filter(m=>m.tostado_mq);
+  const pendTostado=maquilasFiltradas.filter(m=>m.estado_pipeline==="en_tostado"&&!m.tostado_mq);
+  const histTostado=maquilasFiltradas.filter(m=>m.tostado_mq);
   const regC=()=>{
     if(!selC)return;
     if(!formC.kg_cafe_tostado){setErrC("Ingresa kg de café tostado.");return;}
@@ -57,7 +65,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
   const blankE=()=>({fecha:today(),kg_entregados:"",valor_servicio:"",responsable_entrega:"",responsable_recibe:""});
   const [formE,setFormE]=useState(blankE());
   const [errE,setErrE]=useState("");
-  const maqConTostado=maquilas.filter(m=>m.tostado_mq);
+  const maqConTostado=maquilasFiltradas.filter(m=>m.tostado_mq);
   const todasEntregas=maqConTostado.flatMap(m=>(m.entregas_mq||[]).map(e=>({...e,mq:m})));
   const kgEntregadosDe=(m)=>(m.entregas_mq||[]).reduce((s,e)=>s+e.kg_entregados,0);
   const abrirE=(m)=>{setSelE(m);setFormE(blankE());setErrE("");setModalE(true);};
@@ -79,10 +87,22 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
       <KPI label="En Tostado" value={maquilas.filter(m=>m.estado_pipeline==="en_tostado").length} col={C.purple}/>
       <KPI label="Entregas" value={todasEntregas.length} col={C.green}/>
     </div>
+    <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+      <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por cliente..." value={busquedaClienteMQ} onChange={e=>setBusquedaClienteMQ(e.target.value)}/>
+      <select style={{...S.select,width:"auto",minWidth:150}} value={filtroMesMQ} onChange={e=>setFiltroMesMQ(e.target.value)}>
+        <option value="todos">Todos los meses</option>
+        {mesesMQ.map(m=>(<option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+      </select>
+      {(filtroMesMQ!=="todos"||busquedaClienteMQ)&&<>
+        <span style={{fontSize:12,color:C.textDim}}>Kg filtrados: <b style={{color:C.accent}}>{fmt(kgFiltrados)} kg</b></span>
+        <button style={{...S.btnG,fontSize:11,padding:"6px 12px",color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMesMQ("todos");setBusquedaClienteMQ("");}}>✕ Limpiar</button>
+      </>}
+    </div>
     <div style={{display:"flex",gap:4,marginBottom:16,borderBottom:"1px solid "+C.border,paddingBottom:0}}>{TABS_MQ.map(([k,l])=>(<button key={k} style={tStyle(k)} onClick={()=>setTab(k)}>{l}{k==="trilla"&&pendTrilla.length>0?<span style={{marginLeft:6,background:C.red,color:C.white,borderRadius:10,padding:"1px 6px",fontSize:10}}>{pendTrilla.length}</span>:null}{k==="tostado"&&pendTostado.length>0?<span style={{marginLeft:6,background:C.red,color:C.white,borderRadius:10,padding:"1px 6px",fontSize:10}}>{pendTostado.length}</span>:null}</button>))}</div>
 
-    {tab==="registros"&&(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Registros de Maquila</div><TablaScrollV minWidth={1050}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}><thead><tr>{["Codigo","Fecha","Mes","Cliente","Telefono","kg Recibidos","Servicio","Estado","Observaciones","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{maquilas.map(m=>{const ep=m.estado_pipeline||"registro";const puedeTrilla=ep==="registro";return(<tr key={m.id}>
+    {tab==="registros"&&(<div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Registros de Maquila</div>
+      <TablaScrollV minWidth={1050}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}><thead><tr>{["Codigo","Fecha","Mes","Cliente","Telefono","kg Recibidos","Servicio","Estado","Observaciones","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{maquilasFiltradas.map(m=>{const ep=m.estado_pipeline||"registro";const puedeTrilla=ep==="registro";return(<tr key={m.id}>
         <td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{m.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(m.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{m.mes||mesDe(m.fecha)}</td>
@@ -94,7 +114,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{m.observaciones||"-"}</td>
         <td style={S.td}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{puedeTrilla&&<button style={{...S.btn,fontSize:11,padding:"6px 12px",background:C.orange}} onClick={()=>enviarTrilla(m)}>&#8594; Trilla</button>}<button style={S.btnG} onClick={()=>{setEditId(m.id);setForm({fecha:m.fecha,cliente:m.cliente,telefono:m.telefono||"",kg_recibidos:m.kg_recibidos,servicio:m.servicio,observaciones:m.observaciones||""});setModal(true);}}>Editar</button></div></td>
       </tr>);})}
-      </tbody></table></TablaScrollV>{maquilas.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin registros de maquila todavia.</div>}</div>)}
+      </tbody></table></TablaScrollV>{maquilasFiltradas.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{maquilas.length===0?"Sin registros de maquila todavia.":"Ningún registro coincide con el filtro."}</div>}</div>)}
 
     {tab==="trilla"&&(<div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
       <div>
