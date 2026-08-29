@@ -61,7 +61,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
   const clientesUnicos=[...new Set(ventasFilt.map(v=>v.cliente).filter(c=>c&&c!=="Sin Cliente"))];
 
   const porCliente={};
-  todasVentas.forEach(v=>{const c=v.cliente||"Sin Cliente";if(!porCliente[c])porCliente[c]={kg:0,valor:0,tx:0,meses:new Set(),tipos:new Set()};porCliente[c].kg+=v.kg;porCliente[c].valor+=v.valor_total;porCliente[c].tx++;porCliente[c].meses.add(v.mes);porCliente[c].tipos.add(v.tipo);});
+  ventasFilt.forEach(v=>{const c=v.cliente||"Sin Cliente";if(!porCliente[c])porCliente[c]={kg:0,valor:0,tx:0,meses:new Set(),tipos:new Set()};porCliente[c].kg+=v.kg;porCliente[c].valor+=v.valor_total;porCliente[c].tx++;porCliente[c].meses.add(v.mes);porCliente[c].tipos.add(v.tipo);});
   const clienteData=Object.entries(porCliente).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,d])=>({cliente,kg:d.kg,valor:d.valor,tx:d.tx,promKg:d.kg>0?d.valor/d.kg:0,meses:[...d.meses].filter(Boolean).length,tipos:[...d.tipos].join(", ")}));
   const maxValCliente=clienteData.length>0?clienteData[0].valor:1;
 
@@ -253,12 +253,27 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
             )}
           </div>
           <div style={S.card}>
-            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Mix de Productos Vendidos</div>
-            <div style={{fontSize:11,color:C.textDim,marginBottom:20}}>Participación por tipo · kg totales</div>
+            <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Mix de Productos por Nombre</div>
+            <div style={{fontSize:11,color:C.textDim,marginBottom:20}}>Participación por producto comercial · kg totales</div>
             {(()=>{
-              const PCOLS2=[C.teal,C.green,C.purple,C.accent,C.gold,C.orange];
-              const porTipoArr=tiposDisp.map((t,i)=>{const kgt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.kg,0);const valt=todasVentas.filter(v=>v.tipo===t).reduce((s,v)=>s+v.valor_total,0);return{tipo:t,kg:kgt,valor:valt,col:PCOLS2[i%PCOLS2.length]};}).sort((a,b)=>b.kg-a.kg);
-              return <DonutChart data={porTipoArr} labelKey="tipo" valueKey="kg" colorKey="col" ro={70} ri={36} fmtSecondary={d=>fmt(d.kg)+" kg"} legendRowH={26}/>;
+              const PCOLS3=[C.teal,C.green,C.purple,C.accent,C.gold,C.orange,C.navy,C.red];
+              const porProductoMap={};
+              todasVentas.forEach(v=>{
+                const p=v.producto||"Sin Producto";
+                if(!porProductoMap[p])porProductoMap[p]={kg:0,valor:0};
+                porProductoMap[p].kg+=v.kg;porProductoMap[p].valor+=v.valor_total;
+              });
+              let porProductoArr=Object.entries(porProductoMap).map(([producto,d])=>({producto,kg:d.kg,valor:d.valor})).sort((a,b)=>b.kg-a.kg);
+              const TOP_N=8;
+              if(porProductoArr.length>TOP_N){
+                const top=porProductoArr.slice(0,TOP_N);
+                const resto=porProductoArr.slice(TOP_N);
+                const otrosKg=resto.reduce((s,d)=>s+d.kg,0);
+                const otrosValor=resto.reduce((s,d)=>s+d.valor,0);
+                porProductoArr=[...top,{producto:"Otros",kg:otrosKg,valor:otrosValor}];
+              }
+              porProductoArr=porProductoArr.map((d,i)=>({...d,col:PCOLS3[i%PCOLS3.length]}));
+              return <DonutChart data={porProductoArr} labelKey="producto" valueKey="kg" colorKey="col" ro={70} ri={36} fmtSecondary={d=>fmt(d.kg)+" kg"} legendRowH={26}/>;
             })()}
           </div>
         </div>
