@@ -1,7 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
-import{fmtCOP,fmt}from"../../../lib/format";
+import{fmtCOP,fmt,fmtFecha}from"../../../lib/format";
 import{mesDe,semanaISO,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri,ponderarFactor as ponderar}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
@@ -9,6 +9,7 @@ import{Bdg,TablaScrollV}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
 export function DashboardTrilla({lotes,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
+  const [busquedaCorte,setBusquedaCorte]=useState("");
   const lotesTrilla=lotes.filter(l=>l.trilla?.kg_excelso>0);
   const mesesTR=MESES.filter(m=>lotesTrilla.some(l=>mesTrillaDe(l)===m));
   const lotesTF=filtroMesTR==="todos"?lotesTrilla:lotesTrilla.filter(l=>mesTrillaDe(l)===filtroMesTR);
@@ -60,6 +61,7 @@ export function DashboardTrilla({lotes,costos}){
     key,label:key.slice(-3),
     fi:ponderar(arr,"factor_industrial"),
     fp:ponderar(arr,"factor_pretrilla_ponderado"),
+    codigos:[...new Set(arr.map(l=>l.trilla?.nombre_trillado).filter(Boolean))],
   }));
 
   // Costo/kg Excelso Trilladora: calcCostoTri ya existente para un mes especifico; para "todos" se
@@ -74,6 +76,24 @@ export function DashboardTrilla({lotes,costos}){
   const triPorTipo={};triCosFiltrados.forEach(c=>{triPorTipo[c.tipo]=(triPorTipo[c.tipo]||0)+c.valor;});
   const triPieTotal=Object.values(triPorTipo).reduce((s,v)=>s+v,0);
   const triPieData=Object.entries(triPorTipo).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([tipo,val])=>({tipo,val,pct:triPieTotal>0?((val/triPieTotal)*100).toFixed(1):"0.0"}));
+
+  // Cortes por Desviación: agrupa por l.trilla.nombre_trillado (codigo de corte trillado)
+  const gruposPorCorte={};
+  lotesTF.forEach(l=>{
+    const cod=l.trilla?.nombre_trillado||"Sin código";
+    if(!gruposPorCorte[cod])gruposPorCorte[cod]=[];
+    gruposPorCorte[cod].push(l);
+  });
+  const cortesData=Object.entries(gruposPorCorte).map(([codigo,grupo])=>{
+    const kgExcelso=grupo.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
+    const fecha=grupo[0]?.trilla?.fecha_trilla||"";
+    const producto=[...new Set(grupo.map(l=>l.producto).filter(Boolean))].join("+")||"—";
+    const fi=ponderar(grupo,"factor_industrial");
+    const fp=ponderar(grupo,"factor_pretrilla_ponderado");
+    const desviacion=(fi!=null&&fp!=null)?(fi-fp):null;
+    return{codigo,fecha,producto,kgExcelso,fi,fp,desviacion};
+  }).filter(c=>c.desviacion!==null).sort((a,b)=>Math.abs(b.desviacion)-Math.abs(a.desviacion));
+  const cortesFiltrados=cortesData.filter(c=>!busquedaCorte||c.codigo.toLowerCase().includes(busquedaCorte.toLowerCase()));
 
   const tiles=[
     {label:"Kg Trillados",value:fmt(triEntrada)+" kg",sub:"pergamino real a trilladora",col:C.navy,icon:"🌾"},
@@ -174,6 +194,9 @@ export function DashboardTrilla({lotes,costos}){
           <polyline points={linePts("fi")} fill="none" stroke={C.green} strokeWidth="2.2"/>
           <polyline points={linePts("fp")} fill="none" stroke={C.purple} strokeWidth="2.2"/>
           {semanasData.map((d,i)=>(<g key={d.key}>
+            <rect x={xOf(i)-8} y={pt} width="16" height={cH} fill="transparent" style={{cursor:"pointer"}}>
+              <title>{"Semana "+d.label+(d.codigos.length?":\n"+d.codigos.join("\n"):"\nSin cortes registrados")}</title>
+            </rect>
             {d.fi!=null&&<circle cx={xOf(i)} cy={yOf(d.fi)} r="3.2" fill={C.green}/>}
             {d.fp!=null&&<circle cx={xOf(i)} cy={yOf(d.fp)} r="3.2" fill={C.purple}/>}
             <text x={xOf(i)} y={pt+cH+16} textAnchor="middle" fontSize="8.5" fill={C.textDim} fontFamily="Inter,sans-serif">{d.label}</text>
@@ -182,6 +205,30 @@ export function DashboardTrilla({lotes,costos}){
           <line x1={pl} y1={pt+cH} x2={pl+cW} y2={pt+cH} stroke={C.border} strokeWidth="1.5"/>
         </svg>);
       })()}
+    </div>
+
+    <div style={{...S.card,marginBottom:16}}>
+      <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Cortes por Desviación</div>
+      <div style={{fontSize:11,color:C.textDim,marginBottom:14}}>Ordenado de mayor a menor diferencia entre Factor Industrial y Factor Pretrilla</div>
+      <input style={{...S.input,marginBottom:14}} placeholder="Buscar código de corte..." value={busquedaCorte} onChange={e=>setBusquedaCorte(e.target.value)}/>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:640}}>
+        <thead><tr>
+          {["Cod. Corte","Fecha","Producto","Kg Excelso","F. Industrial","F. Pretrilla","Desviación"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+        </tr></thead>
+        <tbody>{cortesFiltrados.map(c=>{
+          const destacado=Math.abs(c.desviacion)>5;
+          return(<tr key={c.codigo} style={destacado?{background:C.redBg}:{}}>
+            <td style={{...S.td,fontWeight:700,color:C.navy}}>{c.codigo}</td>
+            <td style={{...S.td,color:C.textDim}}>{c.fecha?fmtFecha(c.fecha):"—"}</td>
+            <td style={S.td}>{c.producto}</td>
+            <td style={S.td}>{fmt(c.kgExcelso)} kg</td>
+            <td style={S.td}>{c.fi.toFixed(2)}</td>
+            <td style={S.td}>{c.fp.toFixed(2)}</td>
+            <td style={{...S.td,fontWeight:700,color:destacado?C.red:(c.desviacion>0?C.orange:C.green)}}>{c.desviacion>0?"+":""}{c.desviacion.toFixed(2)}</td>
+          </tr>);
+        })}</tbody>
+      </table></TablaScrollV>
+      {cortesFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Ningún corte coincide con la búsqueda.</div>}
     </div>
 
     <div style={S.card}>
