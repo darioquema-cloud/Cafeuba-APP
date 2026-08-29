@@ -45,6 +45,10 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
     setSelT(null);setFormT(blankT());setErrT("");
   };
   const enviarTostado=(m)=>{setMaquilas(p=>p.map(x=>x.id===m.id?{...x,estado_pipeline:"en_tostado"}:x));setTab("tostado");};
+  const marcarEntregaDirecta=(m)=>{
+    if(!window.confirm("¿Enviar este lote directo a Entregas, sin pasar por Tostado?"))return;
+    setMaquilas(p=>p.map(x=>x.id===m.id?{...x,entrega_directa:true}:x));
+  };
   const retroTrilla=(m)=>{if(window.confirm("¿Retroceder a Registros? Se borra el registro de trilla.")){setMaquilas(p=>p.map(x=>x.id===m.id?{...x,estado_pipeline:"registro",trilla_mq:null}:x));}};
   const [selC,setSelC]=useState(null);
   const blankC=()=>({fecha:today(),nombre_producto:"",kg_cafe_tostado:"",temperatura:"",tiempo:"",tipo_tostion:TIPOS_TOSTION[0],catacion:"",responsable:""});
@@ -65,7 +69,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
   const blankE=()=>({fecha:today(),kg_entregados:"",valor_servicio:"",responsable_entrega:"",responsable_recibe:""});
   const [formE,setFormE]=useState(blankE());
   const [errE,setErrE]=useState("");
-  const maqConTostado=maquilasFiltradas.filter(m=>m.tostado_mq);
+  const maqConTostado=maquilasFiltradas.filter(m=>m.tostado_mq||m.entrega_directa);
   const todasEntregas=maqConTostado.flatMap(m=>(m.entregas_mq||[]).map(e=>({...e,mq:m})));
   const kgEntregadosDe=(m)=>(m.entregas_mq||[]).reduce((s,e)=>s+e.kg_entregados,0);
   const abrirE=(m)=>{setSelE(m);setFormE(blankE());setErrE("");setModalE(true);};
@@ -131,7 +135,11 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
               <div><div style={{color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{m.codigo}</div><div style={{color:C.navy,fontWeight:600,fontSize:12}}>{m.cliente}</div></div>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {m.estado_pipeline==="en_trilla"&&<button style={{...S.btn,fontSize:11,padding:"5px 10px",background:C.purple}} onClick={()=>enviarTostado(m)}>&#8594; Tostado</button>}
+                {m.estado_pipeline==="en_trilla"&&!m.entrega_directa&&(<>
+                  <button style={{...S.btn,fontSize:11,padding:"5px 10px",background:C.purple}} onClick={()=>enviarTostado(m)}>&#8594; Tostado</button>
+                  <button style={{...S.btn,fontSize:11,padding:"5px 10px",background:C.green}} onClick={()=>marcarEntregaDirecta(m)}>&#8594; Entrega Directa</button>
+                </>)}
+                {m.entrega_directa&&<Bdg label="Entrega Directa" col={C.green} bg={C.greenBg}/>}
                 <button style={{...S.btnG,fontSize:11,padding:"5px 10px",color:C.orange,borderColor:C.orange+"40"}} onClick={()=>retroTrilla(m)}>Retroceder</button>
               </div>
             </div>
@@ -220,15 +228,22 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
       <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Lotes Listos para Entrega</div>
         {maqConTostado.length===0&&<div style={{color:C.textFaint,fontSize:13}}>Ningún lote ha completado el proceso de tostado todavía.</div>}
         <TablaScrollV minWidth={900}><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Codigo","Cliente","Servicio","kg Tostado","kg Entregados","Pendiente kg","Fecha Tostado","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-        <tbody>{maqConTostado.map(m=>{const t=m.tostado_mq;const entKg=kgEntregadosDe(m);const pendKg=(t.kg_cafe_tostado||0)-entKg;return(<tr key={m.id}>
+        <tbody>{maqConTostado.map(m=>{
+          const esTostado=!!m.tostado_mq;
+          const kgTotal=esTostado?(m.tostado_mq.kg_cafe_tostado||0):(m.trilla_mq?.kg_excelso||0);
+          const fechaRef=esTostado?m.tostado_mq.fecha:m.trilla_mq?.fecha_trilla;
+          const respRef=esTostado?m.tostado_mq.responsable:null;
+          const entKg=kgEntregadosDe(m);
+          const pendKg=kgTotal-entKg;
+          return(<tr key={m.id}>
           <td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{m.codigo||"-"}</td>
           <td style={{...S.td,fontWeight:600,color:C.navy}}>{m.cliente}</td>
           <td style={S.td}><Bdg label={m.servicio} col={C.orange} bg={C.orangeBg}/></td>
-          <td style={{...S.td,fontWeight:600,color:C.purple}}>{fmt(t.kg_cafe_tostado)} kg</td>
+          <td style={{...S.td,fontWeight:600,color:esTostado?C.purple:C.orange}}>{fmt(kgTotal)} kg{!esTostado&&<span style={{color:C.textFaint,fontWeight:400,fontSize:10}}> (excelso)</span>}</td>
           <td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(entKg)} kg</td>
           <td style={S.td}><span style={{fontWeight:700,color:pendKg>0?C.orange:C.textFaint}}>{fmt(pendKg)} kg</span></td>
-          <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(t.fecha)}</td>
-          <td style={{...S.td,color:C.textDim}}>{t.responsable||"—"}</td>
+          <td style={{...S.td,color:C.textDim,fontSize:12}}>{fechaRef?fmtFecha(fechaRef):"—"}</td>
+          <td style={{...S.td,color:C.textDim}}>{respRef||"—"}</td>
           <td style={S.td}><button style={{...S.btn,fontSize:11,padding:"6px 12px",background:pendKg>0?C.green:C.textFaint,cursor:pendKg>0?"pointer":"not-allowed"}} disabled={pendKg<=0} onClick={()=>abrirE(m)}>+ Entrega</button></td>
         </tr>);})}
         </tbody></table></TablaScrollV>
@@ -264,7 +279,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino}){
     {modalE&&selE&&(<Modal title={"Registrar Entrega — "+selE.codigo} onClose={()=>setModalE(false)}>
       <div style={{background:C.greenBg,border:"1px solid "+C.green+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
         <div style={{color:C.green,fontWeight:700}}>{selE.codigo} — {selE.cliente}</div>
-        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>kg tostados disponibles: <b style={{color:C.navy}}>{fmt((selE.tostado_mq?.kg_cafe_tostado||0)-kgEntregadosDe(selE))} kg</b></div>
+        <div style={{color:C.textDim,fontSize:12,marginTop:2}}>kg disponibles: <b style={{color:C.navy}}>{fmt((selE.tostado_mq?.kg_cafe_tostado||selE.trilla_mq?.kg_excelso||0)-kgEntregadosDe(selE))} kg</b>{!selE.tostado_mq&&<span style={{color:C.textFaint}}> (excelso, sin tostar)</span>}</div>
       </div>
       {errE&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errE}</div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
