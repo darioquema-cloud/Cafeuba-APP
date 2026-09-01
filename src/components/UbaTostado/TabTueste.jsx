@@ -141,19 +141,22 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const [filtroMesListos,setFiltroMesListos]=useState("todos");
   const [filtroStockListos,setFiltroStockListos]=useState("todos");
   const mesesListos=[...new Set(listosParaTostar.map(r=>r.mes).filter(Boolean))];
-  const listosFiltrados=listosParaTostar.filter(r=>
-    (filtroMesListos==="todos"||r.mes===filtroMesListos)&&
-    (!filtroProductoListos||r.producto.toLowerCase().includes(filtroProductoListos.toLowerCase()))&&
-    (filtroStockListos==="todos"||(filtroStockListos==="con_stock"?r.kg>0:r.kg<=0))
-  );
+  const listosFiltrados=listosParaTostar.filter(r=>{
+    const q=filtroProductoListos.toLowerCase();
+    const coincide=!q||r.producto.toLowerCase().includes(q)||(r.codigo||"").toLowerCase().includes(q)||(r.origenLabel||"").toLowerCase().includes(q);
+    return (filtroMesListos==="todos"||r.mes===filtroMesListos)&&coincide&&(filtroStockListos==="todos"||(filtroStockListos==="con_stock"?r.kg>0:r.kg<=0));
+  });
   const [filtroProductoHist,setFiltroProductoHist]=useState("");
   const [filtroMesHist,setFiltroMesHist]=useState("todos");
+  const [filtroProductoSelectHist,setFiltroProductoSelectHist]=useState("todos");
   const historico=blendsTostado.filter(t=>t.kg_cafe_tostado>0);
   const mesesHist=[...new Set(historico.map(t=>mesDe(t.fecha)).filter(Boolean))];
-  const historicoFiltrado=historico.filter(t=>
-    (filtroMesHist==="todos"||mesDe(t.fecha)===filtroMesHist)&&
-    (!filtroProductoHist||(t.nombre_producto||"").toLowerCase().includes(filtroProductoHist.toLowerCase()))
-  );
+  const productosHist=[...new Set(historico.map(t=>t.nombre_producto).filter(Boolean))];
+  const historicoFiltrado=historico.filter(t=>{
+    const q=filtroProductoHist.toLowerCase();
+    const coincide=!q||(t.nombre_producto||"").toLowerCase().includes(q)||(t.codigo_lote_origen||"").toLowerCase().includes(q)||(t.codigo||"").toLowerCase().includes(q);
+    return (filtroMesHist==="todos"||mesDe(t.fecha)===filtroMesHist)&&coincide&&(filtroProductoSelectHist==="todos"||t.nombre_producto===filtroProductoSelectHist);
+  });
   const kgDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg,0);
   const valorDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg*(r.valorUnit||0),0);
   const valorTotalTostado=blendsTostado.filter(t=>t.kg_cafe_tostado>0).reduce((s,t)=>s+(t.valor_total||0),0);
@@ -179,7 +182,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     {(pendientes.length>0||poolDirecto.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
       <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+poolDirecto.length})</div>
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-        <input value={filtroProductoListos} onChange={e=>setFiltroProductoListos(e.target.value)} placeholder="Buscar por producto..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
+        <input value={filtroProductoListos} onChange={e=>setFiltroProductoListos(e.target.value)} placeholder="Buscar por producto o código..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
         <select value={filtroMesListos} onChange={e=>setFiltroMesListos(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los meses</option>
           {mesesListos.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
@@ -227,15 +230,19 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     {subTabTueste==="historial"&&(
     <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div>
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-        <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
+        <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto o código..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
         <select value={filtroMesHist} onChange={e=>setFiltroMesHist(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los meses</option>
           {mesesHist.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
         </select>
-        {(filtroProductoHist||filtroMesHist!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoHist("");setFiltroMesHist("todos");}}>✕ Limpiar</button>}
+        <select value={filtroProductoSelectHist} onChange={e=>setFiltroProductoSelectHist(e.target.value)} style={{...S.select,width:"auto",minWidth:150,fontSize:12,padding:"6px 10px"}}>
+          <option value="todos">Todos los productos</option>
+          {productosHist.map(p=>(<option key={p} value={p}>{p}</option>))}
+        </select>
+        {(filtroProductoHist||filtroMesHist!=="todos"||filtroProductoSelectHist!=="todos")&&<button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroProductoHist("");setFiltroMesHist("todos");setFiltroProductoSelectHist("todos");}}>✕ Limpiar</button>}
         <span style={{fontSize:11,color:C.textFaint}}>{historicoFiltrado.length} de {historico.length}</span>
       </div>
-      {(filtroProductoHist||filtroMesHist!=="todos")&&(()=>{
+      {(filtroProductoHist||filtroMesHist!=="todos"||filtroProductoSelectHist!=="todos")&&(()=>{
         const sumKg=historicoFiltrado.reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
         const sumValor=historicoFiltrado.reduce((s,t)=>s+(t.valor_total||0),0);
         return(<div style={{...S.card,display:"flex",gap:24,alignItems:"center",marginBottom:12,background:C.tealBg||C.bg}}>
