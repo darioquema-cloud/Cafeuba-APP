@@ -181,6 +181,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     const ajustesPorLote={};
     inv.detalle.forEach(d=>{if(d.diferencia_kg!==0)ajustesPorLote[d.lote_id]=d.diferencia_kg;});
     setLotes(p=>p.map(l=>{
+      if(l.estado!=="Bodega")return l; // nunca tocar lotes que estan en Recepcion/Proceso/Secado/Finalizado — solo los que ya estan en Bodega Milan
       const salidasSinAjusteViejo=(l.salidas_bodega||[]).filter(s=>!(s.destino_key==="ajuste_inventario"&&s.factura===factura));
       if(!(l.id in ajustesPorLote)){
         const stockNew=l.kg_producto-salidasSinAjusteViejo.reduce((s,x)=>s+x.peso_salida,0);
