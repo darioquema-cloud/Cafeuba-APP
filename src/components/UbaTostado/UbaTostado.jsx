@@ -5,7 +5,7 @@ import{TabEmpaque}from"./TabEmpaque";
 import{TabVentasTostado}from"./TabVentasTostado";
 import{TabNecesidades}from"./TabNecesidades";
 const TABS=[["tueste","Tueste"],["empaque","Empaque"],["ventas","Ventas Tostado"],["necesidades","Necesidades"]];
-export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,setEmpaques,ventasTostado,setVentasTostado,configEmpaque,setConfigEmpaque,necesidadesTostado,setNecesidadesTostado}){
+export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,setEmpaques,ventasTostado,setVentasTostado,configEmpaque,setConfigEmpaque,necesidadesTostado,setNecesidadesTostado,inventariosMensuales,setInventariosMensuales}){
   const [tab,setTab]=useState("tueste");
   return(<div>
     <div style={{marginBottom:16}}>
@@ -15,7 +15,7 @@ export function UbaTostado({blendsTostado,setBlendsTostado,blendsFino,lotesFino,
     <div style={{display:"flex",gap:4,marginBottom:20,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
       {TABS.map(([k,v])=>(<button key={k} onClick={()=>setTab(k)} style={{padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:tab===k?700:400,color:tab===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tab===k?"3px solid "+C.orange:"3px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif",whiteSpace:"nowrap"}}>{v}</button>))}
     </div>
-    {tab==="tueste"&&<TabTueste blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino} lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} empaques={empaques}/>}
+    {tab==="tueste"&&<TabTueste blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino} lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} empaques={empaques} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>}
     {tab==="empaque"&&<TabEmpaque blendsTostado={blendsTostado} empaques={empaques} setEmpaques={setEmpaques} configEmpaque={configEmpaque} setConfigEmpaque={setConfigEmpaque}/>}
     {tab==="ventas"&&<TabVentasTostado empaques={empaques} ventasTostado={ventasTostado} setVentasTostado={setVentasTostado} configEmpaque={configEmpaque}/>}
     {tab==="necesidades"&&<TabNecesidades necesidadesTostado={necesidadesTostado} setNecesidadesTostado={setNecesidadesTostado}/>}
