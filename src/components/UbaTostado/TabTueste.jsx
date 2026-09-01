@@ -11,6 +11,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       <td style={{border:"1px solid "+C.border,padding:2}}>{children}</td>
     </tr>
   );
+  const [subTabTueste,setSubTabTueste]=useState("listos");
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
   const blankForm=()=>({fecha:today(),nombre_producto:"",kg_a_tostar:"",valor_unitario:"",valor_total:"",numero_baches:"",tipo_tostion:TIPOS_TOSTION[0],kg_cafe_tostado:"",catacion:"",responsable:"",codigo_lote_origen:"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",fuentes:[],origen_tipo:"",origen_salida_id:""});
@@ -161,13 +162,20 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Registros de Tueste</div>
       <button style={{...S.btn,background:C.orange}} onClick={abrirNuevo}>+ Nuevo Lote Tostado</button>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
+    <div style={{display:"flex",gap:4,marginBottom:16,borderBottom:"1px solid "+C.border}}>
+      <button style={{border:"none",borderBottom:subTabTueste==="listos"?"2px solid "+C.orange:"2px solid transparent",borderRadius:0,background:"transparent",padding:"10px 16px",fontSize:13,fontWeight:600,color:subTabTueste==="listos"?C.orange:C.textDim,cursor:"pointer"}} onClick={()=>setSubTabTueste("listos")}>Inventario de Materia Prima</button>
+      <button style={{border:"none",borderBottom:subTabTueste==="historial"?"2px solid "+C.orange:"2px solid transparent",borderRadius:0,background:"transparent",padding:"10px 16px",fontSize:13,fontWeight:600,color:subTabTueste==="historial"?C.orange:C.textDim,cursor:"pointer"}} onClick={()=>setSubTabTueste("historial")}>Historial de Tuestes</button>
+    </div>
+    {subTabTueste==="listos"&&(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Kg Disponibles a Tostar" value={fmt(kgDisponiblesTostar,1)+" kg"} col={C.navy}/>
       <KPI label="Valor Kg Disponibles" value={fmtCOP(valorDisponiblesTostar)} col={C.orange}/>
+    </div>)}
+    {subTabTueste==="historial"&&(<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
       <KPI label="Valor Total Tostado" value={fmtCOP(valorTotalTostado)} col={C.purple}/>
       <KPI label="kg Cafe Tostado" value={fmt(totalKgTostado,1)+" kg"} col={C.green}/>
       <KPI label="Rendimiento Prom." value={rendProm+"%"} col={C.gold}/>
-    </div>
+    </div>)}
+    {subTabTueste==="listos"&&(<>
     {(pendientes.length>0||poolDirecto.length>0)&&(<div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.orange}}>
       <div style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:12}}>Lotes Listos para Tostar ({pendientes.length+poolDirecto.length})</div>
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
@@ -215,6 +223,8 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       </table></TablaScrollV>
       {listosFiltrados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin lotes que coincidan con el filtro.</div>}
     </div>)}
+    </>)}
+    {subTabTueste==="historial"&&(
     <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div>
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
@@ -262,6 +272,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
       </tr>);})}</tbody></table></TablaScrollV>
       {historicoFiltrado.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{historico.length===0?"Sin tuestes registrados todavia.":"Ningun tueste coincide con el filtro."}</div>}
     </div>
+    )}
     {modalSalidaUBA&&selTost&&(<Modal title={"Salida Granel / Muestra - "+selTost.codigo} onClose={()=>{setModalSalidaUBA(false);setErrSalidaUBA("");}}>
       <div style={{background:C.purpleBg,border:"1px solid "+C.purple+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
         <div style={{color:C.purple,fontWeight:700}}>{selTost.codigo} - {selTost.nombre_producto}</div>
