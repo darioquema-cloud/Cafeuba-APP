@@ -68,6 +68,7 @@ const costoKgExFinoDe=(grupo)=>{
 
 export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,costos,user}){
   const [modal,setModal]=useState(false);
+  const [editId,setEditId]=useState(null);
   const [cliente,setCliente]=useState("");
   const [productoComercial,setProductoComercial]=useState("");
   const [kgSolicitados,setKgSolicitados]=useState("");
@@ -162,7 +163,20 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
   };
 
   const abrirNuevo=()=>{
+    setEditId(null);
     setCliente("");setProductoComercial("");setKgSolicitados("");setPrecioKg("");setFechaEntrega("");setNotas("");setErr("");setModal(true);
+  };
+
+  const abrirEditar=(p)=>{
+    setEditId(p.id);
+    setCliente(p.cliente);
+    setProductoComercial(p.producto_comercial);
+    setKgSolicitados(String(p.kg_solicitados));
+    setPrecioKg(p.precio_kg?String(p.precio_kg):"");
+    setFechaEntrega(p.fecha_entrega_esperada||"");
+    setNotas(p.notas||"");
+    setErr("");
+    setModal(true);
   };
 
   const guardar=()=>{
@@ -172,17 +186,26 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     if(!(kg>0)){setErr("Ingresa un peso solicitado valido (mayor a 0).");return;}
     const precio=numVal(precioKg);
     const valor=precio>0?kg*precio:0;
-    const nuevo={
-      id:genId(),fecha_registro:today(),cliente:cliente.trim(),
-      producto_comercial:productoComercial,
-      desglose:desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible,valor_unitario:e.valor_unitario})),
-      kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
-      fecha_entrega_esperada:fechaEntrega,notas,entregado:false,
-      faltante_kg:faltante>0?faltante:0,
-      fecha_estimada_sistema:fechaEstimadaEntrega?fechaEstimadaEntrega.toISOString().slice(0,10):null,
-      usuario_registro:user?.nombre||user?.email||"",
-    };
-    setPedidos(p=>[nuevo,...p]);
+    const desgloseActualizado=desgloseSel.map(e=>({tipo:e.tipo,seccion_label:e.seccion_label,ref_id:e.ref_id,ref_codigo:e.ref_codigo,disponible_al_momento:e.disponible,valor_unitario:e.valor_unitario}));
+    const fechaSistema=fechaEstimadaEntrega?fechaEstimadaEntrega.toISOString().slice(0,10):null;
+    if(editId){
+      setPedidos(p=>p.map(x=>x.id===editId?{
+        ...x,cliente:cliente.trim(),producto_comercial:productoComercial,desglose:desgloseActualizado,
+        kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
+        fecha_entrega_esperada:fechaEntrega,notas,
+        faltante_kg:faltante>0?faltante:0,fecha_estimada_sistema:fechaSistema,
+      }:x));
+    }else{
+      const nuevo={
+        id:genId(),fecha_registro:today(),cliente:cliente.trim(),
+        producto_comercial:productoComercial,desglose:desgloseActualizado,
+        kg_solicitados:kg,precio_kg:precio,valor_estimado:valor,
+        fecha_entrega_esperada:fechaEntrega,notas,entregado:false,
+        faltante_kg:faltante>0?faltante:0,fecha_estimada_sistema:fechaSistema,
+        usuario_registro:user?.nombre||user?.email||"",
+      };
+      setPedidos(p=>[nuevo,...p]);
+    }
     setModal(false);
   };
 
@@ -286,9 +309,12 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
                 <td style={S.td}>{disponible==null?(<span style={{color:C.textFaint}}>—</span>):(<span style={{color:excede?C.red:C.green,fontWeight:700}}>{fmt(disponible)} kg{excede&&" ⚠"}{dispInfo&&dispInfo.count>1&&(<span style={{color:C.textFaint,fontWeight:400,fontSize:11}}> ({dispInfo.count} lotes)</span>)}</span>)}</td>
                 <td style={{...S.td,color:C.gold,fontWeight:700}}>{p.valor_estimado>0?fmtCOP(p.valor_estimado):"—"}</td>
                 <td style={{...S.td,color:C.textDim}}>{p.fecha_entrega_esperada?fmtFecha(p.fecha_entrega_esperada):"—"}{p.faltante_kg>0&&p.fecha_estimada_sistema&&(<div style={{color:C.orange,fontSize:10,fontWeight:600,marginTop:2}}>Est. sistema: {fmtFecha(p.fecha_estimada_sistema)}</div>)}</td>
-                <td style={S.td} onClick={e=>e.stopPropagation()}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.textFaint,fontWeight:600,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
+                <td style={S.td} onClick={e=>e.stopPropagation()}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={!!p.entregado} onChange={()=>toggleEntregado(p.id)} style={{accentColor:C.green}}/><span style={{color:p.entregado?C.green:C.red,fontWeight:700,fontSize:12}}>{p.entregado?"Entregado":"Pendiente"}</span></label></td>
                 <td style={{...S.td,color:C.textDim,fontSize:12}}>{p.notas||"-"}</td>
-                <td style={S.td} onClick={e=>e.stopPropagation()}><button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarPedido(p.id)}>Eliminar</button></td>
+                <td style={S.td} onClick={e=>e.stopPropagation()}>
+                  <button style={{...S.btnG,marginRight:6}} onClick={()=>abrirEditar(p)}>Editar</button>
+                  <button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarPedido(p.id)}>Eliminar</button>
+                </td>
               </tr>);
             })}</tbody></table>
           </td></tr>)}
@@ -297,7 +323,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
       {clientesAgrupados.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>{pedidos.length===0?"Sin pedidos registrados todavia.":"Ningun pedido coincide con el filtro."}</div>}
     </div>
 
-    {modal&&(<Modal title="Nuevo Pedido" onClose={()=>setModal(false)}>
+    {modal&&(<Modal title={editId?"Editar Pedido":"Nuevo Pedido"} onClose={()=>setModal(false)}>
       {err&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {err}</div>)}
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Cliente" half><input style={S.input} value={cliente} onChange={e=>setCliente(e.target.value)}/></Fld>
@@ -349,7 +375,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:8}}>
         <button style={S.btnG} onClick={()=>setModal(false)}>Cancelar</button>
-        <button style={S.btn} onClick={guardar}>Guardar Pedido</button>
+        <button style={S.btn} onClick={guardar}>{editId?"Guardar Cambios":"Guardar Pedido"}</button>
       </div>
     </Modal>)}
   </div>);
