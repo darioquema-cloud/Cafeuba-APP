@@ -1,203 +1,166 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
-import{PRESENTACIONES_TOSTADO}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
-import{Fld,KPI,Modal,TablaScrollV}from"../ui";
+import{Fld,KPI,Modal,TablaScrollV,Bdg}from"../ui";
 
-const SKU_MAP=Object.fromEntries(PRESENTACIONES_TOSTADO.map(p=>[p.key,p]));
+const BOLSA_CLIENTE="__bolsa_cliente__";
 
-export function TabEmpaque({blendsTostado,empaques,setEmpaques,configEmpaque,setConfigEmpaque}){
-  const [showConfig,setShowConfig]=useState(false);
+export function TabEmpaque({blendsTostado,empaques,setEmpaques,tiposEmpaque,setTiposEmpaque}){
   const [modal,setModal]=useState(false);
-  const [form,setForm]=useState({fecha:today(),codigo_lote_empacado:"",lote_tostado_id:"",responsable:"",notas:"",items:[]});
+  const [modalTipos,setModalTipos]=useState(false);
   const [err,setErr]=useState("");
+  const [form,setForm]=useState({fecha:today(),codigo_lote_empacado:"",lote_tostado_id:"",gramos_por_unidad:"",unidades:"",tipo_molienda:"Molido",empaque_id:"",responsable:"",notas:""});
+  const [formTipo,setFormTipo]=useState({nombre:"",costo:""});
 
-  // stock granel = tostado - salidas granel - empaques
   const stockGranel=(t)=>(t.kg_cafe_tostado||0)-(t.salidas||[]).reduce((a,s)=>a+s.peso_salida,0)-empaques.filter(e=>e.lote_tostado_id===t.id).reduce((s,e)=>s+(e.kg_cafe_total||0),0);
-
-  const cfgMap=Object.fromEntries(configEmpaque.map(c=>[c.sku_key,c]));
   const lotesConStock=blendsTostado.filter(t=>t.kg_cafe_tostado>0&&stockGranel(t)>0.01);
   const loteSeleccionado=blendsTostado.find(t=>t.id===form.lote_tostado_id)||null;
   const stockDisp=loteSeleccionado?stockGranel(loteSeleccionado):0;
   const vut=loteSeleccionado?(loteSeleccionado.valor_unitario_tostado||(loteSeleccionado.kg_cafe_tostado&&loteSeleccionado.valor_total?Math.round(loteSeleccionado.valor_total/loteSeleccionado.kg_cafe_tostado):0)):0;
 
-  const kgUsadoForm=form.items.reduce((s,it)=>{const sku=SKU_MAP[it.sku_key];return s+(+it.unidades||0)*(sku?.kg_cafe||0);},0);
+  const tiposActivos=tiposEmpaque.filter(t=>t.activo!==false);
+  const empaqueSeleccionado=form.empaque_id===BOLSA_CLIENTE?{nombre:"Bolsa del Cliente",costo:0}:tiposEmpaque.find(t=>t.id===form.empaque_id);
 
-  const agregarSKU=(skuKey)=>{
-    if(form.items.some(it=>it.sku_key===skuKey))return;
-    setForm(p=>({...p,items:[...p.items,{sku_key:skuKey,unidades:""}]}));
-  };
-  const quitarSKU=(idx)=>setForm(p=>({...p,items:p.items.filter((_,i)=>i!==idx)}));
-  const setUnidades=(idx,val)=>setForm(p=>{const its=[...p.items];its[idx]={...its[idx],unidades:val};return{...p,items:its};});
+  const kgTotalForm=(+form.gramos_por_unidad||0)*(+form.unidades||0)/1000;
 
-  const abrirModal=()=>{setForm({fecha:today(),codigo_lote_empacado:"",lote_tostado_id:"",responsable:"",notas:"",items:[]});setErr("");setModal(true);};
+  const stockVentasDe=(e)=>(e.unidades||0)-(e.ventas||[]).reduce((s,v)=>s+(v.unidades||0),0);
+
+  const abrirNuevo=()=>{setForm({fecha:today(),codigo_lote_empacado:"",lote_tostado_id:"",gramos_por_unidad:"",unidades:"",tipo_molienda:"Molido",empaque_id:"",responsable:"",notas:""});setErr("");setModal(true);};
 
   const registrar=()=>{
     if(!form.lote_tostado_id){setErr("Selecciona un lote tostado.");return;}
     if(!form.codigo_lote_empacado.trim()){setErr("Ingresa el Código Lote Empacado.");return;}
-    if(!form.items.length){setErr("Agrega al menos un SKU a empacar.");return;}
-    for(const it of form.items){if(!(+it.unidades>0)){setErr("Ingresa unidades válidas (>0) en todos los SKU.");return;}}
-    if(kgUsadoForm>stockDisp+0.001){setErr("Los kg a consumir ("+fmt(kgUsadoForm,3)+") superan el stock disponible ("+fmt(stockDisp,3)+" kg).");return;}
+    if(!(+form.gramos_por_unidad>0)){setErr("Ingresa los gramos a empacar por unidad.");return;}
+    if(!(+form.unidades>0)){setErr("Ingresa el número de unidades a empacar.");return;}
+    if(!form.empaque_id){setErr("Selecciona el tipo de empaque.");return;}
+    const kgTotal=Math.round((+form.gramos_por_unidad)*(+form.unidades)/1000*1000)/1000;
+    if(kgTotal>stockDisp+0.001){setErr("Los kg a consumir ("+fmt(kgTotal,3)+") superan el stock disponible ("+fmt(stockDisp,3)+" kg).");return;}
     setErr("");
-    const items=form.items.map(it=>{
-      const sku=SKU_MAP[it.sku_key];
-      const cfg=cfgMap[it.sku_key]||{};
-      const unidades=+it.unidades;
-      const kgUnit=sku?.kg_cafe||0;
-      const kgTotal=Math.round(unidades*kgUnit*1000)/1000;
-      const costoCafe=Math.round(vut*kgUnit);
-      const costoEmpaque=cfg.costo_empaque||0;
-      return{sku_key:it.sku_key,sku_label:sku?.label||it.sku_key,unidades,kg_cafe_por_unidad:kgUnit,kg_cafe_total:kgTotal,costo_cafe_unitario:costoCafe,costo_empaque_unitario:costoEmpaque,costo_total_unitario:costoCafe+costoEmpaque,precio_lista:cfg.precio_lista||0};
-    });
-    const kgTotal=Math.round(items.reduce((s,it)=>s+it.kg_cafe_total,0)*1000)/1000;
-    setEmpaques(p=>[{id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),codigo_lote_empacado:form.codigo_lote_empacado.trim(),lote_tostado_id:loteSeleccionado.id,lote_tostado_codigo:loteSeleccionado.codigo,nombre_producto:loteSeleccionado.nombre_producto,valor_unitario_tostado:vut,responsable:form.responsable,notas:form.notas,items,kg_cafe_total:kgTotal},...p]);
+    const costoEmpaqueUnit=empaqueSeleccionado?.costo||0;
+    const costoCafeUnit=Math.round(vut*(+form.gramos_por_unidad)/1000);
+    setEmpaques(p=>[{
+      id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),codigo_lote_empacado:form.codigo_lote_empacado.trim(),
+      lote_tostado_id:loteSeleccionado.id,lote_tostado_codigo:loteSeleccionado.codigo,nombre_producto:loteSeleccionado.nombre_producto,
+      gramos_por_unidad:+form.gramos_por_unidad,unidades:+form.unidades,tipo_molienda:form.tipo_molienda,
+      empaque_nombre:empaqueSeleccionado?.nombre||"",costo_empaque_unitario:costoEmpaqueUnit,
+      kg_cafe_total:kgTotal,valor_unitario_tostado:vut,costo_cafe_unitario:costoCafeUnit,
+      responsable:form.responsable,notas:form.notas,ventas:[]
+    },...p]);
     setModal(false);
   };
 
   const eliminarEmpaque=(e)=>{
-    if(!window.confirm("¿Eliminar esta etapa de empaque? Los kg volverán al stock granel del lote."))return;
+    if((e.ventas||[]).length>0){alert("No se puede eliminar: este empaque ya tiene ventas registradas. Elimina primero las ventas desde Ventas Tostado.");return;}
+    if(!window.confirm("¿Eliminar este registro de empaque? Los kg volverán al stock granel del lote."))return;
     setEmpaques(p=>p.filter(x=>x.id!==e.id));
   };
 
-  const updateCfg=(skuKey,field,val)=>setConfigEmpaque(p=>p.map(c=>c.id===skuKey?{...c,[field]:numVal(val)}:c));
+  const guardarTipo=()=>{
+    if(!formTipo.nombre.trim()||!(+formTipo.costo>=0))return;
+    setTiposEmpaque(p=>[...p,{id:genId(),nombre:formTipo.nombre.trim(),costo:+formTipo.costo,activo:true}]);
+    setFormTipo({nombre:"",costo:""});
+  };
+  const eliminarTipo=(id)=>{
+    if(!window.confirm("¿Eliminar este tipo de empaque?"))return;
+    setTiposEmpaque(p=>p.filter(t=>t.id!==id));
+  };
 
-  // KPIs
-  const totalUnidades=empaques.reduce((s,e)=>s+(e.items||[]).reduce((a,it)=>a+it.unidades,0),0);
   const totalKgEmpacado=empaques.reduce((s,e)=>s+(e.kg_cafe_total||0),0);
-  const corrIDAmes=(()=>{const mes=mesDe(today());return empaques.filter(e=>e.mes===mes);})();
-  const unidadesMes=corrIDAmes.reduce((s,e)=>s+(e.items||[]).reduce((a,it)=>a+it.unidades,0),0);
-
-  const skusActivos=PRESENTACIONES_TOSTADO.filter(p=>{const c=cfgMap[p.key];return!c||c.activo!==false;});
+  const totalUnidades=empaques.reduce((s,e)=>s+(e.unidades||0),0);
+  const mesActual=mesDe(today());
+  const empaquesMes=empaques.filter(e=>e.mes===mesActual);
+  const unidadesMes=empaquesMes.reduce((s,e)=>s+(e.unidades||0),0);
 
   return(<div>
-    {/* Config panel */}
-    <div style={{...S.card,marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.navy}}>Configuración de Precios y Costos por SKU</div>
-        <button style={S.btnG} onClick={()=>setShowConfig(v=>!v)}>{showConfig?"Ocultar":"Editar precios ▾"}</button>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+      <div style={{color:C.navy,fontSize:15,fontWeight:700}}>Registros de Empaque</div>
+      <div style={{display:"flex",gap:8}}>
+        <button style={S.btnG} onClick={()=>setModalTipos(true)}>Tipos de Empaque</button>
+        <button style={{...S.btn,background:C.orange}} onClick={abrirNuevo}>+ Nuevo Registro</button>
       </div>
-      {showConfig&&(<div style={{marginTop:14}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr>{["SKU","Formato","Peso (g)","kg café / unidad","Costo Empaque (COP/u)","Precio de Lista (COP/u)","Activo"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-          <tbody>{PRESENTACIONES_TOSTADO.map(p=>{const c=cfgMap[p.key]||{};return(<tr key={p.key}>
-            <td style={{...S.td,fontWeight:600,color:C.navy,whiteSpace:"nowrap"}}>{p.label}</td>
-            <td style={S.td}>{p.formato}</td>
-            <td style={{...S.td,textAlign:"right"}}>{p.peso_g}</td>
-            <td style={{...S.td,textAlign:"right",color:C.teal,fontWeight:600}}>{p.kg_cafe}</td>
-            <td style={S.td}><input style={{...S.input,width:110,textAlign:"right",padding:"4px 8px"}} type="number" value={c.costo_empaque||0} onChange={e=>updateCfg(p.key,"costo_empaque",e.target.value)}/></td>
-            <td style={S.td}><input style={{...S.input,width:110,textAlign:"right",padding:"4px 8px"}} type="number" value={c.precio_lista||0} onChange={e=>updateCfg(p.key,"precio_lista",e.target.value)}/></td>
-            <td style={{...S.td,textAlign:"center"}}><input type="checkbox" checked={c.activo!==false} onChange={e=>setConfigEmpaque(p2=>p2.map(x=>x.id===p.key?{...x,activo:e.target.checked}:x))}/></td>
-          </tr>);})}</tbody>
-        </table>
-        <div style={{color:C.textFaint,fontSize:11,marginTop:8}}>Los valores se guardan automáticamente. Solo se aplican a nuevas etapas de empaque — los registros existentes conservan el costo capturado al momento del empaque.</div>
-      </div>)}
     </div>
 
-    {/* KPIs + action */}
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:10}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,flex:1}}>
-        <KPI label="Etapas totales" value={empaques.length} col={C.navy}/>
-        <KPI label="Unidades empacadas" value={totalUnidades.toLocaleString("es-CO")} col={C.purple}/>
-        <KPI label="kg café consumido" value={fmt(totalKgEmpacado,1)+" kg"} col={C.orange}/>
-        <KPI label={"Unidades este mes"} value={unidadesMes.toLocaleString("es-CO")} col={C.green}/>
-      </div>
-      <button style={{...S.btn,background:C.purple,flexShrink:0}} onClick={abrirModal}>+ Nueva Etapa de Empaque</button>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
+      <KPI label="Kg Empacados" value={fmt(totalKgEmpacado,1)+" kg"} col={C.navy}/>
+      <KPI label="Unidades Empacadas" value={totalUnidades} col={C.accent}/>
+      <KPI label={"Unidades "+mesActual} value={unidadesMes} col={C.gold}/>
     </div>
 
-    {/* Tabla corridas */}
     <div style={S.card}>
-      <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Etapas de Empaque</div>
-      <TablaScrollV minWidth={900}>
-        <table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
-          <thead><tr>{["Fecha","Mes","Lote Tostado","Código Lote Empacado","Producto","SKUs empacados","kg café usado","Responsable","Notas","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-          <tbody>{empaques.map(e=>(<tr key={e.id}>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
+        <thead><tr>{["Código","Fecha","Lote Tostado","Gramos/u","Tipo","Empaque","Costo Empaque","Unidades","Vendidas","Stock","Kg Total","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>{empaques.map(e=>{
+          const stock=stockVentasDe(e);
+          return(<tr key={e.id}>
+            <td style={{...S.td,fontWeight:700,color:C.accent,fontFamily:"monospace",fontSize:11}}>{e.codigo_lote_empacado}</td>
             <td style={{...S.td,color:C.textDim}}>{fmtFecha(e.fecha)}</td>
-            <td style={{...S.td,textTransform:"capitalize"}}>{e.mes}</td>
-            <td style={{...S.td,color:C.orange,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{e.lote_tostado_codigo}</td>
-            <td style={{...S.td,color:C.navy,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{e.codigo_lote_empacado||"—"}</td>
-            <td style={{...S.td,fontWeight:600}}>{e.nombre_producto}</td>
-            <td style={S.td}><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{(e.items||[]).map((it,i)=>(<span key={i} style={{background:C.purpleBg,color:C.purple,borderRadius:4,padding:"2px 6px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{it.sku_label} ×{it.unidades}</span>))}</div></td>
-            <td style={{...S.td,color:C.orange,fontWeight:700}}>{fmt(e.kg_cafe_total,3)} kg</td>
-            <td style={S.td}>{e.responsable||"—"}</td>
-            <td style={{...S.td,color:C.textDim,fontSize:12,maxWidth:180}}>{e.notas||"—"}</td>
-            <td style={S.td}><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"60"}} onClick={()=>eliminarEmpaque(e)}>Eliminar</button></td>
-          </tr>))}
-          {!empaques.length&&<tr><td colSpan={10} style={{...S.td,color:C.textFaint,textAlign:"center",padding:20}}>Sin etapas de empaque registradas todavía.</td></tr>}
-          </tbody>
-        </table>
-      </TablaScrollV>
+            <td style={S.td}>{e.nombre_producto}<div style={{color:C.textFaint,fontSize:10}}>{e.lote_tostado_codigo}</div></td>
+            <td style={S.td}>{e.gramos_por_unidad} g</td>
+            <td style={S.td}><Bdg label={e.tipo_molienda} col={C.purple} bg={C.purpleBg}/></td>
+            <td style={S.td}>{e.empaque_nombre}</td>
+            <td style={{...S.td,color:e.costo_empaque_unitario>0?C.orange:C.textFaint}}>{fmtCOP(e.costo_empaque_unitario)}</td>
+            <td style={{...S.td,textAlign:"right"}}>{e.unidades}</td>
+            <td style={{...S.td,textAlign:"right",color:C.textDim}}>{(e.ventas||[]).reduce((s,v)=>s+(v.unidades||0),0)}</td>
+            <td style={{...S.td,textAlign:"right",fontWeight:700,color:stock>0?C.green:C.textFaint}}>{stock}</td>
+            <td style={{...S.td,textAlign:"right"}}>{fmt(e.kg_cafe_total,2)} kg</td>
+            <td style={S.td}><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarEmpaque(e)}>Eliminar</button></td>
+          </tr>);
+        })}</tbody>
+      </table></TablaScrollV>
+      {empaques.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin registros de empaque todavía.</div>}
     </div>
 
-    {/* Modal nueva corrida */}
-    {modal&&(<Modal title="Nueva Etapa de Empaque" onClose={()=>setModal(false)} wide>
-      <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
-        <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/></Fld>
-        <Fld label="Código Lote Empacado" half>
-          <input
-            style={S.input}
-            placeholder="Ej: código interno de la empresa"
-            value={form.codigo_lote_empacado}
-            onChange={e=>setForm(p=>({...p,codigo_lote_empacado:e.target.value}))}
-          />
-        </Fld>
-        <Fld label="Lote Tostado" half>
-          <select style={S.select} value={form.lote_tostado_id} onChange={e=>setForm(p=>({...p,lote_tostado_id:e.target.value,items:[]}))}>
-            <option value="">— Selecciona lote —</option>
-            {lotesConStock.map(t=>(<option key={t.id} value={t.id}>{t.codigo} · {t.nombre_producto} · {fmt(stockGranel(t),2)} kg disp.</option>))}
-          </select>
-        </Fld>
-        <Fld label="Responsable" half><input style={S.input} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/></Fld>
-        <Fld label="Notas" half><input style={S.input} value={form.notas} onChange={e=>setForm(p=>({...p,notas:e.target.value}))}/></Fld>
+    {modal&&(<Modal title="Nuevo Registro de Empaque" onClose={()=>setModal(false)}>
+      <Fld label="Fecha" half><input style={S.input} type="date" value={form.fecha} onChange={e=>setForm(p=>({...p,fecha:e.target.value}))}/></Fld>
+      <Fld label="Código Lote Empacado" half><input style={S.input} value={form.codigo_lote_empacado} onChange={e=>setForm(p=>({...p,codigo_lote_empacado:e.target.value}))}/></Fld>
+      <Fld label="Lote Tostado">
+        <select style={S.select} value={form.lote_tostado_id} onChange={e=>setForm(p=>({...p,lote_tostado_id:e.target.value}))}>
+          <option value="">— Selecciona —</option>
+          {lotesConStock.map(t=>(<option key={t.id} value={t.id}>{t.codigo} — {t.nombre_producto} ({fmt(stockGranel(t),1)} kg disp.)</option>))}
+        </select>
+      </Fld>
+      <Fld label="Gramos a Empacar (por unidad)" half><input style={S.input} type="number" min="1" value={form.gramos_por_unidad} onChange={e=>setForm(p=>({...p,gramos_por_unidad:e.target.value}))}/></Fld>
+      <Fld label="Unidades" half><input style={S.input} type="number" min="1" value={form.unidades} onChange={e=>setForm(p=>({...p,unidades:e.target.value}))}/></Fld>
+      <Fld label="Tipo" half>
+        <select style={S.select} value={form.tipo_molienda} onChange={e=>setForm(p=>({...p,tipo_molienda:e.target.value}))}>
+          <option value="Molido">Molido</option>
+          <option value="Grano">Grano</option>
+        </select>
+      </Fld>
+      <Fld label="Empaque" half>
+        <select style={S.select} value={form.empaque_id} onChange={e=>setForm(p=>({...p,empaque_id:e.target.value}))}>
+          <option value="">— Selecciona —</option>
+          {tiposActivos.map(t=>(<option key={t.id} value={t.id}>{t.nombre} ({fmtCOP(t.costo)})</option>))}
+          <option value={BOLSA_CLIENTE}>Bolsa del Cliente ($0)</option>
+        </select>
+      </Fld>
+      {kgTotalForm>0&&<div style={{fontSize:12,color:C.textDim,marginBottom:8}}>Total a consumir: <b style={{color:kgTotalForm>stockDisp?C.red:C.navy}}>{fmt(kgTotalForm,3)} kg</b> (disponible: {fmt(stockDisp,3)} kg)</div>}
+      <Fld label="Responsable" half><input style={S.input} value={form.responsable} onChange={e=>setForm(p=>({...p,responsable:e.target.value}))}/></Fld>
+      <Fld label="Notas" half><input style={S.input} value={form.notas} onChange={e=>setForm(p=>({...p,notas:e.target.value}))}/></Fld>
+      {err&&<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"8px 12px",marginBottom:10,color:C.red,fontSize:13}}>{err}</div>}
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:10}}>
+        <button style={S.btnG} onClick={()=>setModal(false)}>Cancelar</button>
+        <button style={{...S.btn,background:C.green}} onClick={registrar}>Registrar</button>
       </div>
+    </Modal>)}
 
-      {loteSeleccionado&&(<div style={{background:C.orangeBg,border:"1px solid "+C.orange+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}>
-        <span style={{color:C.navy,fontWeight:700}}>{loteSeleccionado.nombre_producto}</span>
-        <span style={{color:C.orange,fontWeight:700}}>Stock disponible: {fmt(stockDisp,2)} kg</span>
-        <span style={{color:C.gold}}>Costo/kg tostado: {fmtCOP(vut)}</span>
-        {kgUsadoForm>0&&<span style={{color:kgUsadoForm>stockDisp?C.red:C.green,fontWeight:700}}>A consumir: {fmt(kgUsadoForm,3)} kg {kgUsadoForm>stockDisp?"⚠ SUPERA STOCK":""}</span>}
-      </div>)}
-
-      {/* Selector de SKUs */}
-      <div style={{...S.card,padding:"12px 14px",marginBottom:12}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.navy,marginBottom:10}}>SKUs a Empacar</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
-          {skusActivos.filter(p=>!form.items.some(it=>it.sku_key===p.key)).map(p=>(<button key={p.key} style={{...S.btnG,fontSize:11,color:C.purple,borderColor:C.purple+"60",padding:"5px 10px"}} onClick={()=>agregarSKU(p.key)}>+ {p.label}</button>))}
-          {skusActivos.filter(p=>!form.items.some(it=>it.sku_key===p.key)).length===0&&form.items.length>0&&<div style={{color:C.textFaint,fontSize:11}}>Todos los SKUs activos ya están en la lista.</div>}
-          {!loteSeleccionado&&<div style={{color:C.textFaint,fontSize:11}}>Selecciona un lote primero.</div>}
-        </div>
-        {form.items.map((it,idx)=>{
-          const sku=SKU_MAP[it.sku_key];
-          const cfg=cfgMap[it.sku_key]||{};
-          const u=+it.unidades||0;
-          const kgUnit=sku?.kg_cafe||0;
-          const kgTotal=Math.round(u*kgUnit*1000)/1000;
-          const costoCafe=Math.round(vut*kgUnit);
-          const costoEmp=cfg.costo_empaque||0;
-          return(<div key={it.sku_key} style={{display:"flex",gap:10,alignItems:"center",marginBottom:8,background:C.purpleBg,borderRadius:6,padding:"8px 12px",border:"1px solid "+C.purple+"30",flexWrap:"wrap"}}>
-            <div style={{minWidth:170,fontWeight:600,color:C.purple}}>{sku?.label}</div>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <input style={{...S.input,width:80,textAlign:"right",padding:"4px 8px"}} type="number" min="1" placeholder="Unidades" value={it.unidades} onChange={e=>setUnidades(idx,e.target.value)}/>
-              <span style={{color:C.textDim,fontSize:12}}>u</span>
-            </div>
-            {u>0&&(<div style={{display:"flex",gap:14,fontSize:11,flexWrap:"wrap"}}>
-              <span style={{color:C.orange}}>kg café: <b>{fmt(kgTotal,3)}</b></span>
-              <span style={{color:C.gold}}>Costo café/u: <b>{fmtCOP(costoCafe)}</b></span>
-              <span style={{color:C.teal}}>Costo empaque/u: <b>{fmtCOP(costoEmp)}</b></span>
-              <span style={{color:C.navy,fontWeight:700}}>Costo total/u: <b>{fmtCOP(costoCafe+costoEmp)}</b></span>
-              <span style={{color:C.green}}>Precio lista: <b>{fmtCOP(cfg.precio_lista||0)}</b></span>
-            </div>)}
-            <button style={{background:"none",border:"none",cursor:"pointer",color:C.red,fontWeight:900,fontSize:16,padding:"0 4px",marginLeft:"auto"}} onClick={()=>quitarSKU(idx)}>×</button>
-          </div>);
-        })}
-        {form.items.length>0&&(<div style={{marginTop:8,display:"flex",gap:20,fontSize:12,fontWeight:600,borderTop:"1px solid "+C.border,paddingTop:8}}>
-          <span style={{color:C.orange}}>Total kg a consumir: <b>{fmt(kgUsadoForm,3)} kg</b></span>
-          <span style={{color:C.navy}}>Total unidades: <b>{form.items.reduce((s,it)=>s+(+it.unidades||0),0)}</b></span>
-        </div>)}
+    {modalTipos&&(<Modal title="Tipos de Empaque (Bolsas Propias)" onClose={()=>setModalTipos(false)}>
+      <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"flex-end"}}>
+        <div style={{flex:1}}><Fld label="Nombre"><input style={S.input} placeholder="Ej: Kraft 500g" value={formTipo.nombre} onChange={e=>setFormTipo(p=>({...p,nombre:e.target.value}))}/></Fld></div>
+        <div style={{width:120}}><Fld label="Costo"><input style={S.input} type="number" min="0" value={formTipo.costo} onChange={e=>setFormTipo(p=>({...p,costo:e.target.value}))}/></Fld></div>
+        <button style={{...S.btn,marginBottom:2}} onClick={guardarTipo}>+ Agregar</button>
       </div>
-
-      {err&&<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:10,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {err}</div>}
-      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:4}}><button style={S.btnG} onClick={()=>setModal(false)}>Cancelar</button><button style={{...S.btn,background:C.purple}} onClick={registrar}>Registrar Etapa de Empaque</button></div>
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Nombre","Costo",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>{tiposEmpaque.map(t=>(<tr key={t.id}>
+          <td style={S.td}>{t.nombre}</td>
+          <td style={S.td}>{fmtCOP(t.costo)}</td>
+          <td style={S.td}><button style={{...S.btnG,fontSize:11,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarTipo(t.id)}>Eliminar</button></td>
+        </tr>))}</tbody>
+      </table>
+      {tiposEmpaque.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin tipos de empaque registrados todavía.</div>}
+      <div style={{display:"flex",justifyContent:"flex-end",marginTop:14}}><button style={S.btn} onClick={()=>setModalTipos(false)}>Cerrar</button></div>
     </Modal>)}
   </div>);
 }
