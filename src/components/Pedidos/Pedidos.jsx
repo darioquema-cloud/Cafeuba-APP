@@ -75,6 +75,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
   const [precioKg,setPrecioKg]=useState("");
   const [fechaEntrega,setFechaEntrega]=useState("");
   const [notas,setNotas]=useState("");
+  const [creandoNuevoProducto,setCreandoNuevoProducto]=useState(false);
   const [err,setErr]=useState("");
   const [fCliente,setFCliente]=useState("");
   const [fEstado,setFEstado]=useState("todos");
@@ -164,7 +165,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
 
   const abrirNuevo=()=>{
     setEditId(null);
-    setCliente("");setProductoComercial("");setKgSolicitados("");setPrecioKg("");setFechaEntrega("");setNotas("");setErr("");setModal(true);
+    setCliente("");setProductoComercial("");setKgSolicitados("");setPrecioKg("");setFechaEntrega("");setNotas("");setCreandoNuevoProducto(false);setErr("");setModal(true);
   };
 
   const abrirEditar=(p)=>{
@@ -175,6 +176,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     setPrecioKg(p.precio_kg?String(p.precio_kg):"");
     setFechaEntrega(p.fecha_entrega_esperada||"");
     setNotas(p.notas||"");
+    setCreandoNuevoProducto(!productosUnicos.includes(p.producto_comercial));
     setErr("");
     setModal(true);
   };
@@ -328,10 +330,17 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Cliente" half><input style={S.input} value={cliente} onChange={e=>setCliente(e.target.value)}/></Fld>
         <Fld label="Producto Comercial" half>
-          <select style={S.select} value={productoComercial} onChange={e=>setProductoComercial(e.target.value)}>
+          <select style={S.select} value={creandoNuevoProducto?"__nuevo__":productoComercial} onChange={e=>{
+            if(e.target.value==="__nuevo__"){setCreandoNuevoProducto(true);setProductoComercial("");}
+            else{setCreandoNuevoProducto(false);setProductoComercial(e.target.value);}
+          }}>
             <option value="">Selecciona...</option>
             {productosUnicos.map(prod=>(<option key={prod} value={prod}>{prod||"(Sin Producto)"}</option>))}
+            <option value="__nuevo__">+ Crear nuevo producto...</option>
           </select>
+          {creandoNuevoProducto&&(
+            <input style={{...S.input,marginTop:6}} placeholder="Nombre del nuevo producto (ej: TANGERINE)" value={productoComercial} onChange={e=>setProductoComercial(e.target.value.toUpperCase())} autoFocus/>
+          )}
         </Fld>
       </div>
       {productoComercial&&(<div style={{...S.card,background:C.panel2,marginBottom:14,padding:12}}>
