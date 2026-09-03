@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
 import{mesTrillaDe}from"../../lib/dates";
-import{calcCosto,calcCostoTri,getSeedCostoTri}from"../../lib/costing";
+import{calcCosto,calcCostoTri,getSeedCostoTri,costoKgExFinoDe}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 
 // ═══ Funciones de stock replicadas TAL CUAL (solo lectura) de BodegaTrilladora.jsx y
@@ -57,15 +57,6 @@ const sumarDiasHabiles=(fechaInicio,dias)=>{
   return f;
 };
 
-// ═══ Funciones de costo replicadas TAL CUAL (solo lectura) de BodegaTrilladoraFino.jsx
-// (costoKgExFinoDe) — no vive exportada en ese archivo, asi que se copia aqui como funcion
-// pura sin modificar su logica interna.
-const costoKgExFinoDe=(grupo)=>{
-  for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}
-  for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}
-  return 0;
-};
-
 export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,costos,user}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
@@ -108,7 +99,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
   const gruposFino=construirGruposBTF(lotesFino,trilledFino);
   const entExcelsoCF=gruposFino.map(g=>{
     const repr=g[0];
-    return{tipo:"excelso_cf",seccion_label:"Excelso Fino (Bodega Trilladora Fino)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoBTF(g),valor_unitario:costoKgExFinoDe(g)};
+    return{tipo:"excelso_cf",seccion_label:"Excelso Fino (Bodega Trilladora Fino)",ref_id:repr.id,ref_codigo:repr.trilla?.nombre_trillado||repr.codigo,producto_original:repr.producto||"",producto_norm:normProducto(repr.producto),disponible:stockGrupoBTF(g),valor_unitario:costoKgExFinoDe(g,costos,lotesFino)};
   });
 
   const entBlend=blends.map(b=>({tipo:"blend",seccion_label:"Blend",ref_id:b.id,ref_codigo:b.codigo,producto_original:b.producto_comercial||b.nombre||"",producto_norm:normProducto(b.producto_comercial||b.nombre),disponible:stockBlend(b),valor_unitario:Math.round(b.costo_kg)||0}));

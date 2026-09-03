@@ -130,10 +130,10 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const lotesTrilladosCFIM=(lotesFino||[]).filter(l=>l.trilla?.kg_excelso>0);
   const gruposBTFIM=construirGruposBTF(lotesTrilladosCFIM,lotesFino);
   const stockBTCFkg=gruposBTFIM.reduce((s,g)=>s+stockGrupoBTF(g,finDeMesCutoff),0);
-  const stockBTCFvalor=gruposBTFIM.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g,finDeMesCutoff),0);
+  const stockBTCFvalor=gruposBTFIM.reduce((s,g)=>s+costoKgExFinoDe(g,costos,lotesFino)*stockGrupoBTF(g,finDeMesCutoff),0);
   const ponderadoValidoBTCF=gruposBTFIM.reduce((s,g)=>{
     const stock=stockGrupoBTF(g,finDeMesCutoff);
-    const costo=costoKgExFinoDe(g);
+    const costo=costoKgExFinoDe(g,costos,lotesFino);
     if(stock<=0||costo<=0)return s;
     return {kg:s.kg+stock,val:s.val+stock*costo};
   },{kg:0,val:0});

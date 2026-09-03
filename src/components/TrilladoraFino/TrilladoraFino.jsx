@@ -1,10 +1,10 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,TablaScrollV,AutoFitText}from"../ui";
-import{NORMAS}from"../../data/constants";
+import{NORMAS,MESES}from"../../data/constants";
 import{fmt,fmtCOP,dateToCode}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
-import{costoKgExDeCafeFino,construirGruposBTF,costoKgExFinoDe}from"../../lib/costing";
+import{costoKgExDeCafeFino,construirGruposBTF,costoKgExFinoDe,calcCostoTriCF}from"../../lib/costing";
 export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const MAX_LOTES=8;
   const blankForm=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:"",costoKgExcelso:""});
@@ -177,6 +177,15 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
       </div>
       </div>
     </div>
+    <div style={{...S.card,marginTop:16,marginBottom:16}}>
+      <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Trilladora por Mes</div>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Trilladora","kg Excelso Producido","Costo Trilladora / kg Excelso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{MESES.filter(m=>{const cb=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return cb>0;}).map(m=>{
+        const{costosTri:ct,kgEx:ke,costoTriKg:ck}=calcCostoTriCF(m,costos,lotesFino);
+        return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(ct)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(ke)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{ke>0?fmtCOP(Math.round(ck)):"Sin excelso registrado"}</td></tr>);
+      })}</tbody></table></TablaScrollV>
+      {(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino").length===0&&<div style={{color:C.textFaint,fontSize:12,padding:8}}>Registra costos de "Bodega Cafe Fino" en el modulo de Costos para ver este calculo.</div>}
+    </div>
     {!isEditing&&gruposTrillados.length>0&&(<div style={{...S.card,marginTop:4}}>
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Trillas Realizadas</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
@@ -187,7 +196,7 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
           const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
           const merma=grupo.reduce((s,x)=>s+(x.trilla?.kg_merma||0),0);
           const pctMermaGrupo=entrada>0?((merma/entrada)*100).toFixed(1):"—";
-          const costoEx=costoKgExFinoDe(grupo);
+          const costoEx=costoKgExFinoDe(grupo,costos,lotesFino);
           const dif=(t.factor_industrial!=null&&t.factor_pretrilla_ponderado!=null)?(t.factor_industrial-t.factor_pretrilla_ponderado):null;
           return(<tr key={repr.id}>
             <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.fecha_trilla}</td>

@@ -2,12 +2,12 @@ import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
-import{construirGruposBTF,stockGrupoBTF,costoKgExFinoDe}from"../../lib/costing";
+import{mesDe,mesTrillaDe}from"../../lib/dates";
+import{construirGruposBTF,stockGrupoBTF,costoKgExFinoDe,calcCostoTriCF}from"../../lib/costing";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
-export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,inventariosMensuales,setInventariosMensuales}){
+export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,costos,inventariosMensuales,setInventariosMensuales}){
   const [selGrupo,setSelGrupo]=useState(null);
   const [modalSalida,setModalSalida]=useState(false);
   const [formSalida,setFormSalida]=useState({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",observaciones:""});
@@ -121,7 +121,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
     const gruposActuales=construirGruposBTFC(trilledFino);
     const valorTotal=detalle.reduce((s,d)=>{
       const grupo=gruposActuales.find(g=>g[0].id===d.grupo_repr_id);
-      const costoKg=grupo?costoKgExFinoDe(grupo):0;
+      const costoKg=grupo?costoKgExFinoDe(grupo,costos,lotesFino):0;
       return s+(costoKg*(d.stock_fisico||0));
     },0);
     const significativos=detalle.filter(d=>d.estado_semaforo&&d.estado_semaforo!=="verde");
@@ -206,15 +206,15 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
   // una salida/venta real, no debe mezclarse en los KPIs de Kg/Valor Salidas.
   const totalSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+b.peso_salida,0),0);
   const totalValorSalidasBTF=trilledFino.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,b)=>a+(b.valor_total||0),0),0);
-  const valorStockBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g),0);
-  const valorEntradaBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g)*g.reduce((a,l)=>a+(l.trilla?.kg_excelso||0),0),0);
+  const valorStockBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g,costos,lotesFino)*stockGrupoBTF(g),0);
+  const valorEntradaBTF=todosGrupos.reduce((s,g)=>s+costoKgExFinoDe(g,costos,lotesFino)*g.reduce((a,l)=>a+(l.trilla?.kg_excelso||0),0),0);
 
   const abrirSalidaBTF=(grupo)=>{
     const reprId=grupo[0].id;
     const reprFresh=lotesFino.find(l=>l.id===reprId)||grupo[0];
     const grupoFresh=[reprFresh,...lotesFino.filter(x=>(reprFresh.trilla?.lotes_combinados||[]).includes(x.id))];
     if(stockGrupoBTF(grupoFresh)<=0)return;
-    const costoKg=costoKgExFinoDe(grupoFresh);
+    const costoKg=costoKgExFinoDe(grupoFresh,costos,lotesFino);
     const ultimaVenta=grupoFresh.flatMap(x=>x.salidas_trilladora||[]).filter(s=>s.valor_kg>0).slice(-1)[0]?.valor_kg||"";
     setSelGrupo(grupoFresh);setEditSalidaId(null);
     setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:costoKg||ultimaVenta,valor_total:"",observaciones:""});
@@ -277,7 +277,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
         // no es una salida/venta real, no debe mezclarse en los KPIs de Kg/Valor Salidas.
         const sumSal=gruposFiltrados.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).filter(y=>y.destino_key!=="ajuste_inventario").reduce((b,c)=>b+c.peso_salida,0),0),0);
         const sumValSal=gruposFiltrados.reduce((s,g)=>s+g.reduce((a,x)=>a+(x.salidas_trilladora||[]).filter(y=>y.destino_key!=="ajuste_inventario").reduce((b,c)=>b+(c.valor_total||0),0),0),0);
-        const sumValStk=gruposFiltrados.reduce((s,g)=>s+costoKgExFinoDe(g)*stockGrupoBTF(g),0);
+        const sumValStk=gruposFiltrados.reduce((s,g)=>s+costoKgExFinoDe(g,costos,lotesFino)*stockGrupoBTF(g),0);
         return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}>
           <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>GRUPOS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{gruposFiltrados.length}</div></div>
           <div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG EXCELSO</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumExc)} kg</div></div>
@@ -290,14 +290,15 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
       <div style={S.card}>
         <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario por Lote</div>
         <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1000}}><thead><tr>
-          {["Corte / Trillado","Lotes Origen","Fecha Trilla","Mes","Producto","kg Excelso","Salidas kg","Stock kg","Costo/kg Ex","Valor en Stock","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+          {["Corte / Trillado","Lotes Origen","Fecha Trilla","Mes","Producto","kg Excelso","Salidas kg","Stock kg","Costo Trillado /kg","Costo/kg Ex","Valor en Stock","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
         </tr></thead>
         <tbody>{gruposFiltrados.map(grupo=>{
           const repr=grupo[0];const t=repr.trilla;
           const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
           const salTotal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
           const stock=excelso-salTotal;
-          const costoEx=costoKgExFinoDe(grupo);
+          const costoEx=costoKgExFinoDe(grupo,costos,lotesFino);
+          const costoTrillaKg=calcCostoTriCF(mesTrillaDe(repr),costos,lotesFino).costoTriKg||0;
           return(<tr key={repr.id}>
             <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||repr.codigo}</td>
             <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
@@ -307,6 +308,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
             <td style={{...S.td,fontWeight:600}}>{fmt(excelso)} kg</td>
             <td style={{...S.td,color:C.orange}}>{salTotal>0?fmt(salTotal)+" kg":"—"}</td>
             <td style={S.td}><span style={{fontWeight:700,fontSize:14,color:stock>0?C.green:C.textFaint}}>{fmt(stock)} kg</span></td>
+            <td style={{...S.td,color:C.teal,fontWeight:600}}>{costoTrillaKg>0?fmtCOP(Math.round(costoTrillaKg)):"—"}</td>
             <td style={{...S.td,color:C.purple,fontWeight:600}}>
               {editCostoId===repr.id
                 ?(<input autoFocus type="number" style={{width:90,padding:"3px 6px",border:"1px solid "+C.accent,borderRadius:4,fontSize:12,color:C.purple}} value={editCostoVal} onChange={e=>setEditCostoVal(e.target.value)} onBlur={()=>guardarCostoBTF(grupo,editCostoVal)} onKeyDown={e=>{if(e.key==="Enter")guardarCostoBTF(grupo,editCostoVal);if(e.key==="Escape"){setEditCostoId(null);setEditCostoVal("");}}}/>)
@@ -315,7 +317,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,in
             <td style={{...S.td,color:C.gold,fontWeight:700}}>{stock>0&&costoEx?fmtCOP(Math.round(stock*costoEx)):"—"}</td>
             <td style={S.td}><button style={{...S.btn,fontSize:11,padding:"6px 12px",background:stock>0?C.accent:C.textFaint,cursor:stock>0?"pointer":"not-allowed"}} disabled={stock<=0} onClick={()=>abrirSalidaBTF(grupo)}>+ Salida</button></td>
           </tr>);
-        })}{gruposFiltrados.length===0&&<tr><td colSpan={11} style={{...S.td,color:C.textFaint,textAlign:"center"}}>Sin lotes trillados registrados todavia.</td></tr>}</tbody></table></TablaScrollV>
+        })}{gruposFiltrados.length===0&&<tr><td colSpan={12} style={{...S.td,color:C.textFaint,textAlign:"center"}}>Sin lotes trillados registrados todavia.</td></tr>}</tbody></table></TablaScrollV>
       </div>
     </>)}
     {tab==="historico"&&(()=>{const todasHTF=trilledFino.flatMap(l=>(l.salidas_trilladora||[]).map(s=>({...s,corte:l.trilla?.nombre_trillado||l.codigo,loteRef:l,grupo:grupoDeBTF(l)}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));const mesesHTF=[...new Set(todasHTF.map(s=>mesDe(s.fecha)).filter(Boolean))].sort();const prodsHTF=[...new Set(todasHTF.map(s=>s.corte).filter(Boolean))].sort();const filtHTF=todasHTF.filter(s=>{if(hMesTF&&mesDe(s.fecha)!==hMesTF)return false;if(hProdTF&&s.corte!==hProdTF)return false;if(hBusqTF){const q=hBusqTF.toLowerCase();if(!s.corte?.toLowerCase().includes(q)&&!s.cliente?.toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}return true;});return todasHTF.length===0?(<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin salidas registradas todavia.</div>):(<div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontWeight:600,fontSize:14,color:C.navy}}>Historico de Salidas</span><span style={{color:C.textFaint,fontSize:12}}>{filtHTF.length} de {todasHTF.length} salidas</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}><input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar corte, cliente, factura..." value={hBusqTF} onChange={e=>setHBusqTF(e.target.value)}/><select style={{...S.select,width:140}} value={hMesTF} onChange={e=>setHMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesHTF.map(m=>(<option key={m}>{m}</option>))}</select><select style={{...S.select,width:160}} value={hProdTF} onChange={e=>setHProdTF(e.target.value)}><option value="">Todos los cortes</option>{prodsHTF.map(p=>(<option key={p}>{p}</option>))}</select>{(hBusqTF||hMesTF||hProdTF)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setHBusqTF("");setHMesTF("");setHProdTF("");}}>✕ Limpiar</button>}</div>{(hBusqTF||hMesTF||hProdTF)&&filtHTF.length>0&&(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>SALIDAS</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{filtHTF.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG</div><div style={{color:"#fdba74",fontWeight:700,fontSize:15}}>{fmt(filtHTF.reduce((s,x)=>s+x.peso_salida,0))} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(filtHTF.reduce((s,x)=>s+(x.valor_total||0),0))}</div></div></div>)}<TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}><thead><tr>{["Lote/Corte","Fecha","Cliente/Destino","Factura","Remision","Peso Salida","Valor/kg","Valor Total","Observaciones",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{filtHTF.map(s=>(<tr key={s.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{s.corte}</td><td style={{...S.td,color:C.textDim}}>{fmtFecha(s.fecha)}</td><td style={{...S.td,fontWeight:600}}>{s.cliente||"-"}</td><td style={S.td}><Bdg label={s.factura||"-"} col={C.navy}/></td><td style={S.td}>{s.remision||"-"}</td><td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(s.peso_salida)} kg</td><td style={{...S.td,color:C.gold}}>{fmtCOP(s.valor_kg)}</td><td style={{...S.td,color:C.gold,fontWeight:700}}>{fmtCOP(s.valor_total)}</td><td style={{...S.td,color:C.textDim,fontSize:12}}>{s.observaciones||"-"}</td><td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarSalidaBTF(s.grupo,s)}>Editar</button> <button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>eliminarSalidaBTF(s.loteRef.id,s.id)}>Eliminar</button></td></tr>))}</tbody></table></TablaScrollV></div>);})()}

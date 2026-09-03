@@ -69,8 +69,11 @@ export const stockGrupoBTF=(grupo,cutoff)=>{
   return exc-sal;
 };
 
-export const costoKgExFinoDe=(grupo)=>{
-  for(const x of grupo){if(x.trilla?.costo_kg_excelso>0)return x.trilla.costo_kg_excelso;}
-  for(const x of grupo){if(x.costo_compra_kg>0)return x.costo_compra_kg;}
-  return 0;
+export const costoKgExFinoDe=(grupo,costos,lotesFino)=>{
+  let base=0;
+  for(const x of grupo){if(x.trilla?.costo_kg_excelso>0){base=x.trilla.costo_kg_excelso;break;}}
+  if(base===0){for(const x of grupo){if(x.costo_compra_kg>0){base=x.costo_compra_kg;break;}}}
+  if(base===0)return 0;
+  const d=calcCostoTriCF(mesTrillaDe(grupo[0]),costos,lotesFino).costoTriKg||0;
+  return base+d;
 };
