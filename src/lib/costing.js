@@ -83,3 +83,9 @@ export const calcCostoTuesteMes=(mes,costos,historico)=>{
   const kgTostado=(historico||[]).filter(t=>mesDe(t.fecha)===mes&&(t.kg_cafe_tostado||0)>0).reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
   return{costosTueste,kgTostado,costoTuesteKg:kgTostado>0?costosTueste/kgTostado:0};
 };
+
+export const calcCostoMaquilaMes=(mes,costos,maquilas)=>{
+  const costosMQ=(costos||[]).filter(c=>c.centro==="Maquila"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
+  const kgRecibidos=(maquilas||[]).filter(m=>(m.mes||mesDe(m.fecha))===mes&&(m.kg_recibidos||0)>0).reduce((s,m)=>s+(m.kg_recibidos||0),0);
+  return{costosMQ,kgRecibidos,costoMQKg:kgRecibidos>0?costosMQ/kgRecibidos:0};
+};
