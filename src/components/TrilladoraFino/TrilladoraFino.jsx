@@ -1,6 +1,6 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
-import{KPI,KPIDoble,Bdg,Fld,TablaScrollV}from"../ui";
+import{KPI,KPIDoble,Bdg,Fld,TablaScrollV,AutoFitText}from"../ui";
 import{NORMAS}from"../../data/constants";
 import{fmt,fmtCOP,dateToCode}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
@@ -128,37 +128,6 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
         </div>);})}
       </div>
       <div>
-        {!isEditing&&gruposTrillados.length>0&&(<div style={{...S.card,marginBottom:16}}>
-          <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Trillas Realizadas</div>
-          <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}>
-            <thead><tr>{["Fecha Trilla","Mes","Corte","Lotes Origen","Producto","Cod. Trillado","Perg. kg","Excelso kg","Merma kg","% Merma","FI","Dif. vs FP","Costo /kg Ex","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-            <tbody>{gruposTrillados.map(grupo=>{
-              const repr=grupo[0];const t=repr.trilla;
-              const entrada=grupo.reduce((s,x)=>s+stockDe(x),0);
-              const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
-              const merma=grupo.reduce((s,x)=>s+(x.trilla?.kg_merma||0),0);
-              const pctMermaGrupo=entrada>0?((merma/entrada)*100).toFixed(1):"—";
-              const costoEx=costoKgExFinoDe(grupo);
-              const dif=(t.factor_industrial!=null&&t.factor_pretrilla_ponderado!=null)?(t.factor_industrial-t.factor_pretrilla_ponderado):null;
-              return(<tr key={repr.id}>
-                <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.fecha_trilla}</td>
-                <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha_trilla)}</td>
-                <td style={S.td}><Bdg label={t.codigo_corte||"—"} col={C.accent} bg={C.accentBg}/></td>
-                <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>
-                <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{[...new Set(grupo.map(x=>x.producto))].map(p=>(<Bdg key={p} label={p} col={C.navy} bg={C.accentBg}/>))}</div></td>
-                <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||"—"}</td>
-                <td style={{...S.td,fontWeight:600}}>{fmt(entrada)}</td>
-                <td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(excelso)}</td>
-                <td style={{...S.td,color:C.red}}>{fmt(merma)}</td>
-                <td style={S.td}>{pctMermaGrupo}%</td>
-                <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.factor_industrial!=null?fmt(t.factor_industrial,1):"—"}</td>
-                <td style={{...S.td,color:dif!=null&&Math.abs(dif)>5?C.red:C.textDim,fontWeight:dif!=null&&Math.abs(dif)>5?700:400}}>{dif!=null?(dif>0?"+":"")+dif.toFixed(1):"—"}</td>
-                <td style={{...S.td,fontWeight:600}}>{costoEx>0?fmtCOP(costoEx):"—"}</td>
-                <td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarGrupo(repr)}>Editar</button></td>
-              </tr>);
-            })}</tbody>
-          </table></TablaScrollV>
-        </div>)}
       <div style={S.card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><div style={{fontWeight:600,fontSize:13,color:C.navy}}>{isEditing?"Editar Registro de Trilla":"Registro de Trilla"}</div>{selArr.length>0&&<button style={S.btnG} onClick={limpiarSeleccion}>Limpiar</button>}</div>
         {!selArr.length?(<div style={{color:C.textFaint,fontSize:13}}>Selecciona de 1 a {MAX_LOTES} lotes</div>):(
           <><div style={{background:C.greenBg,border:"1px solid "+C.green+"30",borderRadius:6,padding:"12px 14px",marginBottom:14}}>
@@ -208,5 +177,36 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
       </div>
       </div>
     </div>
+    {!isEditing&&gruposTrillados.length>0&&(<div style={{...S.card,marginTop:4}}>
+      <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Trillas Realizadas</div>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
+        <thead><tr>{["Fecha Trilla","Mes","Corte","Lotes Origen","Producto","Cod. Trillado","Perg. kg","Excelso kg","Merma kg","% Merma","FI","Dif. vs FP","Costo /kg Ex","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+        <tbody>{gruposTrillados.map(grupo=>{
+          const repr=grupo[0];const t=repr.trilla;
+          const entrada=grupo.reduce((s,x)=>s+stockDe(x),0);
+          const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
+          const merma=grupo.reduce((s,x)=>s+(x.trilla?.kg_merma||0),0);
+          const pctMermaGrupo=entrada>0?((merma/entrada)*100).toFixed(1):"—";
+          const costoEx=costoKgExFinoDe(grupo);
+          const dif=(t.factor_industrial!=null&&t.factor_pretrilla_ponderado!=null)?(t.factor_industrial-t.factor_pretrilla_ponderado):null;
+          return(<tr key={repr.id}>
+            <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.fecha_trilla}</td>
+            <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha_trilla)}</td>
+            <td style={S.td}><Bdg label={t.codigo_corte||"—"} col={C.accent}/></td>
+            <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal}/>))}</div></td>
+            <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{[...new Set(grupo.map(x=>x.producto))].map(p=>(<Bdg key={p} label={p} col={C.navy}/>))}</div></td>
+            <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600,maxWidth:160}}><AutoFitText text={t.nombre_trillado||"—"}/></td>
+            <td style={{...S.td,fontWeight:600}}>{fmt(entrada)}</td>
+            <td style={{...S.td,color:C.green,fontWeight:700}}>{fmt(excelso)}</td>
+            <td style={{...S.td,color:C.red}}>{fmt(merma)}</td>
+            <td style={S.td}>{pctMermaGrupo}%</td>
+            <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.factor_industrial!=null?fmt(t.factor_industrial,1):"—"}</td>
+            <td style={{...S.td,color:dif!=null&&Math.abs(dif)>5?C.red:C.textDim,fontWeight:dif!=null&&Math.abs(dif)>5?700:400}}>{dif!=null?(dif>0?"+":"")+dif.toFixed(1):"—"}</td>
+            <td style={{...S.td,fontWeight:600}}>{costoEx>0?fmtCOP(costoEx):"—"}</td>
+            <td style={S.td}><button style={S.btnG} onClick={()=>abrirEditarGrupo(repr)}>Editar</button></td>
+          </tr>);
+        })}</tbody>
+      </table></TablaScrollV>
+    </div>)}
   </div>);
 }
