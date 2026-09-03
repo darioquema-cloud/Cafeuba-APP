@@ -209,7 +209,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
   const candidatosBasura=tril.filter(l=>pesoATrilladora(l)===0);
 
   // Inventario Subproductos Verde: editar/eliminar/salida (venta) sobre el registro completo (las 4 categorias juntas, un solo stock)
-  const stockSubVerde=(sp)=>(sp.total_subproductos||0)-(sp.salidas||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+  const stockSubVerde=(sp)=>((sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0))-(sp.salidas||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
   const [modalEditarSubVerde,setModalEditarSubVerde]=useState(false);
   const [selSubVerde,setSelSubVerde]=useState(null);
   const [formSubVerde,setFormSubVerde]=useState({});
@@ -227,6 +227,12 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     if(!window.confirm("¿Eliminar este registro de Subproductos Verde? Esta acción no se puede deshacer."))return;
     setSubprodVerde(p=>p.filter(sp=>sp.id!==id));
   };
+  const [filtroProcesoSV,setFiltroProcesoSV]=useState("todos");
+  const totalConProceso=subprodVerde.filter(sp=>sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  const totalSinProceso=subprodVerde.filter(sp=>sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  const registrosSinClasificar=subprodVerde.filter(sp=>sp.con_proceso!=="Con Proceso"&&sp.con_proceso!=="Sin Proceso");
+  const totalSinClasificar=registrosSinClasificar.reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  const subprodVerdeFiltrado=filtroProcesoSV==="todos"?subprodVerde:subprodVerde.filter(sp=>sp.con_proceso===filtroProcesoSV);
   const [modalSalidaSubVerde,setModalSalidaSubVerde]=useState(false);
   const [selSalidaSubVerde,setSelSalidaSubVerde]=useState(null);
   const [formSalidaSubVerde,setFormSalidaSubVerde]=useState({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:"",valor_kg:"",observaciones:""});
@@ -441,16 +447,39 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         <KPI label="Total Inferiores" value={fmt(subprodVerde.reduce((s,sp)=>s+sp.inferiores,0))+" kg"} col={C.teal}/>
         <KPI label="Total Cisco" value={fmt(subprodVerde.reduce((s,sp)=>s+sp.cisco,0))+" kg"} col={C.red}/>
         <KPI label="Total Subproductos" value={fmt(subprodVerde.reduce((s,sp)=>s+sp.total_subproductos,0))+" kg"} col={C.gold}/>
+        <KPI label="Total Con Proceso" value={fmt(totalConProceso)+" kg"} col={C.teal}/>
+        <KPI label="Total Sin Proceso" value={fmt(totalSinProceso)+" kg"} col={C.orange}/>
       </div>
+      {registrosSinClasificar.length>0&&(
+        <div style={{...S.card,marginBottom:16,borderLeft:"3px solid "+C.red}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.red,marginBottom:6}}>⚠ {registrosSinClasificar.length} registro(s) sin clasificar en Proceso ({fmt(totalSinClasificar)} kg)</div>
+          <div style={{fontSize:12,color:C.textDim,marginBottom:10}}>Estos registros no tienen "Con Proceso" ni "Sin Proceso" — por eso no aparecen en ninguna de las 2 tarjetas de arriba. Edita cada uno para asignarle el valor correcto.</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {registrosSinClasificar.map(sp=>(
+              <div key={sp.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"6px 0",borderBottom:"1px solid "+C.border}}>
+                <span><b style={{color:C.navy}}>{sp.codigo}</b> — {fmtFecha(sp.fecha)} — {fmt((sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0))} kg — Proceso actual: "{sp.con_proceso||"(vacio)"}"</span>
+                <button style={S.btnG} onClick={()=>abrirEditarSubVerde(sp)}>Editar</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {subprodVerde.length===0?(
         <div style={{...S.card,color:C.textFaint,fontSize:13}}>Los subproductos verde se generan automaticamente al registrar una trilla. Realiza tu primer registro en la pestana Registro.</div>
       ):(
         <div style={S.card}>
           <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario Subproductos Verde</div>
+          <div style={{marginBottom:12}}>
+            <select style={{...S.select,width:"auto",minWidth:170}} value={filtroProcesoSV} onChange={e=>setFiltroProcesoSV(e.target.value)}>
+              <option value="todos">Todos (Con y Sin Proceso)</option>
+              <option value="Con Proceso">Solo Con Proceso</option>
+              <option value="Sin Proceso">Solo Sin Proceso</option>
+            </select>
+          </div>
           <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:950}}><thead><tr>
             {["Fecha Trilla","Mes","Corte","Codigo Subproducto","Producto","Lotes Origen","Pas. Electronica kg","Cat. Densimetrica kg","Inferiores kg","Cisco kg","Total kg","Stock","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
           </tr></thead>
-          <tbody>{[...subprodVerde].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).map(sp=>(
+          <tbody>{[...subprodVerdeFiltrado].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).map(sp=>(
             <tr key={sp.id}>
               <td style={{...S.td,color:C.textDim,fontSize:12}}>{fmtFecha(sp.fecha)}</td>
               <td style={{...S.td,textTransform:"capitalize"}}>{sp.mes}</td>
