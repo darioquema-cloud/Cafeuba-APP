@@ -54,8 +54,8 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   // igual que se muestra en la columna "Mes" de la tabla Subproductos Verde en Trilla.jsx) —
   // se filtra directo por sp.mes, sin pasar por mesTrillaDe (que espera un lote con l.trilla).
   const subprodPergMes=(subprodPerg||[]).filter(sp=>filtroMes==="todos"||sp.mes===filtroMes).reduce((s,sp)=>s+(sp.kg||0),0);
-  const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
-  const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.total_subproductos||0),0);
+  const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
 
   // ---- BLOQUE: Inventarios ----
   // Stock al cierre del mes filtrado (histórico) — se asume el año actual para construir la
