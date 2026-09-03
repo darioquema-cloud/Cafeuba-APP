@@ -1,13 +1,14 @@
 import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
-import{TIPOS_TOSTION}from"../../data/constants";
+import{TIPOS_TOSTION,MESES}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
+import{calcCostoTuesteMes}from"../../lib/costing";
 import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
 import autoTable from"jspdf-autotable";
-export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,inventariosMensuales,setInventariosMensuales}){
+export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,setLotesFino,setBlendsFino,empaques,inventariosMensuales,setInventariosMensuales,costos}){
   const filaCampo=(label,children)=>(
     <tr>
       <td style={{border:"1px solid "+C.border,padding:"6px 10px",fontSize:12,color:C.text,width:"38%",background:C.panel2,fontWeight:600}}>{label}</td>
@@ -386,6 +387,15 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     </div>
     </>)}
     {subTabTueste==="historial"&&(<>
+    <div style={{...S.card,marginBottom:16}}>
+      <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Tueste por Mes</div>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Tueste","kg Tostados","Costo Tueste / kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{MESES.filter(m=>{const ct=(costos||[]).filter(c=>c.centro==="Tostado"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return ct>0;}).map(m=>{
+        const{costosTueste:ct,kgTostado:kt,costoTuesteKg:ck}=calcCostoTuesteMes(m,costos,historico);
+        return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(ct)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(kt,1)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{kt>0?fmtCOP(Math.round(ck)):"Sin tueste registrado"}</td></tr>);
+      })}</tbody></table></TablaScrollV>
+      {(costos||[]).filter(c=>c.centro==="Tostado").length===0&&<div style={{color:C.textFaint,fontSize:12,padding:8}}>Registra costos del centro "Tostado" en el modulo de Costos para ver este calculo.</div>}
+    </div>
     <div style={S.card}><div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Historial de Tuestes</div>
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto o código..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
@@ -408,8 +418,8 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
           <div><div style={{fontSize:11,color:C.textDim,textTransform:"uppercase"}}>Valor Total (filtrado)</div><div style={{fontSize:18,fontWeight:700,color:C.gold}}>{fmtCOP(sumValor)}</div></div>
         </div>);
       })()}
-      <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","N° Baches","Tipo Tostión","kg Tostado","Valor/kg Tostado","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);return(<tr key={t.id}>
+      <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","N° Baches","Tipo Tostión","kg Tostado","Costo Materia Prima /kg","Costo Tueste /kg","Costo Total Tostado /kg","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+      <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);const costoTuesteKg=t.kg_cafe_tostado>0?calcCostoTuesteMes(mesDe(t.fecha),costos,historico).costoTuesteKg:0;const costoTotalTostado=(vkgTostado||0)+costoTuesteKg;return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha)}</td>
@@ -429,6 +439,8 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <td style={S.td}><Bdg label={t.tipo_tostion||"-"} col={C.orange} bg={C.orangeBg}/></td>
         <td style={{...S.td,color:C.green,fontWeight:700}}>{t.kg_cafe_tostado?fmt(t.kg_cafe_tostado,1)+" kg":<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>}</td>
         <td style={{...S.td,color:C.purple,fontWeight:700}}>{vkgTostado?fmtCOP(vkgTostado):<span style={{color:C.textFaint}}>—</span>}</td>
+        <td style={{...S.td,color:C.teal,fontWeight:600}}>{costoTuesteKg>0?fmtCOP(Math.round(costoTuesteKg)):<span style={{color:C.textFaint}}>—</span>}</td>
+        <td style={{...S.td,color:C.navy,fontWeight:700}}>{costoTotalTostado>0?fmtCOP(Math.round(costoTotalTostado)):<span style={{color:C.textFaint}}>—</span>}</td>
         <td style={{...S.td,color:C.teal,fontWeight:600}}>{t.kg_a_tostar&&t.kg_cafe_tostado?((t.kg_cafe_tostado/t.kg_a_tostar)*100).toFixed(1)+"%":"-"}</td>
         <td style={S.td}><span style={{color:stock>0?C.green:C.textFaint,fontWeight:700}}>{fmt(stock,1)} kg</span></td>
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{t.catacion||"-"}</td>

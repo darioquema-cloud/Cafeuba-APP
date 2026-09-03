@@ -77,3 +77,9 @@ export const costoKgExFinoDe=(grupo,costos,lotesFino)=>{
   const d=calcCostoTriCF(mesTrillaDe(grupo[0]),costos,lotesFino).costoTriKg||0;
   return base+d;
 };
+
+export const calcCostoTuesteMes=(mes,costos,historico)=>{
+  const costosTueste=(costos||[]).filter(c=>c.centro==="Tostado"&&c.mes===mes).reduce((s,c)=>s+c.valor,0);
+  const kgTostado=(historico||[]).filter(t=>mesDe(t.fecha)===mes&&(t.kg_cafe_tostado||0)>0).reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
+  return{costosTueste,kgTostado,costoTuesteKg:kgTostado>0?costosTueste/kgTostado:0};
+};
