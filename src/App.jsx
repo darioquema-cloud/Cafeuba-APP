@@ -9,10 +9,11 @@ import{C,S,tg}from"./theme";
 import{FINCAS,VARIEDADES,TIPOS,ABREV,NORMAS,MESES,EQUIPOS_FERM,EQUIPOS_SECADO,TIPOS_COSTO,CENTROS,CENTRO_COL,CENTRO_BG,ECOL,EBG,USERS_SEED,seedL,seedC,SEED_COSTOS_TRI,PERMISOS,PERMISOS_SEED,NAV,TIPOS_TOSTION}from"./data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"./lib/format";
 import{semanaISO,mesDe,diasEntre}from"./lib/dates";
-import{getSeedCostoTri,calcCosto,calcCostoTri}from"./lib/costing";
+import{getSeedCostoTri,calcCosto,calcCostoTri,esVentaExterna}from"./lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino,pesoOtrosBodega}from"./lib/stock";
 import{Bdg,Fld,KPI,KPIDoble,Bar,Modal,AutoFitText,TablaScrollV,SelectDestino,destinoLabel}from"./components/ui";
 import{CoffeeLoader}from"./components/ui/CoffeeLoader";
+import{SplashIntro}from"./components/ui/SplashIntro";
 import{LoginForm}from"./components/Login/LoginForm";
 const Costos=lazy(()=>import("./components/Costos/Costos").then(m=>({default:m.Costos})));
 const Usuarios=lazy(()=>import("./components/Usuarios/Usuarios").then(m=>({default:m.Usuarios})));
@@ -131,6 +132,7 @@ const exportarComercialExcel=(lotes,lotesFino,blends,blendsFino,blendsTostado,pe
 export default function App(){
   const [authReady,setAuthReady]=useState(false);const [fbUser,setFbUser]=useState(null);const [notAuthorized,setNotAuthorized]=useState(false);
   const [loggedIn,setLoggedIn]=useState(false);const [user,setUser]=useState(null);const [view,setView]=useState("dashboard");
+  const [splashVisto,setSplashVisto]=useState(false);
   const [usuarios,setUsuarios,usuariosReady]=useFirestoreList("usuarios",USERS_SEED);
   const [lotes,setLotes]=useFirestoreList("lotes",seedL());
   const [costos,setCostos]=useFirestoreList("costos",seedC());
@@ -162,6 +164,16 @@ export default function App(){
   useEffect(()=>{setCurrentUserEmail(user?.email||null);},[user]);
   if(!authReady||(fbUser&&!usuariosReady))return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:C.bg,flexDirection:"column",gap:16}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><CoffeeLoader/><div style={{color:C.textDim,fontSize:13}}>Cargando plataforma...</div></div>);
   if(!loggedIn)return(<><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/><LoginForm notAuthorized={notAuthorized}/></>);
+  const anioActual=String(new Date().getFullYear());
+  const kgDeSalidas=(arr,campo)=>(arr||[]).reduce((s,item)=>s+(item[campo]||[]).filter(sd=>esVentaExterna(sd)&&(sd.fecha||"").startsWith(anioActual)).reduce((a,sd)=>a+(sd.peso_salida||0),0),0);
+  const kgVendidosAnio=Math.round(
+    kgDeSalidas(lotes,"salidas_bodega")+kgDeSalidas(lotes,"salidas_trilladora")+
+    kgDeSalidas(lotesFino,"salidas_bodega")+kgDeSalidas(lotesFino,"salidas_trilladora")+
+    kgDeSalidas(blends,"salidas")+kgDeSalidas(blendsFino,"salidas")+
+    kgDeSalidas(subprodVerde,"salidas")+
+    (empaques||[]).reduce((s,e)=>s+(e.ventas||[]).filter(v=>(v.fecha||"").startsWith(anioActual)).reduce((a,v)=>a+((v.unidades||0)*(e.gramos_por_unidad||0)/1000),0),0)
+  );
+  if(!splashVisto)return<SplashIntro kgVendidos={kgVendidosAnio} onContinue={()=>setSplashVisto(true)}/>;
   const VIEWS={dashboard:<Dashboard lotes={lotes} costos={costos} lotesFino={lotesFino} maquilas={maquilas} blendsTostado={blendsTostado} blends={blends} blendsFino={blendsFino} empaques={empaques} subprodPerg={subprodPerg} subprodVerde={subprodVerde}/>,procesamiento:<Procesamiento lotes={lotes} setLotes={setLotes} costos={costos} lotesFino={lotesFino} setLotesFino={setLotesFino}/>,bodega:<Bodega lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,trilla:<Trilla lotes={lotes} setLotes={setLotes} costos={costos} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde} subprodPerg={subprodPerg} setSubprodPerg={setSubprodPerg}/>,bodega_tri:<BodegaTrilladora lotes={lotes} setLotes={setLotes} costos={costos} setLotesFino={setLotesFino} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,blend:<Blend lotes={lotes} setLotes={setLotes} blends={blends} setBlends={setBlends} costos={costos} setLotesFino={setLotesFino} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,bodega_fino:<BodegaFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} lotes={lotes} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,trilladora_fino:<TrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} lotes={lotes} costos={costos}/>,bodega_tri_fino:<BodegaTrilladoraFino lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsTostado={setBlendsTostado} costos={costos} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,blend_fino:<BlendFino lotesFino={lotesFino} setLotesFino={setLotesFino} blendsFino={blendsFino} setBlendsFino={setBlendsFino} setBlendsTostado={setBlendsTostado} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales}/>,maquila:<Maquila maquilas={maquilas} setMaquilas={setMaquilas} setLotesFino={setLotesFino} costos={costos}/>,uba_tostado:<UbaTostado blendsTostado={blendsTostado} setBlendsTostado={setBlendsTostado} blendsFino={blendsFino} lotesFino={lotesFino} setLotesFino={setLotesFino} setBlendsFino={setBlendsFino} empaques={empaques} setEmpaques={setEmpaques} tiposEmpaque={tiposEmpaque} setTiposEmpaque={setTiposEmpaque} necesidadesTostado={necesidadesTostado} setNecesidadesTostado={setNecesidadesTostado} inventariosMensuales={inventariosMensuales} setInventariosMensuales={setInventariosMensuales} costos={costos}/>,ventas:<Ventas lotes={lotes} setLotes={setLotes} lotesFino={lotesFino} setLotesFino={setLotesFino} blends={blends} setBlends={setBlends} blendsFino={blendsFino} setBlendsFino={setBlendsFino} subprodVerde={subprodVerde} setSubprodVerde={setSubprodVerde}/>,pedidos:<Pedidos pedidos={pedidos} setPedidos={setPedidos} lotes={lotes} lotesFino={lotesFino} blends={blends} blendsFino={blendsFino} costos={costos} user={user}/>,crm:<CRM oportunidades={oportunidades} setOportunidades={setOportunidades} muestras={muestras} setMuestras={setMuestras} visitas={visitas} setVisitas={setVisitas} user={user}/>,trazabilidad:<Trazabilidad lotes={lotes} costos={costos} blends={blends} blendsFino={blendsFino} lotesFino={lotesFino}/>,costos:<Costos costos={costos} setCostos={setCostos}/>,usuarios:<Usuarios usuarios={usuarios} setUsuarios={setUsuarios} permisosConfig={permisosConfig} setPermisosConfig={setPermisosConfig}/>};
   const permisosMapE=Object.fromEntries((permisosConfig.length?permisosConfig:PERMISOS_SEED).map(p=>[p.id,{views:p.views||[],readOnly:p.readOnly||[]}]));
   const permiso=permisosMapE[user?.rol]||permisosMapE["Gerente"]||{views:["dashboard"],readOnly:[]};
