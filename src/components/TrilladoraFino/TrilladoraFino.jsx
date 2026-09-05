@@ -12,10 +12,33 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const [isEditing,setIsEditing]=useState(false);
   const [form,setForm]=useState(blankForm());
   const [errTrilla,setErrTrilla]=useState("");
+  const [filtroMesTF,setFiltroMesTF]=useState("");
+  const [filtroProductoTF,setFiltroProductoTF]=useState("");
+  const [filtroCorteTF,setFiltroCorteTF]=useState("");
+  const [busquedaTF,setBusquedaTF]=useState("");
   const stockDe=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);
   const disp=lotesFino.filter(l=>l.para_trilladora&&!l.trilla?.kg_excelso&&stockDe(l)>0);
   const tril=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
   const gruposTrillados=construirGruposBTF(tril,lotesFino);
+  const mesesDTF=[...new Set([...disp.map(l=>l.mes),...tril.map(l=>mesDe(l.trilla?.fecha_trilla))].filter(Boolean))].sort();
+  const productosDTF=[...new Set([...disp.map(l=>l.producto),...tril.map(l=>l.producto)].filter(Boolean))].sort();
+  const cortesDTF=[...new Set(tril.map(l=>l.trilla?.codigo_corte).filter(Boolean))].sort();
+
+  const dispFiltrados=disp.filter(l=>{
+    if(filtroMesTF&&l.mes!==filtroMesTF)return false;
+    if(filtroProductoTF&&l.producto!==filtroProductoTF)return false;
+    if(busquedaTF&&!l.codigo.toLowerCase().includes(busquedaTF.toLowerCase()))return false;
+    return true;
+  });
+
+  const gruposTrilladosFiltrados=gruposTrillados.filter(grupo=>{
+    const repr=grupo[0];
+    if(filtroMesTF&&mesDe(repr.trilla.fecha_trilla)!==filtroMesTF)return false;
+    if(filtroProductoTF&&!grupo.some(x=>x.producto===filtroProductoTF))return false;
+    if(filtroCorteTF&&repr.trilla.codigo_corte!==filtroCorteTF)return false;
+    if(busquedaTF&&!grupo.some(x=>x.codigo.toLowerCase().includes(busquedaTF.toLowerCase())))return false;
+    return true;
+  });
   const totalKgSalidasTF=tril.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.peso_salida||0),0),0);
   const totalValorSalidasTF=tril.reduce((s,l)=>s+(l.salidas_trilladora||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.valor_total||0),0),0);
   const totalExcelsoTF=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
@@ -122,10 +145,16 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
       <KPI label="Pasillas" value={fmt(tril.reduce((s,l)=>s+(l.trilla?.kg_pasillas||0),0))+" kg"} col={C.orange}/>
       <KPI label="Pendientes" value={disp.length} col={C.gold}/>
     </div>
+    <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
+      <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote..." value={busquedaTF} onChange={e=>setBusquedaTF(e.target.value)}/>
+      <select style={{...S.select,width:150}} value={filtroMesTF} onChange={e=>setFiltroMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesDTF.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:160}} value={filtroProductoTF} onChange={e=>setFiltroProductoTF(e.target.value)}><option value="">Todos los productos</option>{productosDTF.map(p=>(<option key={p}>{p}</option>))}</select>
+      <select style={{...S.select,width:160}} value={filtroCorteTF} onChange={e=>setFiltroCorteTF(e.target.value)}><option value="">Todos los cortes</option>{cortesDTF.map(c=>(<option key={c}>{c}</option>))}</select>
+    </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
       <div>{disp.length===0&&<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin lotes disponibles en Bodega Cafe Fino.</div>}
         <div style={{color:C.textFaint,fontSize:11,marginBottom:8}}>Selecciona de 1 a {MAX_LOTES} lotes para trillar juntos.</div>
-        {disp.map(l=>{const isSel=selArr.some(x=>x.id===l.id);return(<div key={l.id} onClick={()=>toggleSel(l)} style={{...S.card,cursor:isEditing?"default":"pointer",opacity:isEditing&&!isSel?0.5:1,marginBottom:10,borderLeft:"3px solid "+(isSel?C.green:C.border),borderColor:isSel?C.green:C.border}}>
+        {dispFiltrados.map(l=>{const isSel=selArr.some(x=>x.id===l.id);return(<div key={l.id} onClick={()=>toggleSel(l)} style={{...S.card,cursor:isEditing?"default":"pointer",opacity:isEditing&&!isSel?0.5:1,marginBottom:10,borderLeft:"3px solid "+(isSel?C.green:C.border),borderColor:isSel?C.green:C.border}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{l.codigo}</span><Bdg label={l.producto||"-"} col={C.navy} bg={C.accentBg}/></div>
           <div style={{color:C.green,fontSize:12,fontWeight:600}}>{fmt(stockDe(l))} kg disponibles{l.pretrilla?.factor_pretrilla?<Bdg label={"FP: "+fmt(l.pretrilla.factor_pretrilla,1)} col={C.gold} bg={C.goldBg}/>:null}</div>
         </div>);})}
@@ -193,7 +222,7 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:14}}>Trillas Realizadas</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
         <thead><tr>{["Fecha Trilla","Mes","Corte","Lotes Origen","Producto","Cod. Trillado","Perg. kg","Excelso kg","Merma kg","% Merma","FI","Dif. vs FP","Costo /kg Ex","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-        <tbody>{gruposTrillados.map(grupo=>{
+        <tbody>{gruposTrilladosFiltrados.map(grupo=>{
           const repr=grupo[0];const t=repr.trilla;
           const entrada=grupo.reduce((s,x)=>s+stockDe(x),0);
           const excelso=grupo.reduce((s,x)=>s+(x.trilla?.kg_excelso||0),0);
