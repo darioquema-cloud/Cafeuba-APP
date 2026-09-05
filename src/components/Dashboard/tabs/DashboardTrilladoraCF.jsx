@@ -1,7 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
-import{fmtCOP,fmt}from"../../../lib/format";
+import{fmtCOP,fmt,fmtFecha}from"../../../lib/format";
 import{semanaISO,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTriCF}from"../../../lib/costing";
 import{Bdg,TablaScrollV}from"../../ui";
@@ -9,6 +9,7 @@ import{DonutChart}from"../../ui/DonutChart";
 
 export function DashboardTrilladoraCF({lotesFino,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
+  const [busquedaCorte,setBusquedaCorte]=useState("");
   const lotesTrillaCF=(lotesFino||[]).filter(l=>l.trilla?.kg_excelso>0);
   const mesesTR=MESES.filter(m=>lotesTrillaCF.some(l=>mesTrillaDe(l)===m));
   const lotesTF=filtroMesTR==="todos"?lotesTrillaCF:lotesTrillaCF.filter(l=>mesTrillaDe(l)===filtroMesTR);
@@ -47,6 +48,23 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
   const fiPonderado=ponderar(lotesTF,"factor_industrial");
   const fpPonderado=ponderar(lotesTF,"factor_pretrilla_ponderado");
   const difFactores=(fiPonderado!=null&&fpPonderado!=null)?(fiPonderado-fpPonderado):null;
+
+  const gruposPorCorteCF={};
+  lotesTF.forEach(l=>{
+    const cod=l.trilla?.nombre_trillado||"Sin código";
+    if(!gruposPorCorteCF[cod])gruposPorCorteCF[cod]=[];
+    gruposPorCorteCF[cod].push(l);
+  });
+  const cortesDataCF=Object.entries(gruposPorCorteCF).map(([codigo,grupo])=>{
+    const kgExcelso=grupo.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
+    const fecha=grupo[0]?.trilla?.fecha_trilla||"";
+    const producto=[...new Set(grupo.map(l=>l.producto).filter(Boolean))].join("+")||"—";
+    const fi=ponderar(grupo,"factor_industrial");
+    const fp=ponderar(grupo,"factor_pretrilla_ponderado");
+    const desviacion=(fi!=null&&fp!=null)?(fi-fp):null;
+    return{codigo,fecha,producto,kgExcelso,fi,fp,desviacion};
+  }).filter(c=>c.desviacion!==null).sort((a,b)=>Math.abs(b.desviacion)-Math.abs(a.desviacion));
+  const cortesFiltradosCF=cortesDataCF.filter(c=>!busquedaCorte||c.codigo.toLowerCase().includes(busquedaCorte.toLowerCase()));
 
   // Tendencia semanal: semana calculada EN VIVO desde trilla.fecha_trilla
   const semanaKey=(f)=>{if(!f)return null;const y=new Date(f+"T00:00:00").getFullYear();return y+"-S"+String(semanaISO(f)).padStart(2,"0");};
@@ -145,6 +163,30 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
           <div style={{background:C.bg,borderRadius:8,padding:"14px 10px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:10,marginBottom:4}}>Diferencia</div><div style={{color:difFactores!=null&&Math.abs(difFactores)<3?C.gold:C.red,fontWeight:800,fontSize:difFactores!=null?20:11}}>{difFactores!=null?fmt(difFactores,1):"Sin datos"}</div></div>
         </div>
       )}
+    </div>
+
+    <div style={{...S.card,marginBottom:16}}>
+      <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Cortes por Desviación</div>
+      <div style={{fontSize:11,color:C.textDim,marginBottom:14}}>Ordenado de mayor a menor diferencia entre Factor Industrial y Factor Pretrilla</div>
+      <input style={{...S.input,marginBottom:14}} placeholder="Buscar código de corte..." value={busquedaCorte} onChange={e=>setBusquedaCorte(e.target.value)}/>
+      <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:640}}>
+        <thead><tr>
+          {["Cod. Corte","Fecha","Producto","Kg Excelso","F. Industrial","F. Pretrilla","Desviación"].map(h=>(<th key={h} style={S.th}>{h}</th>))}
+        </tr></thead>
+        <tbody>{cortesFiltradosCF.map(c=>{
+          const destacado=Math.abs(c.desviacion)>5;
+          return(<tr key={c.codigo} style={destacado?{background:C.redBg}:{}}>
+            <td style={{...S.td,fontWeight:700,color:C.navy}}>{c.codigo}</td>
+            <td style={{...S.td,color:C.textDim}}>{c.fecha?fmtFecha(c.fecha):"—"}</td>
+            <td style={S.td}>{c.producto}</td>
+            <td style={S.td}>{fmt(c.kgExcelso)} kg</td>
+            <td style={S.td}>{c.fi.toFixed(2)}</td>
+            <td style={S.td}>{c.fp.toFixed(2)}</td>
+            <td style={{...S.td,fontWeight:700,color:destacado?C.red:(c.desviacion>0?C.orange:C.green)}}>{c.desviacion>0?"+":""}{c.desviacion.toFixed(2)}</td>
+          </tr>);
+        })}</tbody>
+      </table></TablaScrollV>
+      {cortesFiltradosCF.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Ningún corte coincide con la búsqueda.</div>}
     </div>
 
     <div style={{...S.card,marginBottom:16,minHeight:260}}>
