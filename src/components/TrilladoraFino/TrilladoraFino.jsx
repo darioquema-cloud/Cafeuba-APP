@@ -79,9 +79,11 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const totalSal=(+form.excelso||0)+mermaCalc+pasillasCalc;
   const diff=ent-totalSal;
   const factorIndustrial=(ent>0&&+form.excelso>0)?(ent/(+form.excelso)*70):null;
-  const conPretrilla=selArr.filter(l=>l.pretrilla?.factor_pretrilla);
-  const pesoConPretrilla=conPretrilla.reduce((s,l)=>s+stockDe(l),0);
-  const factorPretrillaPonderado=pesoConPretrilla>0?conPretrilla.reduce((s,l)=>s+stockDe(l)*l.pretrilla.factor_pretrilla,0)/pesoConPretrilla:null;
+  const selArrLive=selArr.map(l=>lotesFino.find(x=>x.id===l.id)||l);
+  const pesoParaPretrilla=(l)=>l.trilla?.kg_excelso>0?l.trilla.kg_excelso:stockDe(l);
+  const conPretrilla=selArrLive.filter(l=>l.pretrilla?.factor_pretrilla!=null&&l.pretrilla?.factor_pretrilla!==0);
+  const pesoConPretrilla=conPretrilla.reduce((s,l)=>s+pesoParaPretrilla(l),0);
+  const factorPretrillaPonderado=pesoConPretrilla>0?conPretrilla.reduce((s,l)=>s+pesoParaPretrilla(l)*l.pretrilla.factor_pretrilla,0)/pesoConPretrilla:null;
   const diferenciaFactor=(factorIndustrial!=null&&factorPretrillaPonderado!=null)?(factorIndustrial-factorPretrillaPonderado):null;
 
   const splitProporcional=(total,pesos)=>{
@@ -166,14 +168,6 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
             {selArr.map(l=>(<div key={l.id} style={{marginBottom:4}}><span style={{color:C.green,fontWeight:700}}>{l.codigo}</span><span style={{color:C.textDim,fontSize:12}}> — {fmt(stockDe(l))} kg{l.pretrilla?.factor_pretrilla?" | FP: "+fmt(l.pretrilla.factor_pretrilla,1):""}</span></div>))}
             <div style={{color:C.navy,fontWeight:700,fontSize:13,marginTop:4}}>Entrada Total: {fmt(ent)} kg</div>
           </div>
-          {factorPretrillaPonderado!=null&&(<div style={{background:C.purpleBg,border:"1px solid "+C.purple+"30",borderRadius:6,padding:12,marginBottom:12}}>
-            <div style={{color:C.purple,fontSize:11,fontWeight:600,marginBottom:8}}>COMPARACION CON PRE-TRILLA</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>FP Ponderado</div><div style={{color:C.purple,fontWeight:700,fontSize:14}}>{fmt(factorPretrillaPonderado,1)}</div></div>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>FI Real</div><div style={{color:C.teal,fontWeight:700,fontSize:14}}>{factorIndustrial!=null?fmt(factorIndustrial,1):"?"}</div></div>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>Diferencia</div><div style={{color:diferenciaFactor>0?C.red:C.green,fontWeight:700,fontSize:14}}>{diferenciaFactor!=null?fmt(diferenciaFactor,1):"?"}</div></div>
-            </div>
-          </div>)}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
             <div><label style={S.lbl}>Fecha de Trilla</label><input style={S.input} type="date" value={form.fecha_trilla} onChange={e=>setForm(p=>({...p,fecha_trilla:e.target.value}))}/></div>
             <div><label style={S.lbl}>Codigo de Corte</label><input style={S.input} value={form.codigo_corte} onChange={e=>setForm(p=>({...p,codigo_corte:e.target.value}))}/></div>
@@ -192,14 +186,23 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
             <div><label style={S.lbl}>Inferiores kg</label><input style={S.input} type="number" placeholder="0" value={form.inferiores} onChange={e=>setForm(p=>({...p,inferiores:e.target.value}))}/></div>
             <div><label style={S.lbl}>Cisco kg</label><input style={S.input} type="number" placeholder="0" value={form.cisco} onChange={e=>setForm(p=>({...p,cisco:e.target.value}))}/></div>
           </div>
-          <div style={{background:C.bg,borderRadius:6,padding:12,marginBottom:12,border:"1px solid "+C.border}}>
-            <div style={{color:C.textDim,fontSize:11,fontWeight:600,marginBottom:8}}>CALCULOS AUTOMATICOS</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>% Merma (Cisco/Perg.)</div><div style={{color:C.red,fontWeight:700,fontSize:14}}>{pctMerma}%</div></div>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>Factor Industrial (Perg./Exc.)x70</div><div style={{color:C.teal,fontWeight:700,fontSize:14}}>{factorIndustrial!=null?fmt(factorIndustrial,1):"?"}</div></div>
-              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>Total Pasillas (Dens+Cat+Inf)</div><div style={{color:C.orange,fontWeight:700,fontSize:14}}>{fmt(pasillasCalc)} kg</div></div>
+          {totalSal>0&&(<div style={{background:C.bg,borderRadius:6,padding:12,marginBottom:12,border:"1px solid "+C.border}}>
+            <div style={{color:C.textDim,fontSize:11,fontWeight:600,marginBottom:8}}>BALANCE</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,textAlign:"center"}}>{[{l:"Entrada",v:ent,c:C.navy},{l:"Excelso",v:+form.excelso,c:C.green},{l:"Merma",v:mermaCalc,c:C.red},{l:"Pasillas",v:pasillasCalc,c:C.orange}].map(x=>(<div key={x.l} style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>{x.l}</div><div style={{color:x.c,fontWeight:700,fontSize:14}}>{fmt(x.v)}</div></div>))}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginTop:8,padding:"8px 10px",background:C.panel2,borderRadius:6}}>
+              <div style={{textAlign:"center"}}><div style={{color:C.textDim,fontSize:10}}>% Merma</div><div style={{color:C.red,fontWeight:700,fontSize:15}}>{pctMerma}%</div></div>
+              <div style={{textAlign:"center"}}><div style={{color:C.textDim,fontSize:10}}>Factor Indust.</div><div style={{color:C.green,fontWeight:700,fontSize:15}}>{factorIndustrial!=null?fmt(factorIndustrial,1):"?"}</div></div>
+              <div style={{textAlign:"center"}}><div style={{color:C.textDim,fontSize:10}}>Diferencia</div><div style={{color:Math.abs(diff)<5?C.gold:C.red,fontWeight:700,fontSize:15}}>{fmt(diff)}</div></div>
             </div>
-          </div>
+          </div>)}
+          {factorPretrillaPonderado!=null&&(<div style={{background:C.purpleBg,border:"1px solid "+C.purple+"30",borderRadius:6,padding:12,marginBottom:12}}>
+            <div style={{color:C.purple,fontSize:11,fontWeight:700,marginBottom:8}}>COMPARATIVO FACTOR PRE-TRILLA</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
+              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>FP Ponderado</div><div style={{color:C.purple,fontWeight:700,fontSize:14}}>{fmt(factorPretrillaPonderado,1)}</div></div>
+              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>FI Real</div><div style={{color:C.green,fontWeight:700,fontSize:14}}>{factorIndustrial!=null?fmt(factorIndustrial,1):"?"}</div></div>
+              <div style={{background:C.panel,borderRadius:4,padding:"6px 4px",border:"1px solid "+C.border}}><div style={{color:C.textDim,fontSize:9}}>Diferencia</div><div style={{color:diferenciaFactor!=null&&Math.abs(diferenciaFactor)<3?C.gold:C.red,fontWeight:700,fontSize:14}}>{diferenciaFactor!=null?fmt(diferenciaFactor,1):"?"}</div></div>
+            </div>
+          </div>)}
           <Fld label="Norma de Produccion"><select style={S.select} value={form.norma} onChange={e=>setForm(p=>({...p,norma:e.target.value}))}>{NORMAS.map(n=>(<option key={n}>{n}</option>))}</select></Fld>
           <Fld label="Costo por KG Excelso COP"><input style={S.input} type="number" placeholder="Ej: 8500  (opcional, se arrastra a Salida)" value={form.costoKgExcelso} onChange={e=>setForm(p=>({...p,costoKgExcelso:e.target.value}))}/></Fld>
           {errTrilla&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"10px 14px",marginBottom:12,color:C.red,fontWeight:600,fontSize:13}}>&#9888; {errTrilla}</div>)}
