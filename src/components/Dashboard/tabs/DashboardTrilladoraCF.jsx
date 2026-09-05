@@ -4,22 +4,22 @@ import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
 import{semanaISO,mesTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTriCF}from"../../../lib/costing";
-import{pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
 
 export function DashboardTrilladoraCF({lotesFino,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
-  const lotesTrillaCF=(lotesFino||[]).filter(l=>l.para_trilladora&&l.trilla?.kg_excelso>0);
+  const lotesTrillaCF=(lotesFino||[]).filter(l=>l.trilla?.kg_excelso>0);
   const mesesTR=MESES.filter(m=>lotesTrillaCF.some(l=>mesTrillaDe(l)===m));
   const lotesTF=filtroMesTR==="todos"?lotesTrillaCF:lotesTrillaCF.filter(l=>mesTrillaDe(l)===filtroMesTR);
+  const stockDe=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);
 
   const triExcelso=lotesTF.reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
-  const triEntrada=lotesTF.reduce((s,l)=>s+pesoATrilladoraCafeFino(l),0);
+  const triEntrada=lotesTF.reduce((s,l)=>s+stockDe(l),0);
   const triMerma=lotesTF.reduce((s,l)=>s+(l.trilla.kg_merma||0),0);
   const triPasillas=lotesTF.reduce((s,l)=>s+(l.trilla.kg_pasillas||0),0);
-  const lotesConMerma=lotesTF.filter(l=>pesoATrilladoraCafeFino(l)>0);
-  const pctMermaProm=lotesConMerma.length>0?lotesConMerma.reduce((s,l)=>s+((l.trilla.kg_merma||0)/pesoATrilladoraCafeFino(l)*100),0)/lotesConMerma.length:0;
+  const lotesConMerma=lotesTF.filter(l=>stockDe(l)>0);
+  const pctMermaProm=lotesConMerma.length>0?lotesConMerma.reduce((s,l)=>s+((l.trilla.kg_merma||0)/stockDe(l)*100),0)/lotesConMerma.length:0;
 
   // Excelso producido por producto (con costo/kg incluyendo D = costo Bodega Cafe Fino prorrateado del mes real de cada lote)
   const porProd={};
@@ -28,7 +28,7 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
     if(!porProd[p])porProd[p]={kgExcelso:0,costoTotal:0};
     const kgEx=l.trilla.kg_excelso||0;
     const cl=calcCosto(l,costos,lotesFino);
-    const costoProduccion=cl?cl.total*pesoATrilladoraCafeFino(l):0;
+    const costoProduccion=cl?cl.total*stockDe(l):0;
     const D=calcCostoTriCF(mesTrillaDe(l),costos,lotesFino).costoTriKg;
     porProd[p].kgExcelso+=kgEx;
     porProd[p].costoTotal+=costoProduccion+D*kgEx;
@@ -37,12 +37,12 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
   const totalKgExProd=prodData.reduce((s,d)=>s+d.kgExcelso,0);
   const totalValorProd=prodData.reduce((s,d)=>s+d.valorTotal,0);
 
-  // Factor Pretrilla Ponderado vs Factor Industrial Ponderado (ponderados por pesoATrilladoraCafeFino(l))
+  // Factor Pretrilla Ponderado vs Factor Industrial Ponderado (ponderados por stockDe(l), igual que TrilladoraFino.jsx)
   const esPlaceholderCarga=(l)=>l.trilla?.factor_industrial===0&&l.trilla?.factor_pretrilla_ponderado===0;
   const ponderar=(arr,campo)=>{
     const con=arr.filter(l=>!esPlaceholderCarga(l)&&l.trilla?.[campo]!=null);
-    const peso=con.reduce((s,l)=>s+pesoATrilladoraCafeFino(l),0);
-    return peso>0?con.reduce((s,l)=>s+pesoATrilladoraCafeFino(l)*l.trilla[campo],0)/peso:null;
+    const peso=con.reduce((s,l)=>s+stockDe(l),0);
+    return peso>0?con.reduce((s,l)=>s+stockDe(l)*l.trilla[campo],0)/peso:null;
   };
   const fiPonderado=ponderar(lotesTF,"factor_industrial");
   const fpPonderado=ponderar(lotesTF,"factor_pretrilla_ponderado");
