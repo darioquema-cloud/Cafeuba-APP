@@ -25,6 +25,8 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
     const costoKg=costoKgExDeCafeFino(l,costos,lotesFino);
     return {kg:s.kg+stock,val:s.val+(costoKg*stock)};
   },{kg:0,val:0});
+  const totalKgTrillados=tril.reduce((s,l)=>s+stockDe(l),0);
+  const totalKgExcelsoTrilla=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
 
   const toggleSel=(l)=>{
     if(isEditing)return;
@@ -114,10 +116,11 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>TRILLA CAFE FINO</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilladora Cafe Fino</div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14,marginBottom:20}}>
-      <KPI label="Lotes Trillados" value={tril.length} col={C.navy}/>
-      <KPIDoble label="Entradas (Excelso)" kgVal={fmt(totalExcelsoTF)+" kg"} valorVal={fmtCOP(totalValorEntradaTF)} col={C.green}/>
-      <KPIDoble label="Salidas" kgVal={fmt(totalKgSalidasTF)+" kg"} valorVal={fmtCOP(totalValorSalidasTF)} col={C.orange}/>
-      <KPIDoble label="Stock Actual" kgVal={fmt(stockActualTF.kg)+" kg"} valorVal={fmtCOP(stockActualTF.val)} col={C.gold}/>
+      <KPI label="Kg Trillados" value={fmt(totalKgTrillados)+" kg"} col={C.navy}/>
+      <KPI label="Excelso Total" value={fmt(totalKgExcelsoTrilla)+" kg"} col={C.green}/>
+      <KPI label="Merma Total" value={fmt(tril.reduce((s,l)=>s+(l.trilla?.kg_merma||0),0))+" kg"} col={C.red}/>
+      <KPI label="Pasillas" value={fmt(tril.reduce((s,l)=>s+(l.trilla?.kg_pasillas||0),0))+" kg"} col={C.orange}/>
+      <KPI label="Pendientes" value={disp.length} col={C.gold}/>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}>
       <div>{disp.length===0&&<div style={{...S.card,color:C.textFaint,fontSize:13}}>Sin lotes disponibles en Bodega Cafe Fino.</div>}
