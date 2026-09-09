@@ -5,10 +5,11 @@ import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{esVentaExterna as esExterno}from"../../lib/costing";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
-export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde}){
+export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde,empaques}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
   const [filtroTipo,setFiltroTipo]=useState("todos");
+  const [filtroLinea,setFiltroLinea]=useState("todas");
   const [busqueda,setBusqueda]=useState("");
   const [clienteSel,setClienteSel]=useState(null);
 
@@ -21,9 +22,15 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blends",origenId:b.id}))),
     ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blendsFino",origenId:b.id}))),
     ...(subprodVerde||[]).flatMap(sp=>(sp.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||sp.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:sp.codigo||sp.producto||"Subproducto Verde",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"subprodVerde",origenId:sp.id}))),
-  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde]);
+    ...(empaques||[]).flatMap(e=>(e.ventas||[]).map(v=>{
+      const kg=(v.unidades||0)*(e.gramos_por_unidad||0)/1000;
+      const valorKgCalc=kg>0?Math.round((v.valor_total||0)/kg):0;
+      return{id:v.id,fecha:v.fecha||"",mes:v.mes||mesDe(v.fecha)||"",factura:v.referencia||"",remision:"",cliente:v.cliente||"Sin Cliente",producto:e.nombre_producto||"Sin Producto",tipo:"UBA Tostado",tipoKey:"uba_tostado",kg,valor_kg:valorKgCalc,valor_total:v.valor_total||0,precio_venta_kg:valorKgCalc,origenColeccion:"empaques_ventas",origenId:e.id,ventaId:v.id};
+    })),
+  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde,empaques]);
 
   const actualizarCampoVenta=(v,campo,valor)=>{
+    if(v.origenColeccion==="empaques_ventas")return; // edicion de ventas UBA Tostado se hace en su pantalla propia
     const patch=(setArr,field)=>{
       setArr(prev=>prev.map(item=>{
         if(item.id!==v.origenId)return item;
@@ -50,6 +57,8 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
   const ventasFilt=todasVentas.filter(v=>{
     if(filtroMes!=="todos"&&v.mes!==filtroMes)return false;
     if(filtroTipo!=="todos"&&v.tipo!==filtroTipo)return false;
+    if(filtroLinea==="verde_fino"&&v.tipoKey==="uba_tostado")return false;
+    if(filtroLinea==="uba_tostado"&&v.tipoKey!=="uba_tostado")return false;
     if(busqueda){const q=busqueda.toLowerCase();if(!v.cliente.toLowerCase().includes(q)&&!v.producto.toLowerCase().includes(q)&&!v.factura.toLowerCase().includes(q)&&!v.remision.toLowerCase().includes(q))return false;}
     return true;
   });
@@ -65,8 +74,14 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
   const clienteData=Object.entries(porCliente).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,d])=>({cliente,kg:d.kg,valor:d.valor,tx:d.tx,promKg:d.kg>0?d.valor/d.kg:0,meses:[...d.meses].filter(Boolean).length,tipos:[...d.tipos].join(", ")}));
   const maxValCliente=clienteData.length>0?clienteData[0].valor:1;
 
-  const porMesGraf={};MESES.forEach(m=>{if(todasVentas.some(v=>v.mes===m))porMesGraf[m]={kg:0,valor:0};});
-  todasVentas.forEach(v=>{if(v.mes&&porMesGraf[v.mes]){porMesGraf[v.mes].kg+=v.kg;porMesGraf[v.mes].valor+=v.valor_total;}});
+  const todasVentasPorLinea=todasVentas.filter(v=>{
+    if(filtroLinea==="verde_fino"&&v.tipoKey==="uba_tostado")return false;
+    if(filtroLinea==="uba_tostado"&&v.tipoKey!=="uba_tostado")return false;
+    return true;
+  });
+
+  const porMesGraf={};MESES.forEach(m=>{if(todasVentasPorLinea.some(v=>v.mes===m))porMesGraf[m]={kg:0,valor:0};});
+  todasVentasPorLinea.forEach(v=>{if(v.mes&&porMesGraf[v.mes]){porMesGraf[v.mes].kg+=v.kg;porMesGraf[v.mes].valor+=v.valor_total;}});
   const mesesGraf=Object.entries(porMesGraf);
   const maxValMes=mesesGraf.reduce((m,[,d])=>Math.max(m,d.valor),1);
 
@@ -106,6 +121,11 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
       <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{...S.select,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}}>
         <option value="todos">Todos los productos</option>
         {tiposDisp.map(t=>(<option key={t} value={t}>{t}</option>))}
+      </select>
+      <select style={{...S.select,width:"auto",minWidth:180}} value={filtroLinea} onChange={e=>setFiltroLinea(e.target.value)}>
+        <option value="todas">Línea de Negocio: Todas</option>
+        <option value="verde_fino">Línea Verde y Fino</option>
+        <option value="uba_tostado">UBA Tostado</option>
       </select>
       <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar cliente, producto, factura..." style={{...S.input,width:"auto",flex:1,minWidth:200,fontSize:12,padding:"6px 10px"}}/>
       {(filtroMes!=="todos"||filtroTipo!=="todos"||busqueda)&&<button style={{...S.btnG,fontSize:11,padding:"6px 12px",color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("todos");setFiltroTipo("todos");setBusqueda("");}}>✕ Limpiar</button>}
@@ -187,13 +207,17 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                 {histCliente.map((v,i)=>(<tr key={v.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
                   <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.fecha||"—"}</td>
                   <td style={S.td}>
-                    <input
-                      defaultValue={v.factura}
-                      placeholder="Sin factura"
-                      style={{...S.input,fontSize:12,padding:"4px 6px",width:100,border:"1px solid transparent",background:"transparent"}}
-                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";}}
-                      onBlur={e=>{e.target.style.border="1px solid transparent";e.target.style.background="transparent";if(e.target.value!==v.factura)actualizarCampoVenta(v,"factura",e.target.value);}}
-                    />
+                    {v.origenColeccion==="empaques_ventas"?(
+                      <span style={{color:C.textDim,fontSize:12}}>{v.factura||"—"}</span>
+                    ):(
+                      <input
+                        defaultValue={v.factura}
+                        placeholder="Sin factura"
+                        style={{...S.input,fontSize:12,padding:"4px 6px",width:100,border:"1px solid transparent",background:"transparent"}}
+                        onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";}}
+                        onBlur={e=>{e.target.style.border="1px solid transparent";e.target.style.background="transparent";if(e.target.value!==v.factura)actualizarCampoVenta(v,"factura",e.target.value);}}
+                      />
+                    )}
                   </td>
                   <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.remision||"—"}</td>
                   <td style={S.td}><Bdg label={v.producto} col={TIPO_COL[v.tipo]||C.navy} bg={TIPO_BG[v.tipo]}/></td>
@@ -202,19 +226,23 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                   <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
                   <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
                   <td style={{...S.td,textAlign:"right"}}>
-                    <input
-                      type="text"
-                      defaultValue={v.precio_venta_kg?fmt(v.precio_venta_kg,0):""}
-                      placeholder="—"
-                      style={{...S.input,fontSize:12,padding:"4px 6px",width:100,textAlign:"right",border:"1px solid transparent",background:"transparent"}}
-                      onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";e.target.value=v.precio_venta_kg||"";}}
-                      onBlur={e=>{
-                        e.target.style.border="1px solid transparent";e.target.style.background="transparent";
-                        const nuevo=+String(e.target.value).replace(/[^\d]/g,"")||0;
-                        e.target.value=nuevo?fmt(nuevo,0):"";
-                        if(nuevo!==(v.precio_venta_kg||0))actualizarCampoVenta(v,"precio_venta_kg",nuevo);
-                      }}
-                    />
+                    {v.origenColeccion==="empaques_ventas"?(
+                      <span style={{color:C.textDim,fontSize:12}}>{v.precio_venta_kg?fmt(v.precio_venta_kg,0):"—"}</span>
+                    ):(
+                      <input
+                        type="text"
+                        defaultValue={v.precio_venta_kg?fmt(v.precio_venta_kg,0):""}
+                        placeholder="—"
+                        style={{...S.input,fontSize:12,padding:"4px 6px",width:100,textAlign:"right",border:"1px solid transparent",background:"transparent"}}
+                        onFocus={e=>{e.target.style.border="1px solid "+C.border;e.target.style.background="#fff";e.target.value=v.precio_venta_kg||"";}}
+                        onBlur={e=>{
+                          e.target.style.border="1px solid transparent";e.target.style.background="transparent";
+                          const nuevo=+String(e.target.value).replace(/[^\d]/g,"")||0;
+                          e.target.value=nuevo?fmt(nuevo,0):"";
+                          if(nuevo!==(v.precio_venta_kg||0))actualizarCampoVenta(v,"precio_venta_kg",nuevo);
+                        }}
+                      />
+                    )}
                   </td>
                   <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(v.kg*(v.precio_venta_kg||0))}</td>
                 </tr>))}
@@ -258,7 +286,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
             {(()=>{
               const PCOLS3=[C.teal,C.green,C.purple,C.accent,C.gold,C.orange,C.navy,C.red];
               const porProductoMap={};
-              todasVentas.forEach(v=>{
+              todasVentasPorLinea.forEach(v=>{
                 const p=v.producto||"Sin Producto";
                 if(!porProductoMap[p])porProductoMap[p]={kg:0,valor:0};
                 porProductoMap[p].kg+=v.kg;porProductoMap[p].valor+=v.valor_total;
@@ -321,7 +349,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead><tr>{["Mes","Transacciones","kg Vendidos","Valor Total","Precio Prom./kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
               <tbody>
-                {mesesGraf.map(([mes,d],i)=>{const txMes=todasVentas.filter(v=>v.mes===mes).length;const promM=d.kg>0?d.valor/d.kg:0;return(<tr key={mes} style={{background:filtroMes===mes?C.accentBg:i%2===0?C.panel:C.panel2,cursor:"pointer"}} onClick={()=>setFiltroMes(filtroMes===mes?"todos":mes)}>
+                {mesesGraf.map(([mes,d],i)=>{const txMes=todasVentasPorLinea.filter(v=>v.mes===mes).length;const promM=d.kg>0?d.valor/d.kg:0;return(<tr key={mes} style={{background:filtroMes===mes?C.accentBg:i%2===0?C.panel:C.panel2,cursor:"pointer"}} onClick={()=>setFiltroMes(filtroMes===mes?"todos":mes)}>
                   <td style={{...S.td,fontWeight:600,textTransform:"capitalize"}}>{mes}</td>
                   <td style={{...S.td,textAlign:"center",color:C.textDim}}>{txMes}</td>
                   <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kg)} kg</td>
@@ -330,9 +358,9 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                 </tr>);})}
                 <tr style={{background:C.navy}}>
                   <td style={{...S.td,fontWeight:800,color:"#fff"}}>TOTAL</td>
-                  <td style={{...S.td,textAlign:"center",fontWeight:800,color:"rgba(255,255,255,0.7)"}}>{todasVentas.length}</td>
-                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(todasVentas.reduce((s,v)=>s+v.kg,0))} kg</td>
-                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(todasVentas.reduce((s,v)=>s+v.valor_total,0))}</td>
+                  <td style={{...S.td,textAlign:"center",fontWeight:800,color:"rgba(255,255,255,0.7)"}}>{todasVentasPorLinea.length}</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(todasVentasPorLinea.reduce((s,v)=>s+v.kg,0))} kg</td>
+                  <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#fff",fontVariantNumeric:"tabular-nums"}}>{fmtCOP(todasVentasPorLinea.reduce((s,v)=>s+v.valor_total,0))}</td>
                   <td style={{...S.td,textAlign:"right",color:"rgba(255,255,255,0.4)"}}>—</td>
                 </tr>
               </tbody>
