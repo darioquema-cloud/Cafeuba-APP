@@ -1,0 +1,40 @@
+name: Respaldo quincenal de Firestore
+
+on:
+  schedule:
+    # Corre el dia 1 y el dia 16 de cada mes, a las 8:00am hora Colombia (13:00 UTC).
+    # Un intervalo exacto de "cada 15 dias" no existe en el calendario (los meses no
+    # tienen todos el mismo numero de dias), asi que se usa el dia 1 y 16 como el
+    # equivalente practico mas cercano a "quincenal".
+    - cron: '0 13 1,16 * *'
+  workflow_dispatch: {} # permite correrlo manualmente desde la pestana "Actions" en GitHub
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar firebase-admin
+        run: npm install firebase-admin --no-save
+
+      - name: Ejecutar el respaldo
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/backup-firestore.js
+
+      - name: Guardar el respaldo en el repositorio
+        run: |
+          git config user.name "Respaldo Automatico"
+          git config user.email "respaldos@cafeuba.app"
+          git add respaldos/
+          git diff --staged --quiet || git commit -m "Respaldo automatico de Firestore - $(date +'%Y-%m-%d')"
+          git push

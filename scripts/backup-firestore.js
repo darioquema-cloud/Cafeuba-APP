@@ -1,20 +1,40 @@
 // scripts/backup-firestore.js
-// Respaldo manual de Firestore — ejecutar con: node scripts/backup-firestore.js
-const admin=require("firebase-admin");
-const fs=require("fs");
-const path=require("path");
+// Respaldo manual (o automatico via GitHub Actions) de Firestore.
+// Uso manual: node scripts/backup-firestore.js
+import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// Ruta a la clave de servicio (NUNCA subir este archivo a git — ver Paso 3)
-const serviceAccount=require("../firebase-service-account.json");
+// Carga un .env local si existe (no hace falta en GitHub Actions, donde el
+// Secret llega directo como variable de entorno).
+try{process.loadEnvFile?.();}catch{}
+
+const __dirname=path.dirname(fileURLToPath(import.meta.url));
+
+// La clave de servicio se lee de una variable de entorno (segura, nunca en el codigo).
+// En GitHub Actions, viene del Secret FIREBASE_SERVICE_ACCOUNT.
+// Para correrlo a mano en tu computador, crea un archivo .env con
+// FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json (ver README-RESPALDOS.md)
+let serviceAccount;
+if(process.env.FIREBASE_SERVICE_ACCOUNT){
+  serviceAccount=JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+}else if(process.env.FIREBASE_SERVICE_ACCOUNT_PATH){
+  serviceAccount=JSON.parse(fs.readFileSync(path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH),"utf-8"));
+}else{
+  console.error("Falta la clave de servicio. Define FIREBASE_SERVICE_ACCOUNT (contenido JSON) o FIREBASE_SERVICE_ACCOUNT_PATH (ruta al archivo).");
+  process.exit(1);
+}
 
 admin.initializeApp({credential:admin.credential.cert(serviceAccount)});
 const db=admin.firestore();
 
+// Lista actualizada — todas las colecciones reales que usa la app hoy.
 const COLECCIONES=[
   "usuarios","lotes","costos","blends","lotesFino","blendsFino","maquilas",
-  "blendsTostado","empaques","ventasTostado","configEmpaque","subprodVerde",
-  "subprodPerg","permisosConfig","inventariosMensuales","pedidos","oportunidades",
-  "muestras","visitas"
+  "blendsTostado","empaques","tiposEmpaque","subprodVerde","subprodPerg",
+  "permisosConfig","inventariosMensuales","pedidos","oportunidades","muestras",
+  "visitas","necesidadesTostado","bitacora_actividad"
 ];
 
 async function respaldar(){
@@ -24,6 +44,7 @@ async function respaldar(){
 
   console.log(`Iniciando respaldo — ${fecha}`);
   let totalDocs=0;
+  const resumen={fecha,colecciones:{}};
 
   for(const coleccion of COLECCIONES){
     const snap=await db.collection(coleccion).get();
@@ -33,10 +54,12 @@ async function respaldar(){
       JSON.stringify(datos,null,2),
       "utf-8"
     );
-    console.log(`  ✓ ${coleccion}: ${datos.length} documentos`);
+    console.log(`  OK ${coleccion}: ${datos.length} documentos`);
+    resumen.colecciones[coleccion]=datos.length;
     totalDocs+=datos.length;
   }
 
+  fs.writeFileSync(path.join(carpeta,"_resumen.json"),JSON.stringify(resumen,null,2),"utf-8");
   console.log(`\nRespaldo completo: ${totalDocs} documentos en total.`);
   console.log(`Guardado en: ${carpeta}`);
 }
