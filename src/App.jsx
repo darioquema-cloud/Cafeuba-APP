@@ -158,8 +158,17 @@ export default function App(){
     if(!authReady||!fbUser||!usuariosReady)return;
     const email=fbUser.email?.toLowerCase();
     const match=usuarios.find(u=>u.email?.toLowerCase()===email&&u.activo!==false);
-    if(match){setUser({...match,nombre:fbUser.displayName||match.nombre,foto:fbUser.photoURL||null});setLoggedIn(true);setNotAuthorized(false);}
-    else if(usuarios.length===0){const nu={id:genId(),nombre:fbUser.displayName||email,email:fbUser.email,rol:"Gerente",activo:true};setUsuarios(p=>[...p,nu]);setUser({...nu,foto:fbUser.photoURL||null});setLoggedIn(true);setNotAuthorized(false);}
+    if(match){
+      if(match.id!==fbUser.uid){
+        const nuevoDoc={...match,id:fbUser.uid,nombre:fbUser.displayName||match.nombre};
+        setUsuarios(p=>[...p.filter(u=>u.id!==match.id),nuevoDoc]);
+        setUser({...nuevoDoc,foto:fbUser.photoURL||null});
+      }else{
+        setUser({...match,nombre:fbUser.displayName||match.nombre,foto:fbUser.photoURL||null});
+      }
+      setLoggedIn(true);setNotAuthorized(false);
+    }
+    else if(usuarios.length===0){const nu={id:fbUser.uid,nombre:fbUser.displayName||email,email:fbUser.email,rol:"Gerente",activo:true};setUsuarios(p=>[...p,nu]);setUser({...nu,foto:fbUser.photoURL||null});setLoggedIn(true);setNotAuthorized(false);}
     else{setLoggedIn(false);setNotAuthorized(true);}
   },[fbUser,usuarios,authReady,usuariosReady]);
   useEffect(()=>{setCurrentUserEmail(user?.email||null);},[user]);
