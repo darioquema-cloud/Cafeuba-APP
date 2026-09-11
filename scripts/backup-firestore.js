@@ -47,11 +47,18 @@ function nombreHoja(coleccion){
 // Convierte cada documento (que puede tener campos anidados: objetos, arreglos) a un
 // formato plano de una sola fila, apto para una hoja de Excel.
 function aplanarParaExcel(datos){
+  const LIMITE_EXCEL=32000; // un poco por debajo del limite real (32767) por seguridad
   return datos.map(doc=>{
     const fila={};
     for(const[key,val]of Object.entries(doc)){
       if(val===null||val===undefined){fila[key]="";}
-      else if(typeof val==="object"){fila[key]=JSON.stringify(val);}
+      else if(typeof val==="object"){
+        let texto=JSON.stringify(val);
+        if(texto.length>LIMITE_EXCEL){
+          texto=texto.slice(0,LIMITE_EXCEL)+"...[TRUNCADO, ver el archivo .json para el dato completo]";
+        }
+        fila[key]=texto;
+      }
       else{fila[key]=val;}
     }
     return fila;
