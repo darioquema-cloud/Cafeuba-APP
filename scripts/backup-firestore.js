@@ -1,7 +1,8 @@
 // scripts/backup-firestore.js
 // Respaldo manual (o automatico via GitHub Actions) de Firestore.
 // Uso manual: node scripts/backup-firestore.js
-import admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -26,8 +27,8 @@ if(process.env.FIREBASE_SERVICE_ACCOUNT){
   process.exit(1);
 }
 
-admin.initializeApp({credential:admin.credential.cert(serviceAccount)});
-const db=admin.firestore();
+const app=initializeApp({credential:cert(serviceAccount)});
+const db=getFirestore(app);
 
 // Lista actualizada — todas las colecciones reales que usa la app hoy.
 const COLECCIONES=[

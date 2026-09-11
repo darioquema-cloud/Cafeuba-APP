@@ -7,7 +7,8 @@
 // (el argumento es la fecha exacta de la carpeta dentro de /respaldos que quieres restaurar)
 //
 // Por seguridad, pide confirmacion escrita antes de tocar cualquier dato.
-import admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -40,8 +41,8 @@ if(process.env.FIREBASE_SERVICE_ACCOUNT){
   process.exit(1);
 }
 
-admin.initializeApp({credential:admin.credential.cert(serviceAccount)});
-const db=admin.firestore();
+const app=initializeApp({credential:cert(serviceAccount)});
+const db=getFirestore(app);
 
 const archivos=fs.readdirSync(carpeta).filter(f=>f.endsWith(".json")&&f!=="_resumen.json");
 const colecciones=archivos.map(f=>f.replace(".json",""));
