@@ -1,0 +1,341 @@
+[
+  {
+    "id": "2PYBE7",
+    "codigo": "M 552-AR",
+    "fecha": "2026-08-06",
+    "mes": "agosto",
+    "semana": 32,
+    "nombre_trillado": "M 552-AR-06082026",
+    "producto": "AR",
+    "corte": "M 552",
+    "lotes_origen": [
+      "CLTG-AR-100626"
+    ],
+    "pasilla_elec": 164,
+    "catadora_dens": 48,
+    "inferiores": 19,
+    "cisco": 168,
+    "total_subproductos": 399,
+    "salidas": [],
+    "con_proceso": "Con Proceso"
+  },
+  {
+    "id": "3VRO0L",
+    "codigo": "M 559-LYCHE",
+    "semana": 36,
+    "lotes_origen": [
+      "CTG-LYCHE-19082026",
+      "CTG-LYCHE-31072026"
+    ],
+    "nombre_trillado": "M 559-LYCHE-03092026",
+    "fecha": "2026-09-03",
+    "catadora_dens": 60,
+    "inferiores": 32,
+    "corte": "M 559",
+    "con_proceso": "Con Proceso",
+    "salidas": [],
+    "mes": "septiembre",
+    "producto": "LYCHE",
+    "total_subproductos": 918,
+    "pasilla_elec": 425,
+    "cisco": 401
+  },
+  {
+    "id": "4G1ZOK",
+    "corte": "M546",
+    "semana": 29,
+    "total_subproductos": 1556,
+    "nombre_trillado": "M546-SD-17072026",
+    "inferiores": 53,
+    "lotes_origen": [
+      "CTG-SD-11072026",
+      "CTG-SD-10072026",
+      "CTG-SD-26062026"
+    ],
+    "salidas": [],
+    "codigo": "M546-SD",
+    "con_proceso": "Con Proceso",
+    "cisco": 726,
+    "fecha": "2026-07-17",
+    "pasilla_elec": 683,
+    "mes": "julio",
+    "producto": "SD",
+    "catadora_dens": 94
+  },
+  {
+    "id": "54UBG7",
+    "lotes_origen": [
+      "CTG-AGRAZ-23072026",
+      "CTG-AGRAZ-22072026"
+    ],
+    "corte": "M551",
+    "salidas": [],
+    "semana": 32,
+    "codigo": "M551-AGRAZ",
+    "pasilla_elec": 347,
+    "catadora_dens": 37,
+    "cisco": 435,
+    "mes": "agosto",
+    "fecha": "2026-08-03",
+    "total_subproductos": 850,
+    "inferiores": 31,
+    "con_proceso": "Con Proceso",
+    "nombre_trillado": "M551-AGRAZ-03082026",
+    "producto": "AGRAZ"
+  },
+  {
+    "id": "5JHUGQ",
+    "nombre_trillado": "M545-MR-17072026",
+    "producto": "MR",
+    "lotes_origen": [
+      "CTG-MR-24062026",
+      "CTG-MR-27062026"
+    ],
+    "con_proceso": "Con Proceso",
+    "corte": "M545",
+    "codigo": "M545-MR",
+    "pasilla_elec": 253,
+    "salidas": [],
+    "semana": 29,
+    "inferiores": 23,
+    "cisco": 321,
+    "total_subproductos": 653,
+    "fecha": "2026-07-17",
+    "mes": "julio",
+    "catadora_dens": 56
+  },
+  {
+    "id": "6M4G5D",
+    "nombre_trillado": "M 558-NR-02092026",
+    "catadora_dens": 65,
+    "producto": "NR",
+    "semana": 36,
+    "con_proceso": "Con Proceso",
+    "pasilla_elec": 534,
+    "cisco": 283,
+    "mes": "septiembre",
+    "inferiores": 17,
+    "fecha": "2026-09-02",
+    "total_subproductos": 899,
+    "salidas": [],
+    "corte": "M 558",
+    "lotes_origen": [
+      "CTG-NR-08072026"
+    ],
+    "codigo": "M 558-NR"
+  },
+  {
+    "id": "6YXAV8",
+    "con_proceso": "Con Proceso",
+    "salidas": [],
+    "semana": 29,
+    "total_subproductos": 921,
+    "catadora_dens": 72,
+    "pasilla_elec": 342,
+    "nombre_trillado": "M544-DR-14072026",
+    "producto": "DR",
+    "mes": "julio",
+    "codigo": "M544-DR",
+    "fecha": "2026-07-14",
+    "inferiores": 34,
+    "cisco": 473,
+    "lotes_origen": [
+      "CLTG-DR-030626",
+      "CLTG-DR-050626"
+    ],
+    "corte": "M544"
+  },
+  {
+    "id": "91VZDD",
+    "codigo": "M 554-MR",
+    "fecha": "2026-08-24",
+    "mes": "agosto",
+    "semana": 35,
+    "nombre_trillado": "M 554-MR-24082026",
+    "producto": "MR",
+    "corte": "M 554",
+    "lotes_origen": [
+      "CTG-MR-29072026",
+      "CTG-MR-18072026",
+      "CTG-MR-24072026",
+      "CTG-MR-25072026"
+    ],
+    "pasilla_elec": 608,
+    "catadora_dens": 106,
+    "inferiores": 42,
+    "cisco": 693,
+    "total_subproductos": 1449,
+    "salidas": [],
+    "con_proceso": "Con Proceso"
+  },
+  {
+    "id": "DPZE6H",
+    "producto": "SD",
+    "salidas": [],
+    "semana": 35,
+    "corte": "M 556",
+    "pasilla_elec": 470,
+    "codigo": "M 556-SD",
+    "fecha": "2026-08-27",
+    "lotes_origen": [
+      "CTG-SD-31072026",
+      "CTG-SD-05082026",
+      "CTG-SD-01082026",
+      "CTG-SD-08082026"
+    ],
+    "total_subproductos": 1131,
+    "con_proceso": "Con Proceso",
+    "catadora_dens": 71,
+    "inferiores": 35,
+    "cisco": 555,
+    "mes": "agosto",
+    "nombre_trillado": "M 556-SD-27082026"
+  },
+  {
+    "id": "FIDDIR",
+    "semana": 31,
+    "salidas": [],
+    "total_subproductos": 389,
+    "nombre_trillado": "M548-SD-01082026",
+    "codigo": "M548-SD",
+    "corte": "M548",
+    "catadora_dens": 25,
+    "pasilla_elec": 146,
+    "producto": "SD",
+    "mes": "agosto",
+    "inferiores": 22,
+    "cisco": 196,
+    "con_proceso": "Con Proceso",
+    "lotes_origen": [
+      "CTG-SD-15072026"
+    ],
+    "fecha": "2026-08-01"
+  },
+  {
+    "id": "FR4J9T",
+    "nombre_trillado": "M547-REGIONAL-23072026",
+    "pasilla_elec": 243,
+    "codigo": "M547-REGIONAL",
+    "con_proceso": "Sin Proceso",
+    "semana": 30,
+    "mes": "julio",
+    "cisco": 2023,
+    "fecha": "2026-07-23",
+    "catadora_dens": 187,
+    "total_subproductos": 2539,
+    "producto": "REGIONAL",
+    "lotes_origen": [
+      "Pergamino Regional 1707"
+    ],
+    "corte": "M547",
+    "salidas": [],
+    "inferiores": 86
+  },
+  {
+    "id": "I0CP8B",
+    "semana": 31,
+    "salidas": [],
+    "codigo": "M550-PP",
+    "corte": "M550",
+    "inferiores": 10,
+    "lotes_origen": [
+      "CTG-PP-01072026"
+    ],
+    "producto": "PP",
+    "con_proceso": "Con Proceso",
+    "total_subproductos": 223,
+    "mes": "agosto",
+    "catadora_dens": 14,
+    "cisco": 102,
+    "nombre_trillado": "M550-PP-01082026",
+    "pasilla_elec": 97,
+    "fecha": "2026-08-01"
+  },
+  {
+    "id": "MRGGPB",
+    "inferiores": 13,
+    "cisco": 183,
+    "fecha": "2026-08-01",
+    "codigo": "M549-CC",
+    "total_subproductos": 323,
+    "lotes_origen": [
+      "CTG-CC-16072026",
+      "CTG-CC-13062026"
+    ],
+    "mes": "agosto",
+    "catadora_dens": 13,
+    "semana": 31,
+    "con_proceso": "Con Proceso",
+    "producto": "CC",
+    "corte": "M549",
+    "pasilla_elec": 114,
+    "nombre_trillado": "M549-CC-01082026",
+    "salidas": []
+  },
+  {
+    "id": "V351PE",
+    "fecha": "2026-08-13",
+    "producto": "Flote junio+flote agosto+Flote julio+Flote mayo+Flote abril",
+    "con_proceso": "Sin Proceso",
+    "semana": 33,
+    "mes": "agosto",
+    "catadora_dens": 450,
+    "nombre_trillado": "M 553-EXCELSO CONSUMO-13082026",
+    "lotes_origen": [
+      "Flote junio",
+      "flote agosto",
+      "Flote julio",
+      "Flote mayo",
+      "Flote abril"
+    ],
+    "corte": "M 553",
+    "inferiores": 173,
+    "salidas": [],
+    "codigo": "M 553-Flote junio+flote agosto+Flote julio+Flote mayo+Flote abril",
+    "total_subproductos": 4394,
+    "cisco": 2871,
+    "pasilla_elec": 900
+  },
+  {
+    "id": "V70OTJ",
+    "semana": 36,
+    "con_proceso": "Con Proceso",
+    "lotes_origen": [
+      "CTG-DR-15082026",
+      "CTG-DR-14082026",
+      "CTG-DR-07082026"
+    ],
+    "fecha": "2026-09-01",
+    "inferiores": 36,
+    "codigo": "M 557-DR",
+    "cisco": 751,
+    "producto": "DR",
+    "salidas": [],
+    "pasilla_elec": 474,
+    "catadora_dens": 96,
+    "corte": "M 557",
+    "nombre_trillado": "M 557-DR-01092026",
+    "mes": "septiembre",
+    "total_subproductos": 1357
+  },
+  {
+    "id": "VUIZ8U",
+    "fecha": "2026-08-25",
+    "producto": "LVD",
+    "catadora_dens": 123,
+    "corte": "M 555",
+    "semana": 35,
+    "inferiores": 78,
+    "nombre_trillado": "M 555-REGIONAL-25082026",
+    "pasilla_elec": 329,
+    "lotes_origen": [
+      "PERGAMINO REGIONAL 2108"
+    ],
+    "mes": "agosto",
+    "cisco": 2168,
+    "total_subproductos": 2698,
+    "codigo": "M 555-LVD",
+    "con_proceso": "Sin Proceso",
+    "salidas": []
+  }
+]

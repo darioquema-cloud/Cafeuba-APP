@@ -1,0 +1,24 @@
+[
+  {
+    "id": "4MMLWS",
+    "kg_entregados": "",
+    "fecha_entrega": "",
+    "producto": "REGIONAL",
+    "notas": "",
+    "kg_necesarios": 500,
+    "trimestre": "Q3",
+    "fecha_requerida": "2026-09-04",
+    "entregado": false
+  },
+  {
+    "id": "LG5EDV",
+    "notas": "",
+    "producto": "MAYPOP",
+    "entregado": false,
+    "fecha_entrega": "",
+    "trimestre": "Q3",
+    "fecha_requerida": "2026-08-28",
+    "kg_entregados": "",
+    "kg_necesarios": 150
+  }
+]

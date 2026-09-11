@@ -1,0 +1,51 @@
+[
+  {
+    "id": "0DGPKT",
+    "nombre": "Juliana Restrepo",
+    "email": "julianarestrepo@cafeuba.com.co",
+    "rol": "Gerente Financiero",
+    "activo": true
+  },
+  {
+    "id": "1T3JT2",
+    "nombre": "Manuel Castro",
+    "email": "acastro@cafeuba.com.co",
+    "rol": "Coordinador Tostado",
+    "activo": true
+  },
+  {
+    "id": "EAGP09",
+    "nombre": "Derly Espinoza",
+    "email": "laboratoriocalidad@cafeuba.com.co",
+    "rol": "Analista de Calidad",
+    "activo": true
+  },
+  {
+    "id": "FFXG9R",
+    "nombre": "Carolina Sanchez",
+    "email": "csanchez@cafeuba.com.co",
+    "rol": "Gerente Administrativo",
+    "activo": true
+  },
+  {
+    "id": "FGODFJK4x9fz4oUIJ1oOoXflcJV2",
+    "email": "dario.quema@cafeuba.com.co",
+    "rol": "Gerente",
+    "nombre": "Moises Dario Quemá",
+    "activo": true
+  },
+  {
+    "id": "U28CHS",
+    "nombre": "Luis Fernando Salguero",
+    "email": "lfsalguero@cafeuba.com.co",
+    "rol": "Analista Calidad + Trilla",
+    "activo": true
+  },
+  {
+    "id": "ZAOYM5",
+    "nombre": "Julio Quiceno",
+    "email": "jquiceno@cafeuba.com.co",
+    "rol": "Gerente Comercial",
+    "activo": true
+  }
+]

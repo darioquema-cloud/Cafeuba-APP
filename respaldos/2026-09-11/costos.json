@@ -1,0 +1,353 @@
+[
+  {
+    "id": "08JXJO",
+    "fecha": "2026-09-08",
+    "tipo": "Mano de Obra",
+    "centro": "Trilladora",
+    "valor": 3029000,
+    "descripcion": "ANALISTA",
+    "mes": "septiembre"
+  },
+  {
+    "id": "1CE13M",
+    "fecha": "2026-08-07",
+    "mes": "agosto",
+    "tipo": "Administracion",
+    "descripcion": "ADMIN",
+    "valor": 1860000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "24XQ50",
+    "fecha": "2026-07-31",
+    "mes": "julio",
+    "tipo": "Mantenimiento Infraestructura",
+    "descripcion": "todos julio",
+    "valor": 179360,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "292QPH",
+    "fecha": "2026-08-07",
+    "mes": "agosto",
+    "tipo": "Administracion",
+    "descripcion": "ADMIN",
+    "valor": 1860000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "2FEZ32",
+    "fecha": "2026-07-30",
+    "mes": "julio",
+    "tipo": "Mantenimiento Infraestructura",
+    "descripcion": "todos los gastos",
+    "valor": 8665443,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "2MQ81C",
+    "fecha": "2026-09-30",
+    "valor": 1860000,
+    "mes": "septiembre",
+    "centro": "Central de Beneficio",
+    "descripcion": "ADMINISTRACION",
+    "tipo": "Mano de Obra"
+  },
+  {
+    "id": "3JX9O7",
+    "fecha": "2026-07-30",
+    "mes": "julio",
+    "tipo": "Mantenimiento Maquinaria",
+    "descripcion": "todos los gastos",
+    "valor": 10775183,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "5YADEB",
+    "fecha": "2026-07-31",
+    "mes": "julio",
+    "tipo": "Energia",
+    "descripcion": "todos julio",
+    "valor": 213532,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "72V9LV",
+    "mes": "julio",
+    "descripcion": "PROCESOS",
+    "tipo": "Mano de Obra",
+    "fecha": "2026-07-28",
+    "valor": 5278000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "731N5X",
+    "descripcion": "AUXILIAR",
+    "fecha": "2026-09-08",
+    "centro": "Trilladora",
+    "mes": "septiembre",
+    "tipo": "Mano de Obra",
+    "valor": 2940000
+  },
+  {
+    "id": "7BIMO5",
+    "fecha": "2026-08-07",
+    "mes": "agosto",
+    "tipo": "Mano de Obra",
+    "descripcion": "ANALISTA",
+    "valor": 3029000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "8X5WS6",
+    "tipo": "Mantenimiento Infraestructura",
+    "centro": "Central de Beneficio",
+    "valor": 3500000,
+    "fecha": "2026-07-28",
+    "descripcion": "OFICIAL",
+    "mes": "julio"
+  },
+  {
+    "id": "9RKTPJ",
+    "fecha": "2026-07-30",
+    "mes": "julio",
+    "tipo": "Agua",
+    "descripcion": "servicios publicos",
+    "valor": 1270900,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "AW4OXQ",
+    "fecha": "2026-07-09",
+    "mes": "julio",
+    "tipo": "Mano de Obra",
+    "descripcion": "ANALISTA",
+    "valor": 3029000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "BB6LIV",
+    "fecha": "2026-07-28",
+    "mes": "julio",
+    "tipo": "Servicios Generales",
+    "descripcion": "NATALIA",
+    "valor": 200000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "C10POL",
+    "fecha": "2026-07-28",
+    "tipo": "Apoyo Cargue Descargue",
+    "descripcion": "APOYO",
+    "centro": "Trilladora",
+    "mes": "julio",
+    "valor": 1504500
+  },
+  {
+    "id": "C4PH1J",
+    "mes": "agosto",
+    "tipo": "Mano de Obra",
+    "centro": "Maquila",
+    "descripcion": "YANCA",
+    "valor": 1835000,
+    "fecha": "2026-08-31"
+  },
+  {
+    "id": "CQEKHP",
+    "fecha": "2026-07-31",
+    "mes": "julio",
+    "tipo": "Papeleria",
+    "descripcion": "todos julio",
+    "valor": 594100,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "CT7BKU",
+    "fecha": "2026-07-09",
+    "mes": "julio",
+    "tipo": "Administracion",
+    "descripcion": "ADMIN",
+    "valor": 1860000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "GZ3BUQ",
+    "fecha": "2026-06-27",
+    "mes": "junio",
+    "tipo": "Mano de Obra",
+    "descripcion": "todo para cerrar mes con el costo por unidad de 947 aprox",
+    "valor": 3100000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "H8QCCP",
+    "mes": "agosto",
+    "valor": 4159567,
+    "fecha": "2026-08-27",
+    "tipo": "Mano de Obra",
+    "descripcion": "PROCESOS",
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "HFXJYM",
+    "tipo": "Mano de Obra",
+    "mes": "septiembre",
+    "valor": 1860000,
+    "fecha": "2026-09-30",
+    "centro": "Trilladora",
+    "descripcion": "ADMINISTRACION"
+  },
+  {
+    "id": "IV0JJH",
+    "mes": "agosto",
+    "valor": 2065219,
+    "fecha": "2026-08-27",
+    "centro": "Trilladora",
+    "tipo": "Apoyo Cargue Descargue",
+    "descripcion": "APOYO WILLIAM Y OTROS "
+  },
+  {
+    "id": "MLUWDK",
+    "fecha": "2026-07-09",
+    "mes": "julio",
+    "tipo": "Mano de Obra",
+    "descripcion": "AUXILIAR",
+    "valor": 2940000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "MQXF9N",
+    "descripcion": "PATIERO",
+    "mes": "julio",
+    "tipo": "Mano de Obra",
+    "fecha": "2026-07-28",
+    "valor": 2400000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "NI5IF4",
+    "mes": "agosto",
+    "fecha": "2026-08-07",
+    "valor": 2157477,
+    "descripcion": "GASTOS LUIS TODO JULIO EN AGOSTO",
+    "tipo": "Logistica",
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "OKQI5Q",
+    "tipo": "Mano de Obra",
+    "centro": "Central de Beneficio",
+    "mes": "agosto",
+    "valor": 880000,
+    "fecha": "2026-08-27",
+    "descripcion": "OFICIAL"
+  },
+  {
+    "id": "P87RML",
+    "tipo": "Energia",
+    "centro": "Central de Beneficio",
+    "mes": "agosto",
+    "valor": 4901213,
+    "descripcion": "ENERGIA Y ACPM",
+    "fecha": "2026-08-27"
+  },
+  {
+    "id": "PXZSEW",
+    "descripcion": "PATIERO YEIMER",
+    "fecha": "2026-08-07",
+    "valor": 1920000,
+    "mes": "agosto",
+    "tipo": "Mano de Obra",
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "QA73QR",
+    "fecha": "2026-07-31",
+    "mes": "julio",
+    "tipo": "Internet",
+    "descripcion": "todos julio",
+    "valor": 250000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "R5F4Q2",
+    "centro": "Trilladora",
+    "valor": 400000,
+    "mes": "agosto",
+    "fecha": "2026-08-27",
+    "descripcion": "NATALIA",
+    "tipo": "Servicios Generales"
+  },
+  {
+    "id": "RGK8EG",
+    "fecha": "2026-08-07",
+    "mes": "agosto",
+    "tipo": "Servicios Generales",
+    "descripcion": "NATALIA",
+    "valor": 200000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "TUYHOZ",
+    "fecha": "2026-07-30",
+    "mes": "julio",
+    "tipo": "Administracion",
+    "descripcion": "ADMIN",
+    "valor": 1860000,
+    "centro": "Central de Beneficio"
+  },
+  {
+    "id": "UQMJR8",
+    "fecha": "2026-08-07",
+    "mes": "agosto",
+    "tipo": "Mano de Obra",
+    "descripcion": "AUXILIAR TRILLA",
+    "valor": 2940000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "W3B0KW",
+    "centro": "Trilladora",
+    "descripcion": "ENERGIA",
+    "tipo": "Energia",
+    "fecha": "2026-08-27",
+    "mes": "agosto",
+    "valor": 200000
+  },
+  {
+    "id": "W4HJXJ",
+    "centro": "Trilladora",
+    "descripcion": "LUIS TODO DE JULIO EN AGOSTO",
+    "tipo": "Logistica",
+    "fecha": "2026-08-07",
+    "valor": 2613175,
+    "mes": "agosto"
+  },
+  {
+    "id": "W7RGON",
+    "fecha": "2026-07-31",
+    "mes": "julio",
+    "tipo": "Servicios",
+    "descripcion": "servicios generales",
+    "valor": 200000,
+    "centro": "Trilladora"
+  },
+  {
+    "id": "YO0D24",
+    "descripcion": "INSUMOS COMPRADOS ",
+    "centro": "Central de Beneficio",
+    "valor": 1,
+    "fecha": "2026-07-28",
+    "tipo": "Mano de Obra",
+    "mes": "julio"
+  },
+  {
+    "id": "YX345F",
+    "valor": 1835000,
+    "tipo": "Mano de Obra",
+    "centro": "Bodega Cafe Fino",
+    "fecha": "2026-08-30",
+    "descripcion": "YANCA",
+    "mes": "agosto"
+  }
+]
