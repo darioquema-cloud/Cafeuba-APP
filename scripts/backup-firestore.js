@@ -3,6 +3,7 @@
 // Uso manual: node scripts/backup-firestore.js
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import * as XLSX from "xlsx";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -38,6 +39,25 @@ const COLECCIONES=[
   "visitas","necesidadesTostado","bitacora_actividad"
 ];
 
+// Excel no permite nombres de hoja de mas de 31 caracteres ni ciertos simbolos.
+function nombreHoja(coleccion){
+  return coleccion.slice(0,31).replace(/[\\/?*[\]:]/g,"_");
+}
+
+// Convierte cada documento (que puede tener campos anidados: objetos, arreglos) a un
+// formato plano de una sola fila, apto para una hoja de Excel.
+function aplanarParaExcel(datos){
+  return datos.map(doc=>{
+    const fila={};
+    for(const[key,val]of Object.entries(doc)){
+      if(val===null||val===undefined){fila[key]="";}
+      else if(typeof val==="object"){fila[key]=JSON.stringify(val);}
+      else{fila[key]=val;}
+    }
+    return fila;
+  });
+}
+
 async function respaldar(){
   const fecha=new Date().toISOString().slice(0,10); // YYYY-MM-DD
   const carpeta=path.join(__dirname,"..","respaldos",fecha);
@@ -46,6 +66,7 @@ async function respaldar(){
   console.log(`Iniciando respaldo — ${fecha}`);
   let totalDocs=0;
   const resumen={fecha,colecciones:{}};
+  const libro=XLSX.utils.book_new();
 
   for(const coleccion of COLECCIONES){
     const snap=await db.collection(coleccion).get();
@@ -55,14 +76,21 @@ async function respaldar(){
       JSON.stringify(datos,null,2),
       "utf-8"
     );
+
+    const hoja=XLSX.utils.json_to_sheet(datos.length>0?aplanarParaExcel(datos):[{aviso:"Sin datos en esta coleccion"}]);
+    XLSX.utils.book_append_sheet(libro,hoja,nombreHoja(coleccion));
+
     console.log(`  OK ${coleccion}: ${datos.length} documentos`);
     resumen.colecciones[coleccion]=datos.length;
     totalDocs+=datos.length;
   }
 
+  XLSX.writeFile(libro,path.join(carpeta,`respaldo_${fecha}.xlsx`));
   fs.writeFileSync(path.join(carpeta,"_resumen.json"),JSON.stringify(resumen,null,2),"utf-8");
+
   console.log(`\nRespaldo completo: ${totalDocs} documentos en total.`);
   console.log(`Guardado en: ${carpeta}`);
+  console.log(`Excel generado: respaldo_${fecha}.xlsx`);
 }
 
 respaldar().catch(e=>{console.error("Error en el respaldo:",e);process.exit(1);});

@@ -16,6 +16,10 @@ Simplemente haz git pull como siempre en tu proyecto — la carpeta respaldos/ v
 aparecer con las copias mas recientes. Cada coleccion de datos (lotes, costos, ventas,
 etc.) queda en su propio archivo .json dentro de la carpeta de esa fecha.
 
+Ademas de los .json, cada carpeta tambien incluye un archivo unico
+respaldo_AAAA-MM-DD.xlsx — un solo Excel con todas las colecciones, cada una en su propia
+pestana, listo para abrir directamente sin depender de JSON.
+
 ## Como correr un respaldo manual (sin esperar la fecha automatica)
 
 Si en algun momento quieres un respaldo AHORA MISMO, sin esperar al dia 1 o 16:
