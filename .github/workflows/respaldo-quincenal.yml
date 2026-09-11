@@ -23,8 +23,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Instalar firebase-admin
-        run: npm install firebase-admin --no-save
+      - name: Instalar dependencias
+        run: npm ci
 
       - name: Ejecutar el respaldo
         env:
