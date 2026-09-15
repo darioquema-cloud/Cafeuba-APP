@@ -5,7 +5,7 @@ import{fmtCOP,fmt}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{esVentaExterna as esExterno}from"../../lib/costing";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
-export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde,empaques}){
+export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde,empaques,mezclasSubKorea}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
   const [filtroTipo,setFiltroTipo]=useState("todos");
@@ -27,9 +27,14 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
       const valorKgCalc=kg>0?Math.round((v.valor_total||0)/kg):0;
       return{id:v.id,fecha:v.fecha||"",mes:v.mes||mesDe(v.fecha)||"",factura:v.referencia||"",remision:"",cliente:v.cliente||"Sin Cliente",producto:e.nombre_producto||"Sin Producto",tipo:"UBA Tostado",tipoKey:"uba_tostado",kg,valor_kg:valorKgCalc,valor_total:v.valor_total||0,precio_venta_kg:valorKgCalc,origenColeccion:"empaques_ventas",origenId:e.id,ventaId:v.id};
     })),
-  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde,empaques]);
+    ...(mezclasSubKorea||[]).flatMap(m=>[
+      ...(m.salidas_sub_korea||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mes:mesDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea"})),
+      ...(m.salidas_sub_korea_pasilla||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mes:mesDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea Pasilla",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea_pasilla"})),
+    ]),
+  ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde,empaques,mezclasSubKorea]);
 
   const actualizarCampoVenta=(v,campo,valor)=>{
+    if(v.origenColeccion==="mezclasSubKorea")return;
     if(v.origenColeccion==="empaques_ventas")return; // edicion de ventas UBA Tostado se hace en su pantalla propia
     const patch=(setArr,field)=>{
       setArr(prev=>prev.map(item=>{
@@ -207,7 +212,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                 {histCliente.map((v,i)=>(<tr key={v.id||i} style={{background:i%2===0?C.panel:C.panel2}}>
                   <td style={{...S.td,color:C.textDim,fontSize:12}}>{v.fecha||"—"}</td>
                   <td style={S.td}>
-                    {v.origenColeccion==="empaques_ventas"?(
+                    {(v.origenColeccion==="empaques_ventas"||v.origenColeccion==="mezclasSubKorea")?(
                       <span style={{color:C.textDim,fontSize:12}}>{v.factura||"—"}</span>
                     ):(
                       <input
@@ -226,7 +231,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
                   <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_kg>0?fmtCOP(v.valor_kg):"—"}</td>
                   <td style={{...S.td,textAlign:"right",color:C.textDim}}>{v.valor_total>0?fmtCOP(v.valor_total):"—"}</td>
                   <td style={{...S.td,textAlign:"right"}}>
-                    {v.origenColeccion==="empaques_ventas"?(
+                    {(v.origenColeccion==="empaques_ventas"||v.origenColeccion==="mezclasSubKorea")?(
                       <span style={{color:C.textDim,fontSize:12}}>{v.precio_venta_kg?fmt(v.precio_venta_kg,0):"—"}</span>
                     ):(
                       <input

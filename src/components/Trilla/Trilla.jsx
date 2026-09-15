@@ -6,7 +6,7 @@ import{semanaISO,mesDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import{Bdg,Fld,KPI,Modal,AutoFitText,TablaScrollV}from"../ui";
-export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subprodPerg,setSubprodPerg}){
+export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subprodPerg,setSubprodPerg,mezclasSubKorea,setMezclasSubKorea}){
   const blankFormTrilla=()=>({excelso:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",humedad:"",norma:NORMAS[0],fecha_trilla:"",codigo_corte:"",con_proceso:"Con Proceso",obs:"",producto_manual:""});
   const blankManual=()=>({fecha:today(),codigo:"",producto:"",kg:"",valor_unitario:"",notas:""});
   const [selArr,setSelArr]=useState([]);
@@ -253,6 +253,65 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     setModalSalidaSubVerde(false);setSelSalidaSubVerde(null);
   };
 
+  // Mezcla Sub Korea: combina varios subproductos Con Proceso en 2 productos resultantes
+  const [selSubMezcla,setSelSubMezcla]=useState([]);
+  const [formMezcla,setFormMezcla]=useState({fecha:today(),kg_sub_korea:"",valor_kg_sub_korea:"",kg_sub_korea_pasilla:"",valor_kg_sub_korea_pasilla:"",responsable:"",notas:""});
+  const [filtroProcesoMezcla,setFiltroProcesoMezcla]=useState("Con Proceso");
+  const toggleSelMezcla=(sp)=>{
+    setSelSubMezcla(p=>p.some(x=>x.id===sp.id)?p.filter(x=>x.id!==sp.id):[...p,sp]);
+  };
+  const subprodDisponiblesMezcla=subprodVerde.filter(sp=>(filtroProcesoMezcla==="todos"||sp.con_proceso===filtroProcesoMezcla)&&stockSubVerde(sp)>0);
+  const entradaMezcla=selSubMezcla.reduce((s,sp)=>s+stockSubVerde(sp),0);
+  const salidaTotalMezcla=(+formMezcla.kg_sub_korea||0)+(+formMezcla.kg_sub_korea_pasilla||0);
+  const diferenciaMezcla=entradaMezcla-salidaTotalMezcla;
+  const guardarMezcla=()=>{
+    if(selSubMezcla.length===0){alert("Selecciona al menos un subproducto Con Proceso para mezclar.");return;}
+    if(!(+formMezcla.kg_sub_korea>0)&&!(+formMezcla.kg_sub_korea_pasilla>0)){alert("Ingresa el resultado de la mezcla (Sub Korea y/o Sub Korea Pasilla).");return;}
+    const idsGrupo=selSubMezcla.map(sp=>sp.id);
+    const codigoMezcla=`MEZCLA-SK-${(formMezcla.fecha||today()).replace(/-/g,"")}-${genId().slice(0,4)}`;
+    setSubprodVerde(p=>p.map(sp=>{
+      if(!idsGrupo.includes(sp.id))return sp;
+      const pesoConsumido=stockSubVerde(sp);
+      return{...sp,salidas:[...(sp.salidas||[]),{id:genId(),fecha:formMezcla.fecha,peso_salida:pesoConsumido,destino_key:"mezcla_sub_korea",destino_label:"Mezcla "+codigoMezcla,observaciones:"Consumido en "+codigoMezcla}]};
+    }));
+    const nuevaMezcla={
+      id:genId(),codigo:codigoMezcla,fecha:formMezcla.fecha,mes:mesDe(formMezcla.fecha),
+      lotes_origen:selSubMezcla.map(sp=>sp.codigo),kg_entrada:entradaMezcla,
+      kg_sub_korea:+formMezcla.kg_sub_korea||0,valor_kg_sub_korea:+formMezcla.valor_kg_sub_korea||0,
+      kg_sub_korea_pasilla:+formMezcla.kg_sub_korea_pasilla||0,valor_kg_sub_korea_pasilla:+formMezcla.valor_kg_sub_korea_pasilla||0,
+      diferencia:diferenciaMezcla,responsable:formMezcla.responsable,notas:formMezcla.notas,
+      salidas_sub_korea:[],salidas_sub_korea_pasilla:[],
+    };
+    setMezclasSubKorea(p=>[nuevaMezcla,...p]);
+    setSelSubMezcla([]);
+    setFormMezcla({fecha:today(),kg_sub_korea:"",valor_kg_sub_korea:"",kg_sub_korea_pasilla:"",valor_kg_sub_korea_pasilla:"",responsable:"",notas:""});
+  };
+
+  // Salida (venta) sobre cada uno de los 2 productos resultantes, por separado
+  const stockSubKorea=(m)=>(m.kg_sub_korea||0)-(m.salidas_sub_korea||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+  const stockSubKoreaPasilla=(m)=>(m.kg_sub_korea_pasilla||0)-(m.salidas_sub_korea_pasilla||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+  const [modalSalidaMezcla,setModalSalidaMezcla]=useState(false);
+  const [selSalidaMezcla,setSelSalidaMezcla]=useState(null);
+  const [productoSalidaMezcla,setProductoSalidaMezcla]=useState("sub_korea");
+  const [formSalidaMezcla,setFormSalidaMezcla]=useState({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:"",valor_kg:"",observaciones:""});
+  const abrirSalidaMezcla=(m,producto)=>{
+    const stock=producto==="sub_korea"?stockSubKorea(m):stockSubKoreaPasilla(m);
+    if(stock<=0)return;
+    setSelSalidaMezcla(m);setProductoSalidaMezcla(producto);
+    setFormSalidaMezcla({fecha:today(),factura:"",remision:"",cliente:"",peso_salida:stock,valor_kg:producto==="sub_korea"?m.valor_kg_sub_korea:m.valor_kg_sub_korea_pasilla,observaciones:""});
+    setModalSalidaMezcla(true);
+  };
+  const confirmarSalidaMezcla=()=>{
+    const m=selSalidaMezcla;
+    const stock=productoSalidaMezcla==="sub_korea"?stockSubKorea(m):stockSubKoreaPasilla(m);
+    const kg=+formSalidaMezcla.peso_salida||0;
+    if(kg<=0||kg>stock){alert("Kg invalido: debe ser mayor a 0 y no superar el stock disponible ("+fmt(stock,1)+" kg).");return;}
+    const vk=+formSalidaMezcla.valor_kg||0;
+    const campoSalidas=productoSalidaMezcla==="sub_korea"?"salidas_sub_korea":"salidas_sub_korea_pasilla";
+    setMezclasSubKorea(p=>p.map(x=>x.id===m.id?{...x,[campoSalidas]:[...(x[campoSalidas]||[]),{id:genId(),fecha:formSalidaMezcla.fecha,factura:formSalidaMezcla.factura,remision:formSalidaMezcla.remision,cliente:formSalidaMezcla.cliente,peso_salida:kg,valor_kg:vk,valor_total:kg*vk,observaciones:formSalidaMezcla.observaciones}]}:x));
+    setModalSalidaMezcla(false);setSelSalidaMezcla(null);
+  };
+
   return(<div>
     <div style={{marginBottom:22}}><div style={{color:C.green,fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>OPERACION 04</div><div style={{color:C.navy,fontSize:22,fontWeight:700}}>Trilla - Excelso / Merma / Pasillas</div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}>
@@ -263,7 +322,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
       <KPI label="Pendientes" value={disp.length} col={C.gold}/>
     </div>
     <div style={{display:"flex",gap:8,marginBottom:16,borderBottom:"2px solid "+C.border,flexWrap:"wrap"}}>
-      {[["registro","Registro"],["subproductos","Subproductos Verde"],["auditoria","Auditoria de Datos"]].map(([k,v])=>(<button key={k} onClick={()=>setTabTrilla(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tabTrilla===k?600:400,color:tabTrilla===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabTrilla===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
+      {[["registro","Registro"],["subproductos","Subproductos Verde"],["mezcla_sub_korea","Mezcla Sub Korea"],["auditoria","Auditoria de Datos"]].map(([k,v])=>(<button key={k} onClick={()=>setTabTrilla(k)} style={{padding:"8px 14px",cursor:"pointer",fontSize:13,fontWeight:tabTrilla===k?600:400,color:tabTrilla===k?C.navy:C.textDim,background:"transparent",border:"none",borderBottom:tabTrilla===k?"2px solid "+C.accent:"2px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif"}}>{v}</button>))}
     </div>
 
     {tabTrilla==="registro"&&<>
@@ -502,6 +561,98 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
           ))}</tbody></table></TablaScrollV>
         </div>
       )}
+    </>)}
+
+    {tabTrilla==="mezcla_sub_korea"&&(<>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1.2fr",gap:16,marginBottom:20}}>
+        <div style={S.card}>
+          <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:4}}>Subproductos Disponibles (Con Proceso)</div>
+          <div style={{color:C.textDim,fontSize:12,marginBottom:14}}>Selecciona 1 o mas para combinar en la mezcla</div>
+          <select style={{...S.select,marginBottom:14}} value={filtroProcesoMezcla} onChange={e=>setFiltroProcesoMezcla(e.target.value)}>
+            <option value="Con Proceso">Solo Con Proceso</option>
+            <option value="Sin Proceso">Solo Sin Proceso</option>
+            <option value="todos">Todos (Con y Sin Proceso)</option>
+          </select>
+          {subprodDisponiblesMezcla.length===0&&<div style={{color:C.textFaint,fontSize:13}}>No hay subproductos Con Proceso con stock disponible.</div>}
+          {subprodDisponiblesMezcla.map(sp=>{
+            const isSel=selSubMezcla.some(x=>x.id===sp.id);
+            return(<div key={sp.id} onClick={()=>toggleSelMezcla(sp)} style={{...S.card,cursor:"pointer",marginBottom:10,borderLeft:"3px solid "+(isSel?C.green:C.border),borderColor:isSel?C.green:C.border}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontWeight:700,color:C.navy,fontSize:13}}>{sp.codigo}</div>
+                  <div style={{color:C.textDim,fontSize:11}}>{sp.producto} — {fmt(stockSubVerde(sp),1)} kg disponibles</div>
+                </div>
+                <input type="checkbox" checked={isSel} readOnly style={{width:18,height:18}}/>
+              </div>
+            </div>);
+          })}
+        </div>
+        <div style={S.card}>
+          <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:14}}>Registro de Mezcla</div>
+          {selSubMezcla.length===0?(
+            <div style={{color:C.textFaint,fontSize:13}}>Selecciona lotes de la izquierda para comenzar.</div>
+          ):(<>
+            <div style={{background:C.bg,borderRadius:6,padding:12,marginBottom:14,border:"1px solid "+C.border,textAlign:"center"}}>
+              <div style={{color:C.textDim,fontSize:11}}>Entrada Total (suma de lo seleccionado)</div>
+              <div style={{color:C.navy,fontWeight:700,fontSize:20}}>{fmt(entradaMezcla,1)} kg</div>
+            </div>
+            <Fld label="Fecha"><input style={S.input} type="date" value={formMezcla.fecha} onChange={e=>setFormMezcla(p=>({...p,fecha:e.target.value}))}/></Fld>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+              <Fld label="Kg Sub Korea (Exportacion)"><input style={S.input} type="number" value={formMezcla.kg_sub_korea} onChange={e=>setFormMezcla(p=>({...p,kg_sub_korea:e.target.value}))}/></Fld>
+              <Fld label="Valor/kg Sub Korea"><input style={S.input} type="number" value={formMezcla.valor_kg_sub_korea} onChange={e=>setFormMezcla(p=>({...p,valor_kg_sub_korea:e.target.value}))}/></Fld>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+              <Fld label="Kg Sub Korea Pasilla (Local)"><input style={S.input} type="number" value={formMezcla.kg_sub_korea_pasilla} onChange={e=>setFormMezcla(p=>({...p,kg_sub_korea_pasilla:e.target.value}))}/></Fld>
+              <Fld label="Valor/kg Sub Korea Pasilla"><input style={S.input} type="number" value={formMezcla.valor_kg_sub_korea_pasilla} onChange={e=>setFormMezcla(p=>({...p,valor_kg_sub_korea_pasilla:e.target.value}))}/></Fld>
+            </div>
+            {Math.abs(diferenciaMezcla)>0.5&&(<div style={{background:C.redBg,border:"1px solid "+C.red+"40",borderRadius:6,padding:"8px 12px",marginBottom:12,color:C.red,fontSize:12,fontWeight:600}}>⚠ Diferencia de {fmt(diferenciaMezcla,1)} kg entre la entrada y el resultado registrado — revisa los kg antes de guardar.</div>)}
+            <Fld label="Responsable"><input style={S.input} value={formMezcla.responsable} onChange={e=>setFormMezcla(p=>({...p,responsable:e.target.value}))}/></Fld>
+            <Fld label="Notas"><textarea style={{...S.input,minHeight:50}} value={formMezcla.notas} onChange={e=>setFormMezcla(p=>({...p,notas:e.target.value}))}/></Fld>
+            <button style={{...S.btn,background:C.green,width:"100%",marginTop:10}} onClick={guardarMezcla}>Registrar Mezcla</button>
+          </>)}
+        </div>
+      </div>
+
+      <div style={S.card}>
+        <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario Sub Korea</div>
+        <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:1100}}>
+          <thead><tr>{["Codigo","Fecha","Lotes Origen","Kg Sub Korea","Stock SK","Valor/kg SK","Kg Sub Korea Pasilla","Stock SKP","Valor/kg SKP","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+          <tbody>{mezclasSubKorea.map(m=>{
+            const stkSK=stockSubKorea(m), stkSKP=stockSubKoreaPasilla(m);
+            return(<tr key={m.id}>
+              <td style={{...S.td,fontWeight:700,color:C.navy}}>{m.codigo}</td>
+              <td style={{...S.td,color:C.textDim}}>{m.fecha}</td>
+              <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{(m.lotes_origen||[]).map(c=>(<Bdg key={c} label={c} col={C.teal}/>))}</div></td>
+              <td style={S.td}>{fmt(m.kg_sub_korea,1)} kg</td>
+              <td style={{...S.td,color:stkSK>0?C.green:C.textFaint,fontWeight:700}}>{fmt(stkSK,1)} kg</td>
+              <td style={S.td}>{fmtCOP(m.valor_kg_sub_korea)}</td>
+              <td style={S.td}>{fmt(m.kg_sub_korea_pasilla,1)} kg</td>
+              <td style={{...S.td,color:stkSKP>0?C.orange:C.textFaint,fontWeight:700}}>{fmt(stkSKP,1)} kg</td>
+              <td style={S.td}>{fmtCOP(m.valor_kg_sub_korea_pasilla)}</td>
+              <td style={S.td}>
+                <button style={{...S.btnG,marginRight:6,opacity:stkSK>0?1:0.4}} disabled={stkSK<=0} onClick={()=>abrirSalidaMezcla(m,"sub_korea")}>+ Salida SK</button>
+                <button style={{...S.btnG,opacity:stkSKP>0?1:0.4}} disabled={stkSKP<=0} onClick={()=>abrirSalidaMezcla(m,"sub_korea_pasilla")}>+ Salida SKP</button>
+              </td>
+            </tr>);
+          })}</tbody>
+        </table></TablaScrollV>
+        {mezclasSubKorea.length===0&&<div style={{color:C.textFaint,fontSize:13,padding:12}}>Sin mezclas registradas todavia.</div>}
+      </div>
+
+      {modalSalidaMezcla&&selSalidaMezcla&&(<Modal title={"Salida "+(productoSalidaMezcla==="sub_korea"?"Sub Korea":"Sub Korea Pasilla")+" - "+selSalidaMezcla.codigo} onClose={()=>setModalSalidaMezcla(false)}>
+        <Fld label="Fecha"><input style={S.input} type="date" value={formSalidaMezcla.fecha} onChange={e=>setFormSalidaMezcla(p=>({...p,fecha:e.target.value}))}/></Fld>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <Fld label="Factura"><input style={S.input} value={formSalidaMezcla.factura} onChange={e=>setFormSalidaMezcla(p=>({...p,factura:e.target.value}))}/></Fld>
+          <Fld label="Remision"><input style={S.input} value={formSalidaMezcla.remision} onChange={e=>setFormSalidaMezcla(p=>({...p,remision:e.target.value}))}/></Fld>
+        </div>
+        <Fld label="Cliente"><input style={S.input} value={formSalidaMezcla.cliente} onChange={e=>setFormSalidaMezcla(p=>({...p,cliente:e.target.value}))}/></Fld>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <Fld label="Kg"><input style={S.input} type="number" value={formSalidaMezcla.peso_salida} onChange={e=>setFormSalidaMezcla(p=>({...p,peso_salida:e.target.value}))}/></Fld>
+          <Fld label="Valor/kg"><input style={S.input} type="number" value={formSalidaMezcla.valor_kg} onChange={e=>setFormSalidaMezcla(p=>({...p,valor_kg:e.target.value}))}/></Fld>
+        </div>
+        <Fld label="Observaciones"><textarea style={{...S.input,minHeight:50}} value={formSalidaMezcla.observaciones} onChange={e=>setFormSalidaMezcla(p=>({...p,observaciones:e.target.value}))}/></Fld>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}><button style={S.btnG} onClick={()=>setModalSalidaMezcla(false)}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={confirmarSalidaMezcla}>Confirmar Salida</button></div>
+      </Modal>)}
     </>)}
 
     {modalEditarSubVerde&&selSubVerde&&(<Modal title={"Editar Subproducto — "+selSubVerde.codigo} onClose={()=>{setModalEditarSubVerde(false);setSelSubVerde(null);}}>
