@@ -253,6 +253,30 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     setModalSalidaSubVerde(false);setSelSalidaSubVerde(null);
   };
 
+  const [modalRegistroManualSV,setModalRegistroManualSV]=useState(false);
+  const [formRegistroManualSV,setFormRegistroManualSV]=useState({fecha:today(),producto:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",con_proceso:"Con Proceso",notas:""});
+  const abrirRegistroManualSV=()=>{
+    setFormRegistroManualSV({fecha:today(),producto:"",pasilla_elec:"",catadora_dens:"",inferiores:"",cisco:"",con_proceso:"Con Proceso",notas:""});
+    setModalRegistroManualSV(true);
+  };
+  const guardarRegistroManualSV=()=>{
+    const pe=+formRegistroManualSV.pasilla_elec||0,cd=+formRegistroManualSV.catadora_dens||0,inf=+formRegistroManualSV.inferiores||0,ci=+formRegistroManualSV.cisco||0;
+    if(!formRegistroManualSV.producto.trim()){alert("Ingresa un nombre/descripcion para este registro (ej: Consolidado 1er Semestre 2026).");return;}
+    if(pe+cd+inf+ci<=0){alert("Ingresa al menos un valor de kg mayor a 0.");return;}
+    const nuevo={
+      id:genId(),codigo:formRegistroManualSV.producto.trim(),
+      fecha:formRegistroManualSV.fecha,mes:mesDe(formRegistroManualSV.fecha),semana:semanaISO(formRegistroManualSV.fecha),
+      nombre_trillado:formRegistroManualSV.producto.trim(),producto:formRegistroManualSV.producto.trim(),
+      corte:"MANUAL",lotes_origen:[],
+      pasilla_elec:pe,catadora_dens:cd,inferiores:inf,cisco:ci,
+      total_subproductos:pe+cd+inf+ci,salidas:[],
+      con_proceso:formRegistroManualSV.con_proceso,
+      origen_manual:true,notas:formRegistroManualSV.notas,
+    };
+    setSubprodVerde(p=>[nuevo,...p]);
+    setModalRegistroManualSV(false);
+  };
+
   // Mezcla Sub Korea: combina varios subproductos Con Proceso en 2 productos resultantes
   const [selSubMezcla,setSelSubMezcla]=useState([]);
   const [formMezcla,setFormMezcla]=useState({fecha:today(),kg_sub_korea:"",valor_kg_sub_korea:"",kg_sub_korea_pasilla:"",valor_kg_sub_korea_pasilla:"",responsable:"",notas:""});
@@ -527,7 +551,10 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         <div style={{...S.card,color:C.textFaint,fontSize:13}}>Los subproductos verde se generan automaticamente al registrar una trilla. Realiza tu primer registro en la pestana Registro.</div>
       ):(
         <div style={S.card}>
-          <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:16}}>Inventario Subproductos Verde</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:14,color:C.navy}}>Inventario Subproductos Verde</div>
+            <button style={{...S.btn,background:C.teal}} onClick={abrirRegistroManualSV}>+ Registro Manual</button>
+          </div>
           <div style={{marginBottom:12}}>
             <select style={{...S.select,width:"auto",minWidth:170}} value={filtroProcesoSV} onChange={e=>setFiltroProcesoSV(e.target.value)}>
               <option value="todos">Todos (Con y Sin Proceso)</option>
@@ -654,6 +681,39 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}><button style={S.btnG} onClick={()=>setModalSalidaMezcla(false)}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={confirmarSalidaMezcla}>Confirmar Salida</button></div>
       </Modal>)}
     </>)}
+
+    {modalRegistroManualSV&&(<Modal title="Registro Manual de Subproducto Verde" onClose={()=>setModalRegistroManualSV(false)}>
+      <div style={{background:C.tealBg,border:"1px solid "+C.teal+"30",borderRadius:6,padding:"10px 14px",marginBottom:14,fontSize:12,color:C.textDim}}>
+        Usa esto para consolidar stock acumulado de un periodo pasado (ej. subproductos del
+        primer semestre que no se registraron trilla por trilla) — no requiere una trilla
+        asociada.
+      </div>
+      <Fld label="Nombre/Descripcion (ej: Consolidado 1er Semestre 2026)">
+        <input style={S.input} value={formRegistroManualSV.producto} onChange={e=>setFormRegistroManualSV(p=>({...p,producto:e.target.value}))}/>
+      </Fld>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+        <Fld label="Fecha"><input style={S.input} type="date" value={formRegistroManualSV.fecha} onChange={e=>setFormRegistroManualSV(p=>({...p,fecha:e.target.value}))}/></Fld>
+        <Fld label="Proceso">
+          <select style={S.select} value={formRegistroManualSV.con_proceso} onChange={e=>setFormRegistroManualSV(p=>({...p,con_proceso:e.target.value}))}>
+            <option value="Con Proceso">Con Proceso</option>
+            <option value="Sin Proceso">Sin Proceso</option>
+          </select>
+        </Fld>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+        <Fld label="Pasilla Electronica (kg)"><input style={S.input} type="number" value={formRegistroManualSV.pasilla_elec} onChange={e=>setFormRegistroManualSV(p=>({...p,pasilla_elec:e.target.value}))}/></Fld>
+        <Fld label="Catadora Densimetrica (kg)"><input style={S.input} type="number" value={formRegistroManualSV.catadora_dens} onChange={e=>setFormRegistroManualSV(p=>({...p,catadora_dens:e.target.value}))}/></Fld>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+        <Fld label="Inferiores (kg)"><input style={S.input} type="number" value={formRegistroManualSV.inferiores} onChange={e=>setFormRegistroManualSV(p=>({...p,inferiores:e.target.value}))}/></Fld>
+        <Fld label="Cisco (kg)"><input style={S.input} type="number" value={formRegistroManualSV.cisco} onChange={e=>setFormRegistroManualSV(p=>({...p,cisco:e.target.value}))}/></Fld>
+      </div>
+      <Fld label="Notas"><textarea style={{...S.input,minHeight:50}} value={formRegistroManualSV.notas} onChange={e=>setFormRegistroManualSV(p=>({...p,notas:e.target.value}))}/></Fld>
+      <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}>
+        <button style={S.btnG} onClick={()=>setModalRegistroManualSV(false)}>Cancelar</button>
+        <button style={{...S.btn,background:C.green}} onClick={guardarRegistroManualSV}>Guardar Registro</button>
+      </div>
+    </Modal>)}
 
     {modalEditarSubVerde&&selSubVerde&&(<Modal title={"Editar Subproducto — "+selSubVerde.codigo} onClose={()=>{setModalEditarSubVerde(false);setSelSubVerde(null);}}>
       <Fld label="Pasilla Electronica (kg)"><input style={S.input} type="number" value={formSubVerde.pasilla_elec} onChange={e=>setFormSubVerde(p=>({...p,pasilla_elec:e.target.value}))}/></Fld>
