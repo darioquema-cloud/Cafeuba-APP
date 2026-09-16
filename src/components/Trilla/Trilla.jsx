@@ -292,7 +292,9 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     if(selSubMezcla.length===0){alert("Selecciona al menos un subproducto Con Proceso para mezclar.");return;}
     if(!(+formMezcla.kg_sub_korea>0)&&!(+formMezcla.kg_sub_korea_pasilla>0)){alert("Ingresa el resultado de la mezcla (Sub Korea y/o Sub Korea Pasilla).");return;}
     const idsGrupo=selSubMezcla.map(sp=>sp.id);
-    const codigoMezcla=`MEZCLA-SK-${(formMezcla.fecha||today()).replace(/-/g,"")}-${genId().slice(0,4)}`;
+    const fechaCod=dateToCode(formMezcla.fecha||today());
+    const mezclasDelDia=mezclasSubKorea.filter(m=>m.codigo?.includes(fechaCod)).length;
+    const codigoMezcla=`MEZCLA-SK-${fechaCod}-${String(mezclasDelDia+1).padStart(2,"0")}`;
     setSubprodVerde(p=>p.map(sp=>{
       if(!idsGrupo.includes(sp.id))return sp;
       const pesoConsumido=stockSubVerde(sp);
@@ -309,6 +311,24 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     setMezclasSubKorea(p=>[nuevaMezcla,...p]);
     setSelSubMezcla([]);
     setFormMezcla({fecha:today(),kg_sub_korea:"",valor_kg_sub_korea:"",kg_sub_korea_pasilla:"",valor_kg_sub_korea_pasilla:"",responsable:"",notas:""});
+  };
+  const [modalEditarMezcla,setModalEditarMezcla]=useState(false);
+  const [selEditarMezcla,setSelEditarMezcla]=useState(null);
+  const [formEditarMezcla,setFormEditarMezcla]=useState({kg_sub_korea:"",valor_kg_sub_korea:"",kg_sub_korea_pasilla:"",valor_kg_sub_korea_pasilla:"",notas:""});
+  const abrirEditarMezcla=(m)=>{
+    setSelEditarMezcla(m);
+    setFormEditarMezcla({kg_sub_korea:m.kg_sub_korea||"",valor_kg_sub_korea:m.valor_kg_sub_korea||"",kg_sub_korea_pasilla:m.kg_sub_korea_pasilla||"",valor_kg_sub_korea_pasilla:m.valor_kg_sub_korea_pasilla||"",notas:m.notas||""});
+    setModalEditarMezcla(true);
+  };
+  const guardarEditarMezcla=()=>{
+    const m=selEditarMezcla;
+    const yaVendidoSK=(m.salidas_sub_korea||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+    const yaVendidoSKP=(m.salidas_sub_korea_pasilla||[]).reduce((s,x)=>s+(x.peso_salida||0),0);
+    const nuevoSK=+formEditarMezcla.kg_sub_korea||0, nuevoSKP=+formEditarMezcla.kg_sub_korea_pasilla||0;
+    if(nuevoSK<yaVendidoSK){alert("No puedes bajar Kg Sub Korea por debajo de lo ya vendido ("+fmt(yaVendidoSK,1)+" kg).");return;}
+    if(nuevoSKP<yaVendidoSKP){alert("No puedes bajar Kg Sub Korea Pasilla por debajo de lo ya vendido ("+fmt(yaVendidoSKP,1)+" kg).");return;}
+    setMezclasSubKorea(p=>p.map(x=>x.id===m.id?{...x,kg_sub_korea:nuevoSK,valor_kg_sub_korea:+formEditarMezcla.valor_kg_sub_korea||0,kg_sub_korea_pasilla:nuevoSKP,valor_kg_sub_korea_pasilla:+formEditarMezcla.valor_kg_sub_korea_pasilla||0,notas:formEditarMezcla.notas}:x));
+    setModalEditarMezcla(false);setSelEditarMezcla(null);
   };
 
   // Salida (venta) sobre cada uno de los 2 productos resultantes, por separado
@@ -657,6 +677,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
               <td style={{...S.td,color:stkSKP>0?C.orange:C.textFaint,fontWeight:700}}>{fmt(stkSKP,1)} kg</td>
               <td style={S.td}>{fmtCOP(m.valor_kg_sub_korea_pasilla)}</td>
               <td style={S.td}>
+                <button style={{...S.btnG,marginRight:6}} onClick={()=>abrirEditarMezcla(m)}>Editar</button>
                 <button style={{...S.btnG,marginRight:6,opacity:stkSK>0?1:0.4}} disabled={stkSK<=0} onClick={()=>abrirSalidaMezcla(m,"sub_korea")}>+ Salida SK</button>
                 <button style={{...S.btnG,opacity:stkSKP>0?1:0.4}} disabled={stkSKP<=0} onClick={()=>abrirSalidaMezcla(m,"sub_korea_pasilla")}>+ Salida SKP</button>
               </td>
@@ -679,6 +700,22 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
         </div>
         <Fld label="Observaciones"><textarea style={{...S.input,minHeight:50}} value={formSalidaMezcla.observaciones} onChange={e=>setFormSalidaMezcla(p=>({...p,observaciones:e.target.value}))}/></Fld>
         <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}><button style={S.btnG} onClick={()=>setModalSalidaMezcla(false)}>Cancelar</button><button style={{...S.btn,background:C.green}} onClick={confirmarSalidaMezcla}>Confirmar Salida</button></div>
+      </Modal>)}
+
+      {modalEditarMezcla&&selEditarMezcla&&(<Modal title={"Editar Mezcla - "+selEditarMezcla.codigo} onClose={()=>setModalEditarMezcla(false)}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <Fld label="Kg Sub Korea (Exportacion)"><input style={S.input} type="number" value={formEditarMezcla.kg_sub_korea} onChange={e=>setFormEditarMezcla(p=>({...p,kg_sub_korea:e.target.value}))}/></Fld>
+          <Fld label="Valor/kg Sub Korea"><input style={S.input} type="number" value={formEditarMezcla.valor_kg_sub_korea} onChange={e=>setFormEditarMezcla(p=>({...p,valor_kg_sub_korea:e.target.value}))}/></Fld>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <Fld label="Kg Sub Korea Pasilla (Local)"><input style={S.input} type="number" value={formEditarMezcla.kg_sub_korea_pasilla} onChange={e=>setFormEditarMezcla(p=>({...p,kg_sub_korea_pasilla:e.target.value}))}/></Fld>
+          <Fld label="Valor/kg Sub Korea Pasilla"><input style={S.input} type="number" value={formEditarMezcla.valor_kg_sub_korea_pasilla} onChange={e=>setFormEditarMezcla(p=>({...p,valor_kg_sub_korea_pasilla:e.target.value}))}/></Fld>
+        </div>
+        <Fld label="Notas"><textarea style={{...S.input,minHeight:50}} value={formEditarMezcla.notas} onChange={e=>setFormEditarMezcla(p=>({...p,notas:e.target.value}))}/></Fld>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:14}}>
+          <button style={S.btnG} onClick={()=>setModalEditarMezcla(false)}>Cancelar</button>
+          <button style={{...S.btn,background:C.green}} onClick={guardarEditarMezcla}>Guardar Cambios</button>
+        </div>
       </Modal>)}
     </>)}
 
