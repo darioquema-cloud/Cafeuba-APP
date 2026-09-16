@@ -1,0 +1,2001 @@
+[
+  {
+    "id": "2V9HYW",
+    "codigo": "Capitan2304-23042026",
+    "producto_comercial": "Capitan",
+    "salidas": [
+      {
+        "id": "XKRXW5",
+        "fecha": "2026-07-30",
+        "factura": "AJUSTE-INV-07-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 9,
+        "valor_kg": 0,
+        "valor_total": 0
+      }
+    ],
+    "nombre": "Capitan 2304",
+    "kg_total": 9,
+    "fecha": "2026-04-23",
+    "mes": "abril",
+    "valor_total": 233314.56,
+    "costo_kg": 25923.84,
+    "items": []
+  },
+  {
+    "id": "36AOJP",
+    "producto_comercial": "TROPICAL",
+    "costo_kg": 57550.766,
+    "mes": "junio",
+    "salidas": [
+      {
+        "id": "MHKIGN",
+        "fecha": "2026-07-30",
+        "factura": "AJUSTE-INV-07-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 4,
+        "valor_kg": 0,
+        "valor_total": 0
+      }
+    ],
+    "nombre": "TROPICAL 3006",
+    "kg_total": 4,
+    "codigo": "TROPICAL3006-30062026",
+    "items": [],
+    "valor_total": 230203.064,
+    "fecha": "2026-06-30"
+  },
+  {
+    "id": "50J9LX",
+    "costo_kg": 57950.40832507433,
+    "producto_comercial": "MAYPOP",
+    "valor_total": 175415886,
+    "codigo": "MAYPOP-28082026",
+    "kg_total": 3027,
+    "salidas": [
+      {
+        "observaciones": "",
+        "id": "6FE8JF",
+        "valor_total": 27816000,
+        "peso_salida": 480,
+        "valor_kg": 57950,
+        "fecha": "2026-09-07",
+        "destino_key": "otro",
+        "factura": "",
+        "remision": "",
+        "cliente": "VAYGAS SAS TANAT"
+      },
+      {
+        "id": "4WAR7H",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "785",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 1560,
+        "valor_kg": 57950,
+        "valor_total": 90402000,
+        "observaciones": ""
+      },
+      {
+        "id": "874UJ7",
+        "fecha": "2026-09-15",
+        "factura": "",
+        "remision": "787",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 605,
+        "valor_kg": 57950,
+        "valor_total": 35059750,
+        "observaciones": ""
+      }
+    ],
+    "nombre": "MAYPOP",
+    "fecha": "2026-08-28",
+    "items": [
+      {
+        "kg_usado": 1977,
+        "codigo": "M 554-MR-24082026",
+        "esStockDirecto": false,
+        "valor_total": 144554286,
+        "reprId": "DGU3MP",
+        "salidaId": "ED0H09",
+        "tipo": "lote",
+        "valor_kg": 73118,
+        "key": "sal:ED0H09"
+      },
+      {
+        "esStockDirecto": false,
+        "tipo": "lote",
+        "kg_usado": 1050,
+        "codigo": "M 555-REGIONAL-25082026",
+        "reprId": "P94NYC",
+        "valor_kg": 29392,
+        "valor_total": 30861600,
+        "key": "sal:RDH4D5",
+        "salidaId": "RDH4D5"
+      }
+    ]
+  },
+  {
+    "id": "5D0ZOM",
+    "mes": "julio",
+    "kg_total": 1112,
+    "fecha": "2026-07-06",
+    "salidas": [
+      {
+        "observaciones": "FLUJO INTERNO",
+        "remision": "",
+        "peso_salida": 139,
+        "valor_kg": 49246,
+        "cliente": "PASILLA",
+        "fecha": "2026-07-07",
+        "factura": "",
+        "id": "7O2W25",
+        "destino_key": "otro",
+        "valor_total": 6845194
+      },
+      {
+        "id": "MF0R1I",
+        "fecha": "2026-07-28",
+        "factura": "",
+        "remision": "770",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 973,
+        "valor_kg": 49246,
+        "valor_total": 47916358,
+        "observaciones": ""
+      }
+    ],
+    "codigo": "VAINILLA0607-06072026",
+    "items": [],
+    "nombre": "VAINILLA 0607",
+    "producto_comercial": "VAINILLA",
+    "costo_kg": 49246.077,
+    "valor_total": 54761637.624
+  },
+  {
+    "id": "5MQO1D",
+    "mes": "mayo",
+    "items": [],
+    "valor_total": 9597774.117999999,
+    "kg_total": 302,
+    "salidas": [
+      {
+        "observaciones": "",
+        "destino_key": "bodega_cf",
+        "id": "QMACJ8",
+        "remision": "770",
+        "cliente": "Bodega Cafe Fino",
+        "factura": "",
+        "peso_salida": 96,
+        "valor_total": 3050976,
+        "valor_kg": 31781,
+        "fecha": "2026-07-28"
+      },
+      {
+        "factura": "",
+        "valor_total": 762744,
+        "observaciones": "CAFE PARA DAISUKE",
+        "remision": "774",
+        "peso_salida": 24,
+        "id": "49L9NB",
+        "valor_kg": 31781,
+        "fecha": "2026-08-03",
+        "destino_key": "bodega_cf",
+        "cliente": "Bodega Cafe Fino"
+      },
+      {
+        "id": "U4WAHR",
+        "fecha": "2026-08-03",
+        "factura": "",
+        "remision": "775",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 182,
+        "valor_kg": 31781,
+        "valor_total": 5784142,
+        "observaciones": "CAFE PARA YUIKI"
+      }
+    ],
+    "costo_kg": 31780.709,
+    "fecha": "2026-05-12",
+    "nombre": "NG 1205",
+    "producto_comercial": "NG",
+    "codigo": "NG1205-12052026"
+  },
+  {
+    "id": "6D93ZW",
+    "items": [],
+    "valor_total": 160700377.65600002,
+    "costo_kg": 42046.148,
+    "producto_comercial": "Caturra nitro",
+    "kg_total": 3822,
+    "salidas": [
+      {
+        "id": "WF3A5G",
+        "observaciones": "",
+        "valor_kg": 42046,
+        "remision": "766",
+        "factura": "",
+        "peso_salida": 500,
+        "valor_total": 21023000,
+        "fecha": "2026-07-14",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf"
+      },
+      {
+        "fecha": "2026-07-23",
+        "destino_key": "bodega_cf",
+        "observaciones": "",
+        "factura": "",
+        "valor_total": 36327744,
+        "cliente": "Bodega Cafe Fino",
+        "peso_salida": 864,
+        "valor_kg": 42046,
+        "id": "W26K01",
+        "remision": "769"
+      },
+      {
+        "valor_total": 10091040,
+        "observaciones": "",
+        "peso_salida": 240,
+        "fecha": "2026-07-28",
+        "cliente": "Bodega Cafe Fino",
+        "id": "WHEDGB",
+        "remision": "770",
+        "factura": "",
+        "destino_key": "bodega_cf",
+        "valor_kg": 42046
+      },
+      {
+        "cliente": "Ajuste de Inventario",
+        "fecha": "2026-07-30",
+        "destino_key": "ajuste_inventario",
+        "remision": "",
+        "peso_salida": 55,
+        "valor_total": 0,
+        "factura": "AJUSTE-INV-07-2026",
+        "id": "QOKSA3",
+        "valor_kg": 0
+      },
+      {
+        "valor_total": 84260184,
+        "observaciones": "CAFE PARA YUIKI",
+        "peso_salida": 2004,
+        "id": "GZ24UV",
+        "fecha": "2026-08-01",
+        "factura": "",
+        "cliente": "Bodega Cafe Fino",
+        "valor_kg": 42046,
+        "remision": "773",
+        "destino_key": "bodega_cf"
+      },
+      {
+        "id": "WCEZZV",
+        "fecha": "2026-08-03",
+        "factura": "",
+        "remision": "774",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 159,
+        "valor_kg": 42046,
+        "valor_total": 6685314,
+        "observaciones": "CAFE PARA DAISUKE"
+      }
+    ],
+    "mes": "junio",
+    "codigo": "CATURRANITRO1706-17062026",
+    "fecha": "2026-06-17",
+    "nombre": "CATURRA NITRO 1706"
+  },
+  {
+    "id": "6Z9PWK",
+    "valor_total": 11258865.448,
+    "producto_comercial": "Caturra nitro",
+    "codigo": "CATURRANITRO2505-20052026",
+    "nombre": "CATURRA NITRO 2505",
+    "salidas": [
+      {
+        "valor_total": 4860000,
+        "precio_venta_kg": 64750,
+        "id": "S1HFGZ",
+        "observaciones": "",
+        "destino_key": "otro",
+        "cliente": "FLOR A FRUTO",
+        "peso_salida": 120,
+        "fecha": "2026-07-08",
+        "factura": "17399",
+        "valor_kg": 40500,
+        "remision": ""
+      },
+      {
+        "observaciones": "",
+        "factura": "17399",
+        "id": "P2SOO8",
+        "peso_salida": 24,
+        "fecha": "2026-07-10",
+        "cliente": "FLOR A FRUTO",
+        "precio_venta_kg": 64750,
+        "destino_key": "otro",
+        "remision": "",
+        "valor_kg": 40500,
+        "valor_total": 972000
+      },
+      {
+        "cliente": "Bodega Cafe Fino",
+        "observaciones": "",
+        "remision": "769",
+        "valor_kg": 40500,
+        "destino_key": "bodega_cf",
+        "fecha": "2026-07-23",
+        "valor_total": 5427000,
+        "id": "25T5ML",
+        "factura": "",
+        "peso_salida": 134
+      }
+    ],
+    "mes": "mayo",
+    "fecha": "2026-05-20",
+    "kg_total": 278,
+    "costo_kg": 40499.516,
+    "items": []
+  },
+  {
+    "id": "8SLY29",
+    "items": [
+      {
+        "salidaId": "5WUC5Y",
+        "tipo": "lote",
+        "reprId": "AGJMMT",
+        "valor_kg": 75090,
+        "valor_total": 15018000,
+        "key": "sal:5WUC5Y",
+        "kg_usado": 200,
+        "codigo": "M 559-LYCHE-03092026",
+        "esStockDirecto": false
+      },
+      {
+        "salidaId": "5QBYHN",
+        "reprId": "P94NYC",
+        "esStockDirecto": false,
+        "valor_kg": 29368,
+        "codigo": "M 555-REGIONAL-25082026",
+        "kg_usado": 800,
+        "valor_total": 23494400,
+        "tipo": "lote",
+        "key": "sal:5QBYHN"
+      }
+    ],
+    "costo_kg": 38512.4,
+    "producto_comercial": "NG",
+    "fecha": "2026-09-10",
+    "valor_total": 38512400,
+    "nombre": "NG",
+    "kg_total": 1000,
+    "codigo": "NG-10092026",
+    "salidas": [
+      {
+        "id": "30NJT6",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "786",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 908,
+        "valor_kg": 38512,
+        "valor_total": 34968896,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "8Z6H9Y",
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "precio_venta_kg": 60000,
+        "factura": "17898",
+        "fecha": "2026-09-01",
+        "remision": "",
+        "id": "ISB1C1",
+        "peso_salida": 5,
+        "cliente": "PREVIUS CHERRYS",
+        "observaciones": "",
+        "valor_kg": 47562,
+        "valor_total": 237810
+      }
+    ],
+    "producto_comercial": "April",
+    "valor_total": 237811.64,
+    "codigo": "APRIL1704-17042026",
+    "costo_kg": 47562.328,
+    "items": [],
+    "nombre": "APRIL 1704",
+    "mes": "abril",
+    "fecha": "2026-04-17",
+    "kg_total": 5
+  },
+  {
+    "id": "9EJ2YR",
+    "codigo": "MAYPOP1106-11062026",
+    "mes": "junio",
+    "salidas": [
+      {
+        "observaciones": "",
+        "destino_key": "otro",
+        "peso_salida": 480,
+        "fecha": "2026-07-08",
+        "valor_kg": 53422,
+        "valor_total": 25642560,
+        "id": "YO0TE1",
+        "precio_venta_kg": 64750,
+        "cliente": "FLOR A FRUTO",
+        "factura": "17399",
+        "remision": ""
+      },
+      {
+        "id": "U18QFA",
+        "destino_key": "otro",
+        "valor_kg": 53422,
+        "peso_salida": 48,
+        "precio_venta_kg": 64750,
+        "remision": "",
+        "valor_total": 2564256,
+        "cliente": "FLOR A FRUTO",
+        "observaciones": "",
+        "fecha": "2026-07-10",
+        "factura": "17399"
+      },
+      {
+        "valor_kg": 53422,
+        "destino_key": "bodega_cf",
+        "peso_salida": 240,
+        "observaciones": "",
+        "factura": "",
+        "remision": "766",
+        "cliente": "Bodega Cafe Fino",
+        "fecha": "2026-07-14",
+        "id": "CJCAB6",
+        "valor_total": 12821280
+      },
+      {
+        "destino_key": "bodega_cf",
+        "fecha": "2026-07-28",
+        "peso_salida": 288,
+        "remision": "770",
+        "factura": "",
+        "observaciones": "",
+        "valor_total": 15385536,
+        "cliente": "Bodega Cafe Fino",
+        "id": "D54Q22",
+        "valor_kg": 53422
+      },
+      {
+        "id": "OBCQA9",
+        "peso_salida": 6,
+        "fecha": "2026-07-30",
+        "destino_key": "ajuste_inventario",
+        "valor_total": 0,
+        "valor_kg": 0,
+        "factura": "AJUSTE-INV-07-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario"
+      },
+      {
+        "fecha": "2026-08-05",
+        "observaciones": "",
+        "remision": "776",
+        "valor_kg": 53422,
+        "factura": "",
+        "peso_salida": 50,
+        "destino_key": "bodega_cf",
+        "cliente": "Bodega Cafe Fino",
+        "valor_total": 2671100,
+        "id": "XKHI9I"
+      },
+      {
+        "cliente": "Bodega Cafe Fino",
+        "peso_salida": 110,
+        "id": "VAF8G9",
+        "destino_key": "bodega_cf",
+        "valor_kg": 53422,
+        "factura": "",
+        "remision": "782",
+        "valor_total": 5876420,
+        "observaciones": "",
+        "fecha": "2026-09-01"
+      }
+    ],
+    "kg_total": 1232,
+    "costo_kg": 53421.807,
+    "producto_comercial": "Maypop",
+    "fecha": "2026-06-11",
+    "valor_total": 65815666.224,
+    "items": [],
+    "nombre": "MAYPOP 1106"
+  },
+  {
+    "id": "AINKP5",
+    "mes": "marzo",
+    "producto_comercial": "Tabacco",
+    "nombre": "TABACO 0403",
+    "costo_kg": 41268.495,
+    "items": [],
+    "codigo": "TABACO0403-04032026",
+    "fecha": "2026-03-04",
+    "salidas": [
+      {
+        "id": "6L38DS",
+        "fecha": "2026-07-28",
+        "factura": "",
+        "remision": "770",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 155,
+        "valor_kg": 41268,
+        "valor_total": 6396540,
+        "observaciones": "para pedido sale como vainilla terracore "
+      }
+    ],
+    "kg_total": 227,
+    "valor_total": 9367948.365
+  },
+  {
+    "id": "AR0Z8J",
+    "kg_total": 2000,
+    "items": [
+      {
+        "key": "sal:1A9BTH",
+        "kg_usado": 201,
+        "tipo": "lote",
+        "codigo": "CLTG-DR-030626",
+        "valor_total": 11770962,
+        "valor_kg": 58562,
+        "reprId": "33J4GQ",
+        "esStockDirecto": false,
+        "salidaId": "1A9BTH"
+      },
+      {
+        "tipo": "lote",
+        "reprId": "IXL30W",
+        "kg_usado": 499,
+        "esStockDirecto": false,
+        "salidaId": "BBPSDG",
+        "key": "sal:BBPSDG",
+        "valor_kg": 78621,
+        "codigo": "M 515-DR-2304",
+        "valor_total": 39231879
+      },
+      {
+        "codigo": "M 538-REGIONAL-1906",
+        "esStockDirecto": false,
+        "kg_usado": 1300,
+        "valor_total": 32836700,
+        "salidaId": "IQ0VZG",
+        "tipo": "lote",
+        "key": "sal:IQ0VZG",
+        "reprId": "KQ7TUU",
+        "valor_kg": 25259
+      }
+    ],
+    "valor_total": 83839541,
+    "producto_comercial": "APRIL",
+    "codigo": "APRIL-21072026",
+    "salidas": [
+      {
+        "peso_salida": 168,
+        "valor_total": 7042560,
+        "remision": "770",
+        "destino_key": "bodega_cf",
+        "fecha": "2026-07-28",
+        "valor_kg": 41920,
+        "cliente": "Bodega Cafe Fino",
+        "observaciones": "",
+        "id": "7URFKG",
+        "factura": ""
+      },
+      {
+        "id": "691O08",
+        "remision": "773",
+        "destino_key": "bodega_cf",
+        "observaciones": "CAFE PARA YUIKI",
+        "factura": "",
+        "valor_kg": 41920,
+        "valor_total": 36218880,
+        "peso_salida": 864,
+        "cliente": "Bodega Cafe Fino",
+        "fecha": "2026-08-01"
+      },
+      {
+        "fecha": "2026-08-03",
+        "remision": "775",
+        "valor_total": 6036480,
+        "id": "GI8LIT",
+        "peso_salida": 144,
+        "valor_kg": 41920,
+        "observaciones": "CAFE PARA YUIKI",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "factura": ""
+      },
+      {
+        "peso_salida": 660,
+        "valor_total": 27667200,
+        "id": "28ACJS",
+        "precio_venta_kg": 60000,
+        "destino_key": "otro",
+        "observaciones": "",
+        "valor_kg": 41920,
+        "fecha": "2026-09-01",
+        "factura": "17898",
+        "remision": "",
+        "cliente": "PREVIUS CHERRYS"
+      },
+      {
+        "id": "AIPNA5",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "785",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 164,
+        "valor_kg": 41920,
+        "valor_total": 6874880,
+        "observaciones": ""
+      }
+    ],
+    "costo_kg": 41919.7705,
+    "fecha": "2026-07-21",
+    "nombre": "APRIL"
+  },
+  {
+    "id": "B1UMYB",
+    "salidas": [
+      {
+        "fecha": "2026-09-01",
+        "remision": "--",
+        "destino_key": "otro",
+        "valor_kg": 41466,
+        "id": "Z3JXJS",
+        "factura": "",
+        "cliente": "QIMA",
+        "observaciones": "",
+        "valor_total": 124522398,
+        "peso_salida": 3003
+      },
+      {
+        "factura": "",
+        "valor_total": 12315402,
+        "id": "IVF5PO",
+        "remision": "",
+        "peso_salida": 297,
+        "observaciones": "",
+        "cliente": "QIMA",
+        "valor_kg": 41466,
+        "fecha": "2026-09-10",
+        "destino_key": "otro"
+      }
+    ],
+    "fecha": "2026-08-29",
+    "items": [
+      {
+        "reprId": "A442NW",
+        "key": "sal:IFXL64",
+        "codigo": "M 556-SD-27082026",
+        "valor_total": 69290000,
+        "valor_kg": 69290,
+        "salidaId": "IFXL64",
+        "kg_usado": 1000,
+        "tipo": "lote",
+        "esStockDirecto": false
+      },
+      {
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_total": 67546400,
+        "esStockDirecto": false,
+        "tipo": "lote",
+        "key": "sal:27VCB7",
+        "valor_kg": 29368,
+        "salidaId": "27VCB7",
+        "reprId": "P94NYC",
+        "kg_usado": 2300
+      }
+    ],
+    "codigo": "CATURRANITRO-29082026",
+    "costo_kg": 41465.57575757576,
+    "valor_total": 136836400,
+    "kg_total": 3300,
+    "nombre": "CATURRA NITRO",
+    "producto_comercial": "CATURRA NITRO"
+  },
+  {
+    "id": "B8O10V",
+    "fecha": "2026-06-13",
+    "items": [],
+    "valor_total": 35251513.225999996,
+    "costo_kg": 33540.926,
+    "mes": "junio",
+    "producto_comercial": "NG",
+    "nombre": "NG 1306",
+    "codigo": "NG1306-13062026",
+    "kg_total": 1051,
+    "salidas": [
+      {
+        "cliente": "Bodega Cafe Fino",
+        "id": "RE30GE",
+        "destino_key": "bodega_cf",
+        "factura": "",
+        "valor_kg": 33541,
+        "peso_salida": 240,
+        "observaciones": "",
+        "remision": "766",
+        "valor_total": 8049840,
+        "fecha": "2026-07-14"
+      },
+      {
+        "destino_key": "ajuste_inventario",
+        "fecha": "2026-07-30",
+        "valor_kg": 0,
+        "cliente": "Ajuste de Inventario",
+        "valor_total": 0,
+        "factura": "AJUSTE-INV-07-2026",
+        "id": "XZB16G",
+        "peso_salida": -5,
+        "remision": ""
+      },
+      {
+        "cliente": "Bodega Cafe Fino",
+        "remision": "775",
+        "peso_salida": 118,
+        "id": "XRUE49",
+        "observaciones": "CAFE PARA YUIKI",
+        "valor_total": 3957838,
+        "factura": "",
+        "fecha": "2026-08-03",
+        "valor_kg": 33541,
+        "destino_key": "bodega_cf"
+      },
+      {
+        "id": "QIZPEM",
+        "destino_key": "ajuste_inventario",
+        "remision": "",
+        "fecha": "2026-08-04",
+        "valor_total": 0,
+        "valor_kg": 0,
+        "cliente": "Ajuste de Inventario",
+        "factura": "AJUSTE-INV-08-2026",
+        "peso_salida": 5
+      },
+      {
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "destino_key": "otro",
+        "fecha": "2026-08-26",
+        "remision": "",
+        "factura": "18315",
+        "valor_total": 23243913,
+        "peso_salida": 693,
+        "valor_kg": 33541,
+        "id": "49EF2M",
+        "cliente": "CARCAFE",
+        "precio_venta_kg": 49584
+      }
+    ]
+  },
+  {
+    "id": "CINGAL",
+    "salidas": [
+      {
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "remision": "",
+        "peso_salida": 4,
+        "factura": "AJUSTE-INV-07-2026",
+        "id": "42XAKI",
+        "fecha": "2026-07-30",
+        "valor_total": 0,
+        "cliente": "Ajuste de Inventario"
+      },
+      {
+        "factura": "18315",
+        "valor_kg": 44030,
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "valor_total": 308210,
+        "id": "0W8ZOL",
+        "fecha": "2026-08-26",
+        "cliente": "CARCAFE",
+        "peso_salida": 7,
+        "destino_key": "otro",
+        "remision": "",
+        "precio_venta_kg": 49584
+      }
+    ],
+    "codigo": "NG(LYCHE)1304-13042026",
+    "kg_total": 72,
+    "producto_comercial": "NG",
+    "nombre": "NG  (LYCHE) 1304",
+    "mes": "abril",
+    "costo_kg": 44030.459,
+    "fecha": "2026-04-13",
+    "valor_total": 3170193.0480000004,
+    "items": []
+  },
+  {
+    "id": "FEHL0Q",
+    "costo_kg": 56585.44776119403,
+    "codigo": "CATURRANITRO0108-03082026",
+    "fecha": "2026-08-03",
+    "salidas": [
+      {
+        "factura": "",
+        "id": "GGC8OY",
+        "observaciones": "CAFE PARA DAISUKE",
+        "destino_key": "bodega_cf",
+        "cliente": "Bodega Cafe Fino",
+        "valor_total": 5262405,
+        "fecha": "2026-08-03",
+        "peso_salida": 93,
+        "remision": "774",
+        "valor_kg": 56585
+      },
+      {
+        "destino_key": "ajuste_inventario",
+        "id": "IUZYO4",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "valor_total": 0,
+        "peso_salida": -1,
+        "fecha": "2026-09-01",
+        "valor_kg": 0,
+        "factura": "AJUSTE-INV-09-2026"
+      },
+      {
+        "valor_total": 2376570,
+        "peso_salida": 42,
+        "valor_kg": 56585,
+        "remision": "",
+        "cliente": "QIMA",
+        "fecha": "2026-09-10",
+        "factura": "",
+        "id": "FHSRWP",
+        "observaciones": "",
+        "destino_key": "otro"
+      }
+    ],
+    "kg_total": 134,
+    "producto_comercial": "CATURRA NITRO",
+    "items": [
+      {
+        "codigo": "CTG-SD-15072026",
+        "valor_kg": 64127,
+        "reprId": "941N32",
+        "tipo": "lote",
+        "salidaId": "AUID3W",
+        "valor_total": 6925716,
+        "kg_usado": 108,
+        "esStockDirecto": false,
+        "key": "sal:AUID3W"
+      },
+      {
+        "tipo": "lote",
+        "reprId": "KQ7TUU",
+        "salidaId": "Y9304B",
+        "valor_kg": 25259,
+        "esStockDirecto": false,
+        "valor_total": 656734,
+        "kg_usado": 26,
+        "key": "sal:Y9304B",
+        "codigo": "M 538-REGIONAL-1906"
+      }
+    ],
+    "valor_total": 7582450,
+    "nombre": "CATURRA NITRO 0108"
+  },
+  {
+    "id": "FIX2A9",
+    "kg_total": 1796,
+    "items": [
+      {
+        "kg_usado": 546,
+        "reprId": "A442NW",
+        "codigo": "M 556-SD-27082026",
+        "tipo": "lote",
+        "key": "sal:5AO0HI",
+        "salidaId": "5AO0HI",
+        "valor_kg": 68326,
+        "esStockDirecto": false,
+        "valor_total": 37305996
+      },
+      {
+        "valor_kg": 29368,
+        "key": "sal:LKQM1G",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_total": 29015584,
+        "salidaId": "LKQM1G",
+        "reprId": "P94NYC",
+        "esStockDirecto": false,
+        "kg_usado": 988,
+        "tipo": "lote"
+      },
+      {
+        "kg_usado": 262,
+        "reprId": "X2NUTD",
+        "esStockDirecto": false,
+        "key": "sal:JL71QT",
+        "salidaId": "JL71QT",
+        "valor_total": 7949604,
+        "codigo": "M547-REGIONAL-23072026",
+        "valor_kg": 30342,
+        "tipo": "lote"
+      }
+    ],
+    "codigo": "CATURRANITRO-08092026",
+    "salidas": [
+      {
+        "valor_kg": 41354,
+        "observaciones": "",
+        "cliente": "QIMA",
+        "fecha": "2026-09-10",
+        "factura": "",
+        "id": "DBN35S",
+        "peso_salida": 1028,
+        "valor_total": 42511912,
+        "remision": "",
+        "destino_key": "otro"
+      },
+      {
+        "id": "2H9PX6",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "785",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 731,
+        "valor_kg": 41354,
+        "valor_total": 30229774,
+        "observaciones": ""
+      }
+    ],
+    "producto_comercial": "CATURRA NITRO",
+    "costo_kg": 41353.66592427617,
+    "fecha": "2026-09-08",
+    "valor_total": 74271184,
+    "nombre": "CATURRA NITRO"
+  },
+  {
+    "id": "G58N6Y",
+    "producto_comercial": "APRIL",
+    "kg_total": 627,
+    "nombre": "APRIL 0705",
+    "valor_total": 19830568.527,
+    "mes": "mayo",
+    "costo_kg": 31627.701,
+    "items": [],
+    "salidas": [
+      {
+        "observaciones": "",
+        "valor_kg": 31628,
+        "peso_salida": 120,
+        "remision": "",
+        "factura": "17399",
+        "valor_total": 3795360,
+        "id": "P07W6V",
+        "cliente": "FLOR A FRUTO",
+        "destino_key": "otro",
+        "fecha": "2026-07-08",
+        "precio_venta_kg": 64750
+      },
+      {
+        "valor_kg": 31628,
+        "valor_total": 6072576,
+        "peso_salida": 192,
+        "observaciones": "CAFE PARA DAISUKE",
+        "factura": "",
+        "remision": "774",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "id": "BXPQE1",
+        "fecha": "2026-08-03"
+      },
+      {
+        "cliente": "PREVIUS CHERRYS",
+        "precio_venta_kg": 60000,
+        "observaciones": "",
+        "destino_key": "otro",
+        "valor_kg": 31628,
+        "id": "P65SWL",
+        "fecha": "2026-09-01",
+        "valor_total": 9962820,
+        "factura": "17898",
+        "peso_salida": 315,
+        "remision": ""
+      }
+    ],
+    "codigo": "APRIL0705-07052026",
+    "fecha": "2026-05-07"
+  },
+  {
+    "id": "GQU0VE",
+    "fecha": "2026-06-10",
+    "producto_comercial": "Pink Borbon",
+    "items": [],
+    "salidas": [
+      {
+        "observaciones": "",
+        "fecha": "2026-07-14",
+        "destino_key": "bodega_cf",
+        "id": "4LZ2MU",
+        "valor_total": 44041280,
+        "cliente": "Bodega Cafe Fino",
+        "factura": "",
+        "remision": "766",
+        "peso_salida": 1202,
+        "valor_kg": 36640
+      },
+      {
+        "destino_key": "ajuste_inventario",
+        "remision": "",
+        "valor_kg": 0,
+        "fecha": "2026-07-30",
+        "id": "HB69YU",
+        "cliente": "Ajuste de Inventario",
+        "factura": "AJUSTE-INV-07-2026",
+        "peso_salida": -6,
+        "valor_total": 0
+      },
+      {
+        "id": "34IIIJ",
+        "fecha": "2026-08-04",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 6,
+        "valor_kg": 0,
+        "valor_total": 0
+      }
+    ],
+    "kg_total": 1202,
+    "costo_kg": 36640.152,
+    "mes": "junio",
+    "nombre": "PINK BOURBON 1106",
+    "codigo": "PINKBOURBON1106-10062026",
+    "valor_total": 44041462.704
+  },
+  {
+    "id": "HIZLN5",
+    "kg_total": 2907,
+    "items": [
+      {
+        "salidaId": "61NGO8",
+        "esStockDirecto": false,
+        "valor_kg": 57148,
+        "reprId": "33J4GQ",
+        "valor_total": 66120236,
+        "key": "sal:61NGO8",
+        "codigo": "CLTG-DR-030626",
+        "tipo": "lote",
+        "kg_usado": 1157
+      },
+      {
+        "salidaId": "L2OMHE",
+        "tipo": "lote",
+        "valor_kg": 30342,
+        "codigo": "Pergamino Regional 1707",
+        "kg_usado": 1750,
+        "valor_total": 53098500,
+        "reprId": "X2NUTD",
+        "esStockDirecto": false,
+        "key": "sal:L2OMHE"
+      }
+    ],
+    "codigo": "APRIL-13082026",
+    "costo_kg": 41010.91709666323,
+    "valor_total": 119218736,
+    "fecha": "2026-08-13",
+    "salidas": [
+      {
+        "destino_key": "bodega_cf",
+        "fecha": "2026-08-25",
+        "observaciones": "",
+        "valor_total": 24606600,
+        "remision": "780",
+        "peso_salida": 600,
+        "factura": "",
+        "valor_kg": 41011,
+        "id": "UW73SG",
+        "cliente": "Bodega Cafe Fino"
+      },
+      {
+        "id": "KEE20A",
+        "valor_total": 30758250,
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "peso_salida": 750,
+        "remision": "",
+        "destino_key": "otro",
+        "precio_venta_kg": 49584,
+        "valor_kg": 41011,
+        "cliente": "CARCAFE",
+        "fecha": "2026-08-26",
+        "factura": "18315"
+      },
+      {
+        "destino_key": "bodega_cf",
+        "valor_kg": 41011,
+        "peso_salida": 50,
+        "valor_total": 2050550,
+        "factura": "",
+        "observaciones": "",
+        "remision": "782",
+        "id": "7PY08H",
+        "cliente": "Bodega Cafe Fino",
+        "fecha": "2026-09-01"
+      },
+      {
+        "id": "IJYNDE",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "785",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 1408,
+        "valor_kg": 41011,
+        "valor_total": 57743488,
+        "observaciones": ""
+      }
+    ],
+    "nombre": "APRIL",
+    "producto_comercial": "APRIL"
+  },
+  {
+    "id": "HXYUWQ",
+    "nombre": "NIU 1205",
+    "fecha": "2026-05-12",
+    "codigo": "NIU1205-12052026",
+    "mes": "mayo",
+    "producto_comercial": "NIU",
+    "items": [],
+    "kg_total": 4,
+    "valor_total": 163245.612,
+    "costo_kg": 40811.403,
+    "salidas": []
+  },
+  {
+    "id": "J6JF8Q",
+    "costo_kg": 56628.983606557376,
+    "fecha": "2026-08-24",
+    "codigo": "MAYPOP-24082026",
+    "kg_total": 122,
+    "producto_comercial": "MAYPOP",
+    "nombre": "MAYPOP",
+    "items": [
+      {
+        "key": "sal:2I6WII",
+        "salidaId": "2I6WII",
+        "tipo": "lote",
+        "valor_kg": 73680,
+        "reprId": "DGU3MP",
+        "esStockDirecto": false,
+        "valor_total": 5452320,
+        "codigo": "M 554-MR-24082026",
+        "kg_usado": 74
+      },
+      {
+        "tipo": "lote",
+        "salidaId": "6JZ9S1",
+        "esStockDirecto": false,
+        "codigo": "M547-REGIONAL-23072026",
+        "key": "sal:6JZ9S1",
+        "valor_kg": 30342,
+        "valor_total": 1456416,
+        "reprId": "X2NUTD",
+        "kg_usado": 48
+      }
+    ],
+    "valor_total": 6908736,
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "precio_venta_kg": 49584,
+        "fecha": "2026-08-26",
+        "remision": "",
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "factura": "18315",
+        "valor_total": 6908738,
+        "id": "2MLSG3",
+        "valor_kg": 56629,
+        "peso_salida": 122,
+        "cliente": "CARCAFE"
+      }
+    ]
+  },
+  {
+    "id": "K6J1O5",
+    "producto_comercial": "Maypop",
+    "mes": "abril",
+    "fecha": "2026-04-09",
+    "salidas": [
+      {
+        "remision": "",
+        "valor_kg": 52383,
+        "valor_total": 419064,
+        "factura": "17399",
+        "fecha": "2026-07-08",
+        "observaciones": "",
+        "id": "EK9KOH",
+        "destino_key": "otro",
+        "precio_venta_kg": 64750,
+        "cliente": "FLOR A FRUTO",
+        "peso_salida": 8
+      },
+      {
+        "cliente": "Ajuste de Inventario",
+        "valor_total": 0,
+        "fecha": "2026-07-30",
+        "valor_kg": 0,
+        "remision": "",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 0.1,
+        "factura": "AJUSTE-INV-07-2026",
+        "id": "BWJ2E2"
+      },
+      {
+        "remision": "",
+        "valor_kg": 0,
+        "cliente": "Ajuste de Inventario",
+        "peso_salida": -0.09999999999999964,
+        "id": "P9NJQ6",
+        "factura": "AJUSTE-INV-08-2026",
+        "destino_key": "ajuste_inventario",
+        "fecha": "2026-08-04",
+        "valor_total": 0
+      }
+    ],
+    "valor_total": 419067.72,
+    "kg_total": 8,
+    "codigo": "MAYPOP0904-09042026",
+    "nombre": "MAYPOP 0904",
+    "costo_kg": 52383.465,
+    "items": []
+  },
+  {
+    "id": "PB3CDE",
+    "valor_total": 17857760,
+    "nombre": "LOGAN",
+    "items": [
+      {
+        "salidaId": "QVIKD2",
+        "esStockDirecto": false,
+        "valor_total": 7888920,
+        "valor_kg": 30342,
+        "codigo": "M547-REGIONAL-23072026",
+        "tipo": "lote",
+        "reprId": "X2NUTD",
+        "key": "sal:QVIKD2",
+        "kg_usado": 260
+      },
+      {
+        "salidaId": "341X33",
+        "esStockDirecto": false,
+        "valor_kg": 71206,
+        "key": "sal:341X33",
+        "reprId": "Y64YWV",
+        "tipo": "lote",
+        "kg_usado": 140,
+        "codigo": "M 552-AR-06082026",
+        "valor_total": 9968840
+      }
+    ],
+    "salidas": [
+      {
+        "precio_venta_kg": 49584,
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "remision": "",
+        "id": "9VSQDG",
+        "destino_key": "otro",
+        "peso_salida": 375,
+        "cliente": "CARCAFE",
+        "fecha": "2026-08-26",
+        "valor_total": 16741500,
+        "valor_kg": 44644,
+        "factura": "18315"
+      }
+    ],
+    "codigo": "LOGAN-20082026",
+    "costo_kg": 44644.4,
+    "fecha": "2026-08-20",
+    "producto_comercial": "LOGAN",
+    "kg_total": 400
+  },
+  {
+    "id": "PUDZRX",
+    "nombre": "MAYPOP",
+    "salidas": [
+      {
+        "observaciones": "",
+        "destino_key": "bodega_cf",
+        "fecha": "2026-08-19",
+        "id": "SVRVUR",
+        "remision": "778",
+        "valor_kg": 58448,
+        "valor_total": 11689600,
+        "cliente": "Bodega Cafe Fino",
+        "factura": "",
+        "peso_salida": 200
+      },
+      {
+        "destino_key": "otro",
+        "valor_kg": 58448,
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "fecha": "2026-08-26",
+        "valor_total": 65929344,
+        "remision": "",
+        "id": "SQ7LTX",
+        "cliente": "CARCAFE",
+        "peso_salida": 1128,
+        "factura": "18315",
+        "precio_venta_kg": 49584
+      }
+    ],
+    "costo_kg": 58447.51506024096,
+    "fecha": "2026-08-07",
+    "valor_total": 77618300,
+    "producto_comercial": "MAYPOP",
+    "kg_total": 1328,
+    "items": [
+      {
+        "kg_usado": 1058,
+        "key": "sal:1SVXMX",
+        "codigo": "CTG-MR-24062026",
+        "esStockDirecto": false,
+        "tipo": "lote",
+        "valor_kg": 65620,
+        "salidaId": "1SVXMX",
+        "valor_total": 69425960,
+        "reprId": "MW4929"
+      },
+      {
+        "valor_kg": 30342,
+        "esStockDirecto": false,
+        "reprId": "X2NUTD",
+        "tipo": "lote",
+        "salidaId": "EK0QYO",
+        "kg_usado": 270,
+        "valor_total": 8192340,
+        "codigo": "Pergamino Regional 1707",
+        "key": "sal:EK0QYO"
+      }
+    ],
+    "codigo": "MAYPOP-07082026"
+  },
+  {
+    "id": "PWSN84",
+    "mes": "junio",
+    "costo_kg": 48009.572,
+    "codigo": "NIU2606-26062026",
+    "valor_total": 66373233.29,
+    "salidas": [
+      {
+        "destino_key": "bodega_cf",
+        "observaciones": "",
+        "factura": "",
+        "valor_total": 24005000,
+        "remision": "781",
+        "id": "ASSVTZ",
+        "fecha": "2026-07-10",
+        "peso_salida": 500,
+        "valor_kg": 48010,
+        "cliente": "Bodega Cafe Fino"
+      },
+      {
+        "destino_key": "bodega_cf",
+        "fecha": "2026-07-23",
+        "factura": "",
+        "valor_total": 4801000,
+        "remision": "769",
+        "id": "QZL9TT",
+        "peso_salida": 100,
+        "cliente": "Bodega Cafe Fino",
+        "valor_kg": 48010,
+        "observaciones": ""
+      },
+      {
+        "valor_kg": 48010,
+        "observaciones": "",
+        "valor_total": 11522400,
+        "id": "31QWQO",
+        "destino_key": "bodega_cf",
+        "factura": "",
+        "remision": "770",
+        "fecha": "2026-07-28",
+        "peso_salida": 240,
+        "cliente": "Bodega Cafe Fino"
+      },
+      {
+        "id": "CQ7HL7",
+        "factura": "",
+        "destino_key": "bodega_cf",
+        "remision": "773",
+        "valor_total": 576120,
+        "cliente": "Bodega Cafe Fino",
+        "peso_salida": 12,
+        "observaciones": "CAFE PARA YUIKI",
+        "fecha": "2026-08-01",
+        "valor_kg": 48010
+      },
+      {
+        "fecha": "2026-08-03",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "remision": "774",
+        "id": "DB6U9L",
+        "valor_total": 1152240,
+        "observaciones": "CAFE PARA DAISUKE",
+        "factura": "",
+        "peso_salida": 24,
+        "valor_kg": 48010
+      },
+      {
+        "destino_key": "bodega_cf",
+        "cliente": "Bodega Cafe Fino",
+        "valor_total": 13826880,
+        "remision": "775",
+        "id": "9YG399",
+        "peso_salida": 288,
+        "factura": "",
+        "observaciones": "CAFE PARA YUIKI",
+        "fecha": "2026-08-03",
+        "valor_kg": 48010
+      },
+      {
+        "peso_salida": 12.5,
+        "valor_kg": 0,
+        "factura": "AJUSTE-INV-08-2026",
+        "id": "V3VP8C",
+        "remision": "",
+        "destino_key": "ajuste_inventario",
+        "cliente": "Ajuste de Inventario",
+        "valor_total": 0,
+        "fecha": "2026-08-04"
+      },
+      {
+        "destino_key": "otro",
+        "observaciones": "",
+        "valor_kg": 48010,
+        "valor_total": 9890060,
+        "cliente": "VAYGAS SAS TANAT",
+        "peso_salida": 206,
+        "id": "HCIL1K",
+        "fecha": "2026-09-07",
+        "factura": "",
+        "remision": ""
+      }
+    ],
+    "fecha": "2026-06-26",
+    "nombre": "NIU 2606",
+    "kg_total": 1382.5,
+    "items": [],
+    "producto_comercial": "NIU"
+  },
+  {
+    "id": "RW5AHS",
+    "kg_total": 150,
+    "valor_total": 6442350,
+    "costo_kg": 42949,
+    "fecha": "2026-09-14",
+    "codigo": "LOGAN-14092026",
+    "producto_comercial": "LOGAN",
+    "nombre": "LOGAN",
+    "items": [
+      {
+        "kg_usado": 100,
+        "tipo": "lote",
+        "codigo": "M 555-REGIONAL-25082026",
+        "reprId": "P94NYC",
+        "salidaId": "IRKMD9",
+        "esStockDirecto": false,
+        "key": "sal:IRKMD9",
+        "valor_kg": 29368,
+        "valor_total": 2936800
+      },
+      {
+        "salidaId": "V54TQS",
+        "key": "sal:V54TQS",
+        "esStockDirecto": false,
+        "valor_kg": 70111,
+        "valor_total": 3505550,
+        "reprId": "Y64YWV",
+        "kg_usado": 50,
+        "codigo": "M 552-AR-06082026",
+        "tipo": "lote"
+      }
+    ],
+    "salidas": [
+      {
+        "id": "XUX23O",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "785",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 145,
+        "valor_kg": 42949,
+        "valor_total": 6227605,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "T4FD7J",
+    "kg_total": 13,
+    "mes": "marzo",
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "remision": "",
+        "cliente": "VAYGAS SAS TANAT",
+        "observaciones": "",
+        "id": "A2WRS3",
+        "valor_total": 543920,
+        "peso_salida": 13,
+        "valor_kg": 41840,
+        "factura": "",
+        "fecha": "2026-09-07"
+      }
+    ],
+    "nombre": "PINK BOURBON MAME 1703",
+    "valor_total": 543916.646,
+    "costo_kg": 41839.742,
+    "producto_comercial": "Pink Borbon",
+    "fecha": "2026-03-17",
+    "codigo": "PINKBOURBONMAME1703-17032026",
+    "items": []
+  },
+  {
+    "id": "UZ56FM",
+    "kg_total": 2922,
+    "codigo": "CATURRANITRO-03082026",
+    "salidas": [
+      {
+        "remision": "776",
+        "valor_kg": 59110,
+        "id": "Z7L1H3",
+        "destino_key": "bodega_cf",
+        "fecha": "2026-08-05",
+        "cliente": "Bodega Cafe Fino",
+        "peso_salida": 525,
+        "valor_total": 31032750,
+        "observaciones": "pedido de JUMBO",
+        "factura": ""
+      },
+      {
+        "factura": "18315",
+        "observaciones": "PLACA: NLW 918 CONDUCTOR: CRISTIAN GARCIA VALENCIA – CON CC: 1.007.416.701",
+        "id": "LC4CT1",
+        "valor_total": 73887500,
+        "peso_salida": 1250,
+        "cliente": "CARCAFE",
+        "precio_venta_kg": 49584,
+        "destino_key": "otro",
+        "remision": "",
+        "fecha": "2026-08-26",
+        "valor_kg": 59110
+      },
+      {
+        "destino_key": "otro",
+        "fecha": "2026-09-01",
+        "id": "4CJ6G7",
+        "observaciones": "",
+        "factura": "17898",
+        "precio_venta_kg": 60000,
+        "cliente": "PREVIUS CHERRYS",
+        "remision": "",
+        "valor_kg": 59110,
+        "peso_salida": 1015,
+        "valor_total": 59996650
+      },
+      {
+        "factura": "AJUSTE-INV-09-2026",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "fecha": "2026-09-01",
+        "valor_kg": 0,
+        "id": "Q7LOQM",
+        "valor_total": 0,
+        "remision": "",
+        "peso_salida": -1
+      },
+      {
+        "valor_kg": 59110,
+        "fecha": "2026-09-10",
+        "valor_total": 7861630,
+        "remision": "",
+        "peso_salida": 133,
+        "observaciones": "",
+        "id": "R3H1PB",
+        "cliente": "QIMA",
+        "destino_key": "otro",
+        "factura": ""
+      }
+    ],
+    "fecha": "2026-08-03",
+    "costo_kg": 59109.55030800821,
+    "items": [
+      {
+        "kg_usado": 76,
+        "valor_total": 5388856,
+        "tipo": "lote",
+        "codigo": "M 540-SD-2406",
+        "valor_kg": 70906,
+        "salidaId": "S537B9",
+        "esStockDirecto": false,
+        "key": "sal:S537B9",
+        "reprId": "3WHGW1"
+      },
+      {
+        "key": "sal:P3W3TW",
+        "kg_usado": 1600,
+        "reprId": "7EX0HD",
+        "esStockDirecto": false,
+        "valor_kg": 68895,
+        "salidaId": "P3W3TW",
+        "codigo": "CTG-SD-11072026",
+        "valor_total": 110232000,
+        "tipo": "lote"
+      },
+      {
+        "kg_usado": 574,
+        "valor_kg": 64127,
+        "codigo": "CTG-SD-15072026",
+        "esStockDirecto": false,
+        "salidaId": "P4KDK5",
+        "tipo": "lote",
+        "reprId": "941N32",
+        "valor_total": 36808898,
+        "key": "sal:P4KDK5"
+      },
+      {
+        "salidaId": "DGFT6W",
+        "tipo": "lote",
+        "valor_kg": 30191,
+        "valor_total": 20288352,
+        "kg_usado": 672,
+        "reprId": "X2NUTD",
+        "esStockDirecto": false,
+        "key": "sal:DGFT6W",
+        "codigo": "Pergamino Regional 1707"
+      }
+    ],
+    "valor_total": 172718106,
+    "producto_comercial": "CATURRA NITRO",
+    "nombre": "CATURRANITRO"
+  },
+  {
+    "id": "V7MGKH",
+    "kg_total": 7265,
+    "fecha": "2026-08-05",
+    "nombre": "AGI",
+    "valor_total": 296958923,
+    "items": [
+      {
+        "valor_kg": 25259,
+        "key": "sal:IFB9FW",
+        "reprId": "KQ7TUU",
+        "esStockDirecto": false,
+        "tipo": "lote",
+        "codigo": "M 538-REGIONAL-1906",
+        "salidaId": "IFB9FW",
+        "valor_total": 116191400,
+        "kg_usado": 4600
+      },
+      {
+        "valor_kg": 48927,
+        "codigo": "M 534-AGRAZ-1206",
+        "valor_total": 2299569,
+        "tipo": "lote",
+        "salidaId": "IF0M2L",
+        "esStockDirecto": false,
+        "key": "sal:IF0M2L",
+        "reprId": "0VRRN7",
+        "kg_usado": 47
+      },
+      {
+        "valor_total": 64429950,
+        "kg_usado": 950,
+        "tipo": "lote",
+        "salidaId": "YYRRND",
+        "key": "sal:YYRRND",
+        "codigo": "M 542-AGRAZ-3006",
+        "esStockDirecto": false,
+        "reprId": "2Z4HXV",
+        "valor_kg": 67821
+      },
+      {
+        "kg_usado": 468,
+        "salidaId": "8O4LWJ",
+        "reprId": "6H139C",
+        "tipo": "lote",
+        "valor_total": 17340804,
+        "esStockDirecto": false,
+        "codigo": "AGRAZ 2611",
+        "valor_kg": 37053,
+        "key": "sal:8O4LWJ"
+      },
+      {
+        "valor_total": 96697200,
+        "salidaId": "FCCWPS",
+        "codigo": "CTG-AGRAZ-23072026",
+        "kg_usado": 1200,
+        "esStockDirecto": false,
+        "reprId": "N4LPMI",
+        "valor_kg": "80581",
+        "tipo": "lote",
+        "key": "sal:FCCWPS"
+      }
+    ],
+    "producto_comercial": "AGI",
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "observaciones": "",
+        "id": "L9SVS8",
+        "factura": "17898",
+        "remision": "",
+        "valor_kg": 40875,
+        "fecha": "2026-09-01",
+        "peso_salida": 7035,
+        "precio_venta_kg": 60000,
+        "cliente": "PREVIUS CHERRYS",
+        "valor_total": 287555625
+      }
+    ],
+    "costo_kg": 40875.28189951824,
+    "codigo": "AGI-05082026"
+  },
+  {
+    "id": "W35H9Q",
+    "fecha": "2026-08-24",
+    "codigo": "NIU-24082026",
+    "valor_total": 27216630,
+    "kg_total": 630,
+    "items": [
+      {
+        "valor_total": 15704955,
+        "esStockDirecto": false,
+        "reprId": "07HT2F",
+        "valor_kg": 49857,
+        "key": "sal:07Z5D8",
+        "tipo": "lote",
+        "kg_usado": 315,
+        "codigo": "M550-PP-01082026",
+        "salidaId": "07Z5D8"
+      },
+      {
+        "salidaId": "K6LWJY",
+        "kg_usado": 315,
+        "reprId": "SQY88Q",
+        "valor_total": 11511675,
+        "valor_kg": 36545,
+        "key": "sal:K6LWJY",
+        "esStockDirecto": false,
+        "tipo": "lote",
+        "codigo": "M549-CC-01082026"
+      }
+    ],
+    "nombre": "NIU",
+    "salidas": [
+      {
+        "factura": "",
+        "valor_total": 6480150,
+        "fecha": "2026-08-24",
+        "destino_key": "bodega_cf",
+        "id": "9RKL5N",
+        "valor_kg": 43201,
+        "cliente": "Bodega Cafe Fino",
+        "remision": "780",
+        "peso_salida": 150,
+        "observaciones": ""
+      },
+      {
+        "id": "VOBONB",
+        "peso_salida": 33,
+        "valor_kg": 43201,
+        "observaciones": "",
+        "factura": "",
+        "fecha": "2026-09-07",
+        "destino_key": "otro",
+        "valor_total": 1425633,
+        "remision": "",
+        "cliente": "VAYGAS SAS TANAT"
+      },
+      {
+        "valor_kg": 43201,
+        "destino_key": "bodega_cf",
+        "observaciones": "",
+        "cliente": "Bodega Cafe Fino",
+        "valor_total": 6480150,
+        "peso_salida": 150,
+        "remision": "783",
+        "id": "LFA1UG",
+        "fecha": "2026-09-08",
+        "factura": ""
+      },
+      {
+        "remision": "",
+        "fecha": "2026-09-10",
+        "peso_salida": 297,
+        "cliente": "Blend NIU-09092026",
+        "observaciones": "Usado como insumo del blend NIU-09092026",
+        "id": "1XW1HU",
+        "factura": "",
+        "valor_kg": 43201,
+        "auto_blend": true,
+        "valor_total": 12830697
+      }
+    ],
+    "costo_kg": 43201,
+    "producto_comercial": "NIU"
+  },
+  {
+    "id": "X012VQ",
+    "items": [],
+    "kg_total": 792,
+    "mes": "junio",
+    "valor_total": 24314519.592,
+    "salidas": [
+      {
+        "id": "IRTQHP",
+        "fecha": "2026-07-28",
+        "factura": "",
+        "remision": "770",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 312,
+        "valor_kg": 30700,
+        "valor_total": 9578400,
+        "observaciones": ""
+      }
+    ],
+    "fecha": "2026-06-15",
+    "codigo": "AGI1506-15062026",
+    "costo_kg": 30700.151,
+    "nombre": "AGI 1506",
+    "producto_comercial": "AGI"
+  },
+  {
+    "id": "XU2O7D",
+    "costo_kg": 41248.607052896725,
+    "producto_comercial": "",
+    "items": [
+      {
+        "tipo": "lote",
+        "codigo": "M549-CC-01082026",
+        "salidaId": "F1O0WD",
+        "valor_kg": 35450,
+        "kg_usado": 100,
+        "valor_total": 3545000,
+        "key": "sal:F1O0WD",
+        "reprId": "SQY88Q",
+        "esStockDirecto": false
+      },
+      {
+        "esStockDirecto": false,
+        "salidaId": "1XW1HU",
+        "key": "sal:1XW1HU",
+        "valor_kg": 43201,
+        "tipo": "blend",
+        "valor_total": 12830697,
+        "codigo": "NIU-24082026",
+        "kg_usado": 297,
+        "reprId": "W35H9Q"
+      }
+    ],
+    "valor_total": 16375697,
+    "codigo": "NIU-09092026",
+    "kg_total": 397,
+    "fecha": "2026-09-09",
+    "salidas": [
+      {
+        "valor_kg": 41249,
+        "observaciones": "",
+        "factura": "",
+        "fecha": "2026-09-10",
+        "cliente": "QIMA",
+        "destino_key": "otro",
+        "remision": "",
+        "id": "8F5FPW",
+        "valor_total": 9899760,
+        "peso_salida": 240
+      },
+      {
+        "cliente": "Bodega Cafe Fino",
+        "valor_total": 2062450,
+        "remision": "784",
+        "peso_salida": 50,
+        "destino_key": "bodega_cf",
+        "observaciones": "",
+        "factura": "",
+        "id": "PT7DQF",
+        "fecha": "2026-09-10",
+        "valor_kg": 41249
+      },
+      {
+        "id": "H42A1U",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "786",
+        "cliente": "Bodega Cafe Fino",
+        "destino_key": "bodega_cf",
+        "peso_salida": 107,
+        "valor_kg": 41249,
+        "valor_total": 4413643,
+        "observaciones": ""
+      }
+    ],
+    "nombre": "NIU"
+  },
+  {
+    "id": "Y0OC1R",
+    "items": [
+      {
+        "reprId": "SXA6OX",
+        "tipo": "lote",
+        "valor_kg": 112325,
+        "key": "sal:3QYUOY",
+        "valor_total": 28081250,
+        "kg_usado": 250,
+        "salidaId": "3QYUOY",
+        "esStockDirecto": false,
+        "codigo": "M 558-NR-02092026"
+      },
+      {
+        "reprId": "X2NUTD",
+        "esStockDirecto": false,
+        "valor_kg": 30342,
+        "kg_usado": 1950,
+        "tipo": "lote",
+        "salidaId": "FAH2W3",
+        "key": "sal:FAH2W3",
+        "valor_total": 59166900,
+        "codigo": "M547-REGIONAL-23072026"
+      },
+      {
+        "valor_kg": 56529,
+        "codigo": "M 557-DR-01092026",
+        "valor_total": 14132250,
+        "salidaId": "VQ546M",
+        "esStockDirecto": false,
+        "kg_usado": 250,
+        "key": "sal:VQ546M",
+        "tipo": "lote",
+        "reprId": "C9GRR0"
+      }
+    ],
+    "salidas": [
+      {
+        "valor_kg": 41380,
+        "cliente": "VAYGAS SAS TANAT",
+        "peso_salida": 2400,
+        "fecha": "2026-09-07",
+        "id": "KZ5SM8",
+        "remision": "",
+        "valor_total": 99312000,
+        "factura": "",
+        "observaciones": "",
+        "destino_key": "otro"
+      }
+    ],
+    "nombre": "PINK BOURBON ",
+    "producto_comercial": "PINK BOURBON MAME ",
+    "fecha": "2026-09-02",
+    "kg_total": 2450,
+    "codigo": "PINKBOURBON-02092026",
+    "valor_total": 101380400,
+    "costo_kg": 41379.755102040814
+  }
+]

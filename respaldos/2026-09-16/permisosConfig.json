@@ -1,0 +1,231 @@
+[
+  {
+    "id": "Analista Calidad + Trilla",
+    "views": [
+      "dashboard",
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "trazabilidad"
+    ],
+    "readOnly": [
+      "dashboard",
+      "procesamiento",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino"
+    ]
+  },
+  {
+    "id": "Analista de Calidad",
+    "views": [
+      "bodega",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trazabilidad"
+    ],
+    "readOnly": [
+      "bodega",
+      "bodega_tri",
+      "blend"
+    ]
+  },
+  {
+    "id": "Coordinador Tostado",
+    "views": [
+      "dashboard",
+      "bodega_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "trazabilidad"
+    ],
+    "readOnly": [
+      "dashboard",
+      "bodega_fino",
+      "blend_fino",
+      "ventas"
+    ]
+  },
+  {
+    "id": "Gerente",
+    "views": [
+      "dashboard",
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "trazabilidad",
+      "costos",
+      "usuarios",
+      "carga_inicial",
+      "pedidos",
+      "pipeline",
+      "muestras",
+      "crm",
+      "bitacora"
+    ],
+    "readOnly": [
+      "bitacora"
+    ]
+  },
+  {
+    "id": "Gerente Administrativo",
+    "readOnly": [
+      "dashboard",
+      "bodega",
+      "bodega_tri",
+      "blend",
+      "trilladora_fino",
+      "blend_fino"
+    ],
+    "views": [
+      "dashboard",
+      "bodega",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "costos"
+    ]
+  },
+  {
+    "id": "Gerente Comercial",
+    "readOnly": [
+      "dashboard",
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "costos"
+    ],
+    "views": [
+      "dashboard",
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "trazabilidad",
+      "costos",
+      "pedidos",
+      "crm"
+    ]
+  },
+  {
+    "id": "Gerente Financiero",
+    "readOnly": [
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "pipeline"
+    ],
+    "views": [
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "trazabilidad",
+      "costos",
+      "pedidos",
+      "dashboard",
+      "pipeline",
+      "crm"
+    ]
+  },
+  {
+    "id": "Gerente Produccion",
+    "views": [
+      "dashboard",
+      "procesamiento",
+      "bodega",
+      "trilla",
+      "bodega_tri",
+      "blend",
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "ventas",
+      "trazabilidad",
+      "costos",
+      "usuarios",
+      "carga_inicial",
+      "pedidos",
+      "pipeline"
+    ],
+    "readOnly": [
+      "pipeline"
+    ]
+  },
+  {
+    "id": "Operario Cafe Fino",
+    "views": [
+      "bodega_fino",
+      "trilladora_fino",
+      "bodega_tri_fino",
+      "blend_fino",
+      "maquila",
+      "uba_tostado",
+      "trazabilidad"
+    ],
+    "readOnly": [
+      "uba_tostado",
+      "trazabilidad"
+    ]
+  }
+]

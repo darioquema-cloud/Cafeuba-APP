@@ -1,0 +1,514 @@
+[
+  {
+    "id": "1EPJT0",
+    "fecha_registro": "2026-07-27",
+    "ref_id": "B8O10V",
+    "kg_solicitados": 96,
+    "valor_estimado": 0,
+    "cliente": "TERRACORE AEREO",
+    "usuario_registro": "Moises Dario Quemá",
+    "ref_codigo": "NG1306-13062026",
+    "precio_kg": 0,
+    "notas": "",
+    "fecha_entrega_esperada": "2026-07-28",
+    "tipo_producto": "blend",
+    "entregado": true
+  },
+  {
+    "id": "81YVUV",
+    "precio_kg": 0,
+    "fecha_entrega_esperada": "2026-07-28",
+    "notas": "",
+    "ref_id": "X012VQ",
+    "ref_codigo": "AGI1506-15062026",
+    "entregado": true,
+    "fecha_registro": "2026-07-27",
+    "kg_solicitados": 312,
+    "tipo_producto": "blend",
+    "cliente": "TERRACORE AEREO",
+    "valor_estimado": 0,
+    "usuario_registro": "Moises Dario Quemá"
+  },
+  {
+    "id": "BZKFPW",
+    "precio_kg": 0,
+    "kg_solicitados": 240,
+    "usuario_registro": "Moises Dario Quemá",
+    "desglose": [
+      {
+        "seccion_label": "Blend",
+        "disponible_al_momento": 4,
+        "tipo": "blend",
+        "ref_codigo": "NIU1205-12052026",
+        "ref_id": "HXYUWQ",
+        "valor_unitario": 40811
+      },
+      {
+        "disponible_al_momento": 206,
+        "tipo": "blend",
+        "seccion_label": "Blend",
+        "ref_id": "PWSN84",
+        "ref_codigo": "NIU2606-26062026",
+        "valor_unitario": 48010
+      },
+      {
+        "disponible_al_momento": 480,
+        "ref_id": "W35H9Q",
+        "ref_codigo": "NIU-24082026",
+        "seccion_label": "Blend",
+        "tipo": "blend",
+        "valor_unitario": 43201
+      },
+      {
+        "ref_codigo": "NIU3006-30062026",
+        "ref_id": "ZCN2Q3",
+        "valor_unitario": 52486,
+        "seccion_label": "Blend Cafe Fino",
+        "tipo": "blend_cf",
+        "disponible_al_momento": 0
+      }
+    ],
+    "fecha_entrega_esperada": "2026-09-04",
+    "fecha_registro": "2026-09-02",
+    "faltante_kg": 0,
+    "producto_comercial": "NIU",
+    "fecha_estimada_sistema": null,
+    "valor_estimado": 0,
+    "entregado": true,
+    "cliente": "VAYGA SAS",
+    "notas": ""
+  },
+  {
+    "id": "COFCR8",
+    "kg_solicitados": 240,
+    "fecha_entrega_esperada": "2026-07-28",
+    "entregado": true,
+    "fecha_registro": "2026-07-27",
+    "ref_codigo": "NIU2606-26062026",
+    "usuario_registro": "Moises Dario Quemá",
+    "valor_estimado": 0,
+    "precio_kg": 0,
+    "cliente": "TERRACORE AEREO",
+    "ref_id": "PWSN84",
+    "notas": "",
+    "tipo_producto": "blend"
+  },
+  {
+    "id": "DQ23JZ",
+    "ref_codigo": "APRIL0705-07052026",
+    "fecha_entrega_esperada": "2026-07-28",
+    "ref_id": "G58N6Y",
+    "notas": "",
+    "cliente": "TERRACORE AEREO",
+    "usuario_registro": "Moises Dario Quemá",
+    "valor_estimado": 0,
+    "precio_kg": 0,
+    "tipo_producto": "blend",
+    "kg_solicitados": 312,
+    "entregado": true,
+    "fecha_registro": "2026-07-27"
+  },
+  {
+    "id": "EKZOFO",
+    "entregado": true,
+    "kg_solicitados": 480,
+    "fecha_entrega_esperada": "2026-09-04",
+    "usuario_registro": "Moises Dario Quemá",
+    "notas": "CODIGO: 3-2692-00301",
+    "cliente": "VAYGA SAS",
+    "faltante_kg": 0,
+    "producto_comercial": "MAYPOP",
+    "desglose": [
+      {
+        "valor_unitario": 57950,
+        "ref_codigo": "MAYPOP-28082026",
+        "disponible_al_momento": 1032,
+        "tipo": "blend",
+        "ref_id": "50J9LX",
+        "seccion_label": "Blend"
+      },
+      {
+        "ref_codigo": "MAYPOP1106-11062026",
+        "disponible_al_momento": 0,
+        "ref_id": "9EJ2YR",
+        "tipo": "blend",
+        "valor_unitario": 53422,
+        "seccion_label": "Blend"
+      },
+      {
+        "disponible_al_momento": 0,
+        "ref_codigo": "MAYPOP-24082026",
+        "valor_unitario": 56629,
+        "seccion_label": "Blend",
+        "ref_id": "J6JF8Q",
+        "tipo": "blend"
+      },
+      {
+        "valor_unitario": 52383,
+        "tipo": "blend",
+        "seccion_label": "Blend",
+        "ref_id": "K6J1O5",
+        "ref_codigo": "MAYPOP0904-09042026",
+        "disponible_al_momento": 0
+      },
+      {
+        "ref_id": "PUDZRX",
+        "ref_codigo": "MAYPOP-07082026",
+        "seccion_label": "Blend",
+        "disponible_al_momento": 0,
+        "valor_unitario": 58448,
+        "tipo": "blend"
+      },
+      {
+        "tipo": "blend_cf",
+        "ref_codigo": "MAYPOPCOMPETITION-04062026",
+        "valor_unitario": 58181,
+        "disponible_al_momento": 26,
+        "ref_id": "HIAQVJ",
+        "seccion_label": "Blend Cafe Fino"
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "tipo": "blend_cf",
+        "disponible_al_momento": 0,
+        "valor_unitario": 58155,
+        "ref_codigo": "Maypop1106-11062026",
+        "ref_id": "VTLF1P"
+      }
+    ],
+    "fecha_registro": "2026-09-02",
+    "fecha_estimada_sistema": null,
+    "valor_estimado": 0,
+    "precio_kg": 0
+  },
+  {
+    "id": "EWNWLK",
+    "usuario_registro": "Moises Dario Quemá",
+    "entregado": true,
+    "fecha_registro": "2026-07-27",
+    "ref_id": "1OPN16",
+    "notas": "",
+    "fecha_entrega_esperada": "2026-07-28",
+    "tipo_producto": "blend_cf",
+    "valor_estimado": 0,
+    "kg_solicitados": 120,
+    "cliente": "TERRACORE AEREO",
+    "ref_codigo": "Sakura2606-26062026",
+    "precio_kg": 0
+  },
+  {
+    "id": "IMU4QN",
+    "notas": "",
+    "tipo_producto": "blend",
+    "usuario_registro": "Moises Dario Quemá",
+    "fecha_registro": "2026-07-27",
+    "precio_kg": 0,
+    "cliente": "TERRACORE AEREO",
+    "kg_solicitados": 240,
+    "entregado": true,
+    "valor_estimado": 0,
+    "fecha_entrega_esperada": "2026-07-28",
+    "ref_id": "6D93ZW",
+    "ref_codigo": "CATURRANITRO1706-17062026"
+  },
+  {
+    "id": "J6LJYC",
+    "tipo_producto": "blend",
+    "cliente": "TERRACORE AEREO",
+    "ref_id": "5D0ZOM",
+    "notas": "SE junta con tobacco para copletar pedido",
+    "precio_kg": 0,
+    "kg_solicitados": 1128,
+    "fecha_registro": "2026-07-27",
+    "entregado": true,
+    "fecha_entrega_esperada": "2026-07-28",
+    "valor_estimado": 0,
+    "ref_codigo": "VAINILLA0607-06072026",
+    "usuario_registro": "Moises Dario Quemá"
+  },
+  {
+    "id": "JNXTDS",
+    "desglose": [
+      {
+        "disponible_al_momento": 0,
+        "tipo": "blend",
+        "valor_unitario": 42046,
+        "seccion_label": "Blend",
+        "ref_codigo": "CATURRANITRO1706-17062026",
+        "ref_id": "6D93ZW"
+      },
+      {
+        "ref_codigo": "CATURRANITRO2505-20052026",
+        "seccion_label": "Blend",
+        "valor_unitario": 40500,
+        "ref_id": "6Z9PWK",
+        "tipo": "blend",
+        "disponible_al_momento": 0
+      },
+      {
+        "valor_unitario": 41466,
+        "seccion_label": "Blend",
+        "tipo": "blend",
+        "ref_codigo": "CATURRANITRO-29082026",
+        "disponible_al_momento": 297,
+        "ref_id": "B1UMYB"
+      },
+      {
+        "seccion_label": "Blend",
+        "valor_unitario": 56585,
+        "disponible_al_momento": 42,
+        "ref_codigo": "CATURRANITRO0108-03082026",
+        "ref_id": "FEHL0Q",
+        "tipo": "blend"
+      },
+      {
+        "seccion_label": "Blend",
+        "valor_unitario": 59110,
+        "disponible_al_momento": 133,
+        "ref_codigo": "CATURRANITRO-03082026",
+        "tipo": "blend",
+        "ref_id": "UZ56FM"
+      },
+      {
+        "ref_id": "3QEPX9",
+        "disponible_al_momento": 20,
+        "ref_codigo": "Caturranitro2805-28052026",
+        "seccion_label": "Blend Cafe Fino",
+        "tipo": "blend_cf",
+        "valor_unitario": 34589
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "ref_codigo": "Caturranitro1906-19062026",
+        "ref_id": "4JQKSE",
+        "tipo": "blend_cf",
+        "disponible_al_momento": 0,
+        "valor_unitario": 31267
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "valor_unitario": 40014,
+        "ref_id": "OCVXGP",
+        "disponible_al_momento": 0,
+        "ref_codigo": "CATURRANITRO-02072026",
+        "tipo": "blend_cf"
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "valor_unitario": 37283,
+        "disponible_al_momento": 0,
+        "ref_id": "UNYJ1P",
+        "ref_codigo": "CATURRANITROUBA-14072026",
+        "tipo": "blend_cf"
+      }
+    ],
+    "kg_solicitados": 120,
+    "faltante_kg": 0,
+    "fecha_entrega_esperada": "2026-09-05",
+    "precio_kg": 0,
+    "notas": "3-2692-00304   caja de 24 kg al vacio",
+    "fecha_registro": "2026-09-02",
+    "cliente": "VAYGA SAS",
+    "entregado": true,
+    "usuario_registro": "Moises Dario Quemá",
+    "valor_estimado": 0,
+    "producto_comercial": "CATURRA NITRO",
+    "fecha_estimada_sistema": null
+  },
+  {
+    "id": "LLDQF4",
+    "fecha_registro": "2026-09-02",
+    "desglose": [
+      {
+        "ref_id": "A89LJK",
+        "seccion_label": "Blend Cafe Fino",
+        "ref_codigo": "SIDRABIO-04082026",
+        "disponible_al_momento": 1.0999999999999996,
+        "tipo": "blend_cf",
+        "valor_unitario": 42926
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "ref_codigo": "SidraBio1305-13052026",
+        "ref_id": "GW3B7G",
+        "tipo": "blend_cf",
+        "valor_unitario": 49821,
+        "disponible_al_momento": 0
+      }
+    ],
+    "fecha_entrega_esperada": "2026-09-05",
+    "entregado": true,
+    "cliente": "VAYGA SAS",
+    "producto_comercial": "SIDRA BIO",
+    "valor_estimado": 0,
+    "usuario_registro": "Moises Dario Quemá",
+    "notas": "3-2692-00308",
+    "precio_kg": 0,
+    "kg_solicitados": 480,
+    "faltante_kg": 478.9,
+    "fecha_estimada_sistema": "2026-09-30"
+  },
+  {
+    "id": "M64UTZ",
+    "cliente": "VAYGA SAS",
+    "valor_estimado": 0,
+    "fecha_estimada_sistema": "2026-09-30",
+    "desglose": [
+      {
+        "disponible_al_momento": 4,
+        "ref_codigo": "SUDANBIO-04082026",
+        "seccion_label": "Blend Cafe Fino",
+        "tipo": "blend_cf",
+        "valor_unitario": 31848,
+        "ref_id": "5NES06"
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "disponible_al_momento": 0,
+        "tipo": "blend_cf",
+        "ref_id": "AULUGX",
+        "ref_codigo": "SUDANBIO-17072026",
+        "valor_unitario": 37340
+      },
+      {
+        "valor_unitario": 36403,
+        "ref_codigo": "SUDANBIO-24082026",
+        "seccion_label": "Blend Cafe Fino",
+        "disponible_al_momento": 14,
+        "ref_id": "ILWZ4T",
+        "tipo": "blend_cf"
+      },
+      {
+        "tipo": "blend_cf",
+        "disponible_al_momento": 0,
+        "ref_codigo": "SUDANBIO-2-17072026",
+        "ref_id": "JXQAZR",
+        "valor_unitario": 37178,
+        "seccion_label": "Blend Cafe Fino"
+      }
+    ],
+    "fecha_registro": "2026-09-02",
+    "notas": "3-2692-00303  caja de 24 kg",
+    "entregado": true,
+    "usuario_registro": "Moises Dario Quemá",
+    "precio_kg": 0,
+    "fecha_entrega_esperada": "2026-09-05",
+    "kg_solicitados": 480,
+    "faltante_kg": 462,
+    "producto_comercial": "SUDAN BIO"
+  },
+  {
+    "id": "OKFFBZ",
+    "kg_solicitados": 48,
+    "cliente": "VAYGA SAS",
+    "fecha_entrega_esperada": "2026-09-05",
+    "producto_comercial": "TABACCO",
+    "faltante_kg": 0,
+    "entregado": true,
+    "fecha_registro": "2026-09-02",
+    "usuario_registro": "Moises Dario Quemá",
+    "notas": "3-2692-00305  caja de 24kg al vacio",
+    "precio_kg": 0,
+    "desglose": [
+      {
+        "ref_codigo": "TABACO0403-04032026",
+        "valor_unitario": 41268,
+        "tipo": "blend",
+        "disponible_al_momento": 72,
+        "seccion_label": "Blend",
+        "ref_id": "AINKP5"
+      }
+    ],
+    "valor_estimado": 0,
+    "fecha_estimada_sistema": null
+  },
+  {
+    "id": "P150VA",
+    "cliente": "VAYGA SAS",
+    "faltante_kg": 0,
+    "desglose": [
+      {
+        "ref_id": "5MQO1D",
+        "valor_unitario": 31781,
+        "tipo": "blend",
+        "seccion_label": "Blend",
+        "ref_codigo": "NG1205-12052026",
+        "disponible_al_momento": 0
+      },
+      {
+        "seccion_label": "Blend",
+        "disponible_al_momento": 0,
+        "ref_id": "B8O10V",
+        "tipo": "blend",
+        "ref_codigo": "NG1306-13062026",
+        "valor_unitario": 33541
+      },
+      {
+        "disponible_al_momento": 61,
+        "tipo": "blend",
+        "ref_id": "CINGAL",
+        "valor_unitario": 44030,
+        "ref_codigo": "NG(LYCHE)1304-13042026",
+        "seccion_label": "Blend"
+      },
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "disponible_al_momento": 192,
+        "ref_id": "V974I3",
+        "tipo": "blend_cf",
+        "valor_unitario": 34552,
+        "ref_codigo": "NG-01072026"
+      }
+    ],
+    "kg_solicitados": 192,
+    "fecha_estimada_sistema": null,
+    "usuario_registro": "Moises Dario Quemá",
+    "entregado": true,
+    "fecha_entrega_esperada": "2026-09-05",
+    "precio_kg": 0,
+    "fecha_registro": "2026-09-02",
+    "producto_comercial": "NG",
+    "valor_estimado": 0,
+    "notas": "3-2692-00309 caja de 24kg al vacio"
+  },
+  {
+    "id": "TCRZRP",
+    "valor_estimado": 92160000,
+    "desglose": [
+      {
+        "seccion_label": "Blend Cafe Fino",
+        "tipo": "blend_cf",
+        "ref_id": "W8GRXV",
+        "valor_unitario": 38809,
+        "ref_codigo": "PinkBorbonmame-04082026",
+        "disponible_al_momento": 1.3000000000000007
+      }
+    ],
+    "fecha_registro": "2026-08-29",
+    "producto_comercial": "PINK BORBON MAME",
+    "precio_kg": 38400,
+    "fecha_entrega_esperada": "2026-09-05",
+    "entregado": true,
+    "usuario_registro": "Julio Quiceno",
+    "kg_solicitados": 2400,
+    "fecha_estimada_sistema": "2026-09-25",
+    "cliente": "VAYGA SAS",
+    "notas": "",
+    "faltante_kg": 2398.7
+  },
+  {
+    "id": "ZQOT3W",
+    "valor_estimado": 0,
+    "notas": "",
+    "fecha_registro": "2026-07-27",
+    "ref_codigo": "MAYPOP1106-11062026",
+    "cliente": "TERRACORE AEREO",
+    "kg_solicitados": 288,
+    "entregado": true,
+    "usuario_registro": "Moises Dario Quemá",
+    "fecha_entrega_esperada": "2026-07-28",
+    "precio_kg": 0,
+    "tipo_producto": "blend",
+    "ref_id": "9EJ2YR"
+  }
+]

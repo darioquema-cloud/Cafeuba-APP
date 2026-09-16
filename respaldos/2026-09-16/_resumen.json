@@ -1,0 +1,25 @@
+{
+  "fecha": "2026-09-16",
+  "colecciones": {
+    "usuarios": 7,
+    "lotes": 128,
+    "costos": 44,
+    "blends": 34,
+    "lotesFino": 196,
+    "blendsFino": 53,
+    "maquilas": 44,
+    "blendsTostado": 31,
+    "empaques": 0,
+    "tiposEmpaque": 1,
+    "subprodVerde": 20,
+    "subprodPerg": 5,
+    "permisosConfig": 9,
+    "inventariosMensuales": 14,
+    "pedidos": 16,
+    "oportunidades": 160,
+    "muestras": 0,
+    "visitas": 0,
+    "necesidadesTostado": 2,
+    "bitacora_actividad": 1679
+  }
+}
