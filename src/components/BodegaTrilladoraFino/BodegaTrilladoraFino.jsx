@@ -2,7 +2,7 @@ import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,Modal,TablaScrollV,SelectDestino}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{mesDe,mesTrillaDe}from"../../lib/dates";
+import{mesDe,mesAnioTrillaDe}from"../../lib/dates";
 import{construirGruposBTF,stockGrupoBTF,costoKgExFinoDe,calcCostoTriCF,grupoDeBTF}from"../../lib/costing";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
@@ -298,7 +298,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,co
           const salTotal=grupo.reduce((s,x)=>s+(x.salidas_trilladora||[]).reduce((a,b)=>a+b.peso_salida,0),0);
           const stock=excelso-salTotal;
           const costoEx=costoKgExFinoDe(grupo,costos,lotesFino);
-          const costoTrillaKg=calcCostoTriCF(mesTrillaDe(repr),costos,lotesFino).costoTriKg||0;
+          const costoTrillaKg=calcCostoTriCF(mesAnioTrillaDe(repr),costos,lotesFino).costoTriKg||0;
           return(<tr key={repr.id}>
             <td style={{...S.td,fontFamily:"monospace",fontSize:11,color:C.green,fontWeight:600}}>{t.nombre_trillado||repr.codigo}</td>
             <td style={S.td}><div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{grupo.map(x=>(<Bdg key={x.id} label={x.codigo} col={C.teal} bg={C.tealBg}/>))}</div></td>

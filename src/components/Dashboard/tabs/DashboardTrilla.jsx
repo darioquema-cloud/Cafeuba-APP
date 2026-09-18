@@ -2,7 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt,fmtFecha}from"../../../lib/format";
-import{mesDe,semanaISO,mesTrillaDe}from"../../../lib/dates";
+import{mesDe,semanaISO,mesTrillaDe,mesAnioTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri,ponderarFactor as ponderar}from"../../../lib/costing";
 import{pesoATrilladora}from"../../../lib/stock";
 import{Bdg,TablaScrollV}from"../../ui";
@@ -30,7 +30,7 @@ export function DashboardTrilla({lotes,costos}){
     const kgEx=l.trilla.kg_excelso||0;
     const cl=calcCosto(l,costos,lotes);
     const costoProduccion=cl?cl.total*pesoATrilladora(l):0;
-    const D=calcCostoTri(mesTrillaDe(l),costos,lotes).costoTriKg;
+    const D=calcCostoTri(mesAnioTrillaDe(l),costos,lotes).costoTriKg;
     porProd[p].kgExcelso+=kgEx;
     porProd[p].costoTotal+=costoProduccion+D*kgEx;
   });

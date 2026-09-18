@@ -1,8 +1,8 @@
 import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
-import{TIPOS_TOSTION,MESES}from"../../data/constants";
+import{TIPOS_TOSTION}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesDe,mesAnioDe}from"../../lib/dates";
 import{calcCostoTuesteMes}from"../../lib/costing";
 import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
@@ -390,7 +390,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     <div style={{...S.card,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Tueste por Mes</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Tueste","kg Tostados","Costo Tueste / kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{MESES.filter(m=>{const ct=(costos||[]).filter(c=>c.centro==="Tostado"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return ct>0;}).map(m=>{
+      <tbody>{[...new Set((costos||[]).filter(c=>c.centro==="Tostado").map(c=>c.mesAnio))].filter(Boolean).sort().map(m=>{
         const{costosTueste:ct,kgTostado:kt,costoTuesteKg:ck}=calcCostoTuesteMes(m,costos,historico);
         return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(ct)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(kt,1)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{kt>0?fmtCOP(Math.round(ck)):"Sin tueste registrado"}</td></tr>);
       })}</tbody></table></TablaScrollV>
@@ -419,7 +419,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         </div>);
       })()}
       <TablaScrollV minWidth={1500}><table style={{width:"100%",borderCollapse:"collapse",minWidth:1500}}><thead><tr>{["Codigo","Fecha","Mes","Producto","Trazabilidad","kg a Tostar","Valor Unit.","Valor Total","N° Baches","Tipo Tostión","kg Tostado","Costo Materia Prima /kg","Costo Tueste /kg","Costo Total Tostado /kg","Rend.","Stock Granel","Catacion","Responsable","Acciones"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);const costoTuesteKg=t.kg_cafe_tostado>0?calcCostoTuesteMes(mesDe(t.fecha),costos,historico).costoTuesteKg:0;const costoTotalTostado=(vkgTostado||0)+costoTuesteKg;return(<tr key={t.id}>
+      <tbody>{historicoFiltrado.map(t=>{const stock=stockGranel(t);const vkgTostado=t.valor_unitario_tostado||(t.kg_cafe_tostado&&t.valor_total?Math.round(t.valor_total/t.kg_cafe_tostado):null);const costoTuesteKg=t.kg_cafe_tostado>0?calcCostoTuesteMes(mesAnioDe(t.fecha),costos,historico).costoTuesteKg:0;const costoTotalTostado=(vkgTostado||0)+costoTuesteKg;return(<tr key={t.id}>
         <td style={{...S.td,color:C.purple,fontWeight:700,fontFamily:"monospace",fontSize:11}}>{t.codigo||"-"}</td>
         <td style={{...S.td,color:C.textDim}}>{fmtFecha(t.fecha)}</td>
         <td style={{...S.td,textTransform:"capitalize"}}>{mesDe(t.fecha)}</td>

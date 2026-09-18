@@ -7,4 +7,5 @@ export const mesAnioDe=(d)=>{
   return(m&&a)?`${m}-${a}`:"";
 };
 export const mesTrillaDe=(l)=>mesDe(l?.trilla?.fecha_trilla);
+export const mesAnioTrillaDe=(l)=>mesAnioDe(l?.trilla?.fecha_trilla);
 export const diasEntre=(a,b)=>a&&b?Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000):null;

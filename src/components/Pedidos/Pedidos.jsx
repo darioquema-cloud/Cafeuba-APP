@@ -2,7 +2,7 @@ import{useState,Fragment}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,fmtCOP,numVal,today,genId,fmtFecha}from"../../lib/format";
-import{mesTrillaDe}from"../../lib/dates";
+import{mesAnioTrillaDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri,getSeedCostoTri,costoKgExFinoDe}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 
@@ -82,7 +82,7 @@ export function Pedidos({pedidos,setPedidos,lotes,lotesFino,blends,blendsFino,co
     const efCostoKg=(x)=>{const p=pesoATrilladora(x);const cl=calcCosto(x,costos,lotes);if(p>0&&cl?.total>0)return cl.total;const stored=x.trilla?.costo_kg_excelso||0;return stored>0?stored:getSeedCostoTri(x.codigo,x.kg_producto);};
     const pesoEf=grupo.reduce((s,x)=>s+efPeso(x),0);
     const costoTotalGrupo=grupo.reduce((s,x)=>s+efCostoKg(x)*efPeso(x),0);
-    const D=calcCostoTri(mesTrillaDe(repr),costos,lotes).costoTriKg;
+    const D=calcCostoTri(mesAnioTrillaDe(repr),costos,lotes).costoTriKg;
     return excelsoGrupo>0?Math.round(costoTotalGrupo/excelsoGrupo)+Math.round(D):0;
   };
 

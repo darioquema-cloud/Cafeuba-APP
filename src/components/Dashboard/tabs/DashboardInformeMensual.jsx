@@ -2,7 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
-import{mesDe,mesTrillaDe}from"../../../lib/dates";
+import{mesDe,mesTrillaDe,mesAnioTrillaDe}from"../../../lib/dates";
 import{calcCosto,calcCostoTri,costoKgExDe,ponderarFactor,esVentaExterna,construirGruposBTF,stockGrupoBTF,costoKgExFinoDe}from"../../../lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{DonutChart}from"../../ui/DonutChart";
@@ -218,9 +218,14 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   // caso se calcula un promedio ponderado real: se suma costosTri y kgEx de TODOS los meses que
   // tuvieron trilla (llamando a calcCostoTri por cada uno, sin reinventar su logica) y se divide
   // el total de costos entre el total de kg — evita elegir arbitrariamente el mes del primer lote.
-  const mesesConTrilla=[...new Set(lotes.filter(l=>l.trilla?.kg_excelso>0).map(l=>mesTrillaDe(l)).filter(Boolean))];
+  // PARCHE TEMPORAL (Fase 2 del ajuste de ano): filtroMes en este archivo todavia es solo el
+  // nombre del mes (sin selector de ano en su UI) — se reutiliza anioActual (ya declarado
+  // arriba) para que la comparacion siga siendo correcta mientras se rediseña su filtro en
+  // una fase posterior (Fase 3). Cuando eso se haga, reemplazar esto por el mesAnio real
+  // seleccionado.
+  const mesesConTrilla=[...new Set(lotes.filter(l=>l.trilla?.kg_excelso>0).map(l=>mesAnioTrillaDe(l)).filter(Boolean))];
   const D=filtroMes!=="todos"
-    ?calcCostoTri(filtroMes,costos,lotes).costoTriKg
+    ?calcCostoTri(filtroMes+"-"+anioActual,costos,lotes).costoTriKg
     :(()=>{
         const tot=mesesConTrilla.reduce((acc,m)=>{const r=calcCostoTri(m,costos,lotes);return{costos:acc.costos+r.costosTri,kg:acc.kg+r.kgEx};},{costos:0,kg:0});
         return tot.kg>0?tot.costos/tot.kg:0;

@@ -1,8 +1,8 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
-import{NORMAS,TIPOS_TOSTION,MESES}from"../../data/constants";
+import{NORMAS,TIPOS_TOSTION}from"../../data/constants";
 import{fmtCOP,fmt,today,genId,fmtFecha}from"../../lib/format";
-import{mesDe,semanaISO}from"../../lib/dates";
+import{mesDe,semanaISO,mesAnioDe}from"../../lib/dates";
 import{calcCostoMaquilaMes}from"../../lib/costing";
 import{Bdg,Fld,KPI,Modal,TablaScrollV}from"../ui";
 const SERVICIOS_MAQUILA=["Trilla","Seleccion","Tostado","Marca"];
@@ -108,7 +108,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino,costos}){
     {tab==="registros"&&(<div style={{...S.card,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Maquila por Mes</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Maquila","kg Recibidos","Costo Operacion / kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{MESES.filter(m=>{const cm=(costos||[]).filter(c=>c.centro==="Maquila"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return cm>0;}).map(m=>{
+      <tbody>{[...new Set((costos||[]).filter(c=>c.centro==="Maquila").map(c=>c.mesAnio))].filter(Boolean).sort().map(m=>{
         const{costosMQ:cm,kgRecibidos:kr,costoMQKg:ck}=calcCostoMaquilaMes(m,costos,maquilas);
         return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(cm)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(kr)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{kr>0?fmtCOP(Math.round(ck)):"Sin recepcion registrada"}</td></tr>);
       })}</tbody></table></TablaScrollV>
@@ -124,7 +124,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino,costos}){
         <td style={{...S.td,fontWeight:600,color:C.navy}}>{m.cliente}</td>
         <td style={{...S.td,color:C.textDim}}>{m.telefono||"-"}</td>
         <td style={{...S.td,fontWeight:700,color:C.accent}}>{fmt(m.kg_recibidos)} kg</td>
-        <td style={{...S.td,color:C.teal,fontWeight:600}}>{(()=>{const{costoMQKg}=calcCostoMaquilaMes(m.mes||mesDe(m.fecha),costos,maquilas);return costoMQKg>0?fmtCOP(Math.round(costoMQKg)):<span style={{color:C.textFaint}}>—</span>;})()}</td>
+        <td style={{...S.td,color:C.teal,fontWeight:600}}>{(()=>{const{costoMQKg}=calcCostoMaquilaMes(m.mesAnio||mesAnioDe(m.fecha),costos,maquilas);return costoMQKg>0?fmtCOP(Math.round(costoMQKg)):<span style={{color:C.textFaint}}>—</span>;})()}</td>
         <td style={S.td}><Bdg label={m.servicio} col={C.orange} bg={C.orangeBg}/></td>
         <td style={S.td}><Bdg label={ep==="registro"?"Registro":ep==="en_trilla"?"En Trilla":ep==="en_tostado"?"En Tostado":"Entrega"} col={ep==="registro"?C.textDim:ep==="en_trilla"?C.orange:ep==="en_tostado"?C.purple:C.green}/></td>
         <td style={{...S.td,color:C.textDim,fontSize:12}}>{m.observaciones||"-"}</td>

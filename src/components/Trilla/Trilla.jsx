@@ -1,8 +1,8 @@
 import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
-import{NORMAS,MESES}from"../../data/constants";
+import{NORMAS}from"../../data/constants";
 import{fmtCOP,fmt,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{semanaISO,mesDe}from"../../lib/dates";
+import{semanaISO,mesDe,mesAnioDe}from"../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import{Bdg,Fld,KPI,Modal,AutoFitText,TablaScrollV}from"../ui";
@@ -129,7 +129,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     // Arrastrar valor unitario (costo/kg excelso) y valor total al objeto trilla (punto 4)
     const costoTotalGrupo=selArr.reduce((s,l)=>{const cl=calcCosto(l,costos,lotes);return s+(cl?cl.total*pesoATrilladora(l):0);},0);
     const excelsoTotal=+form.excelso||0;
-    const D=calcCostoTri(mesDe(form.fecha_trilla),costos,lotes).costoTriKg;
+    const D=calcCostoTri(mesAnioDe(form.fecha_trilla),costos,lotes).costoTriKg;
     const costoKgExGrupo=excelsoTotal>0?Math.round(costoTotalGrupo/excelsoTotal)+Math.round(D):0;
     setLotes(p=>p.map(l=>{
       const idx=selArr.findIndex(x=>x.id===l.id);
@@ -178,7 +178,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     setModalManual(false);setFormManual(blankManual());
   };
 
-  const mesTri=selArr[0]?.mes||"";
+  const mesTri=selArr[0]?.mesAnio||"";
   const {costosTri,kgEx,costoTriKg}=useMemo(()=>calcCostoTri(mesTri,costos,lotes),[mesTri,costos,lotes]);
   const totalKgExcelso=tril.reduce((s,l)=>s+(l.trilla?.kg_excelso||0),0);
   const totalKgTrillados=tril.reduce((s,l)=>s+pesoATrilladora(l),0);
@@ -374,7 +374,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     <div style={{...S.card,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Trilladora por Mes</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Trilladora","kg Excelso Producido","Costo Trilladora / kg Excelso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{MESES.filter(m=>{const cb=(costos||[]).filter(c=>c.centro==="Trilladora"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return cb>0;}).map(m=>{
+      <tbody>{[...new Set((costos||[]).filter(c=>c.centro==="Trilladora").map(c=>c.mesAnio))].filter(Boolean).sort().map(m=>{
         const {costosTri:ct,kgEx:ke,costoTriKg:ck}=calcCostoTri(m,costos,lotes);
         return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(ct)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(ke)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{ke>0?fmtCOP(Math.round(ck)):"Sin excelso registrado"}</td></tr>);
       })}</tbody></table></TablaScrollV>

@@ -1,7 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,TablaScrollV,AutoFitText}from"../ui";
-import{NORMAS,MESES}from"../../data/constants";
+import{NORMAS}from"../../data/constants";
 import{fmt,fmtCOP,dateToCode}from"../../lib/format";
 import{mesDe}from"../../lib/dates";
 import{costoKgExDeCafeFino,construirGruposBTF,costoKgExFinoDe,calcCostoTriCF}from"../../lib/costing";
@@ -215,7 +215,7 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
     <div style={{...S.card,marginTop:16,marginBottom:16}}>
       <div style={{fontWeight:600,fontSize:13,color:C.navy,marginBottom:12}}>Costo Trilladora por Mes</div>
       <TablaScrollV><table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}><thead><tr>{["Mes","Costos Trilladora","kg Excelso Producido","Costo Trilladora / kg Excelso"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
-      <tbody>{MESES.filter(m=>{const cb=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&c.mes===m).reduce((s,c)=>s+c.valor,0);return cb>0;}).map(m=>{
+      <tbody>{[...new Set((costos||[]).filter(c=>c.centro==="Bodega Cafe Fino").map(c=>c.mesAnio))].filter(Boolean).sort().map(m=>{
         const{costosTri:ct,kgEx:ke,costoTriKg:ck}=calcCostoTriCF(m,costos,lotesFino);
         return(<tr key={m}><td style={{...S.td,textTransform:"capitalize",fontWeight:600}}>{m}</td><td style={{...S.td,color:C.orange,fontWeight:600}}>{fmtCOP(ct)}</td><td style={{...S.td,color:C.green,fontWeight:600}}>{fmt(ke)} kg</td><td style={{...S.td,color:C.purple,fontWeight:700,fontSize:14}}>{ke>0?fmtCOP(Math.round(ck)):"Sin excelso registrado"}</td></tr>);
       })}</tbody></table></TablaScrollV>
