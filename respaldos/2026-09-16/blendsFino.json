@@ -1,0 +1,3374 @@
+[
+  {
+    "id": "1GIFXD",
+    "producto_comercial": "",
+    "valor_total": 4613310,
+    "salidas": [
+      {
+        "id": "7K8Y9V",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 100,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "costo_kg": 46133.1,
+    "fecha": "2026-07-30",
+    "codigo": "GESHALAVADO-30072026",
+    "items": [
+      {
+        "reprId": "T7C5CU",
+        "salidaId": "UJMQNF",
+        "valor_total": 2275000,
+        "codigo": "CF 185-GESHA LAVADO-0406",
+        "key": "finolote:sal:UJMQNF",
+        "tipo": "finolote",
+        "valor_kg": 65000,
+        "kg_usado": 35
+      },
+      {
+        "salidaId": "WP2D44",
+        "tipo": "finolote",
+        "reprId": "TLR42B",
+        "key": "finolote:sal:WP2D44",
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "valor_kg": 35974,
+        "kg_usado": 65,
+        "valor_total": 2338310
+      }
+    ],
+    "kg_total": 100,
+    "nombre": "GESHA LAVADO"
+  },
+  {
+    "id": "1OPN16",
+    "items": [],
+    "fecha": "2026-06-26",
+    "costo_kg": 47523.36,
+    "mes": "junio",
+    "kg_total": 111,
+    "producto_comercial": "SAKURA",
+    "codigo": "Sakura2606-26062026",
+    "nombre": "Sakura 2606",
+    "valor_total": 5275092.96,
+    "salidas": [
+      {
+        "valor_total": 807891,
+        "peso_salida": 17,
+        "fecha": "2026-07-30",
+        "remision": "3384",
+        "valor_kg": 47523,
+        "cliente": "UBA Tostado",
+        "id": "RZ79DN",
+        "observaciones": "",
+        "factura": "",
+        "destino_key": "uba_tostado"
+      },
+      {
+        "factura": "17379",
+        "cliente": "OM World Octavia",
+        "valor_kg": 47523,
+        "remision": "N-38-2026",
+        "destino_key": "otro",
+        "observaciones": "",
+        "valor_total": 4467162,
+        "id": "01PDZ2",
+        "peso_salida": 94,
+        "fecha": "2026-08-03",
+        "precio_venta_kg": 56100
+      },
+      {
+        "remision": "",
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "observaciones": "",
+        "valor_total": 0,
+        "cliente": "Ajuste de Inventario",
+        "fecha": "2026-08-05",
+        "id": "1H4N7H",
+        "factura": "AJUSTE-INV-08-2026",
+        "peso_salida": -94
+      },
+      {
+        "destino_key": "uba_tostado",
+        "id": "L8MS05",
+        "cliente": "UBA Tostado",
+        "peso_salida": 21,
+        "observaciones": "",
+        "valor_kg": 47523,
+        "factura": "",
+        "fecha": "2026-08-18",
+        "valor_total": 997983,
+        "remision": "2769"
+      },
+      {
+        "destino_key": "otro",
+        "remision": "",
+        "cliente": "QUAT",
+        "valor_kg": 47523,
+        "valor_total": 475230,
+        "factura": "17801",
+        "observaciones": "",
+        "fecha": "2026-08-04",
+        "peso_salida": 10,
+        "id": "5XUHVF",
+        "precio_venta_kg": 62497
+      },
+      {
+        "id": "WXM7AZ",
+        "fecha": "2026-07-31",
+        "factura": "17800",
+        "remision": "",
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "destino_key": "otro",
+        "peso_salida": 63,
+        "valor_kg": 47523,
+        "valor_total": 2993949,
+        "observaciones": "",
+        "precio_venta_kg": 53516
+      }
+    ]
+  },
+  {
+    "id": "3QEPX9",
+    "kg_total": 260,
+    "salidas": [
+      {
+        "remision": "",
+        "valor_total": 8301360,
+        "factura": "17800",
+        "id": "LOR5E8",
+        "precio_venta_kg": 53516,
+        "fecha": "2026-07-31",
+        "valor_kg": 34589,
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "destino_key": "otro",
+        "peso_salida": 240,
+        "observaciones": ""
+      },
+      {
+        "cliente": "Ajuste de Inventario",
+        "peso_salida": 20,
+        "factura": "AJUSTE-INV-09-2026",
+        "destino_key": "ajuste_inventario",
+        "id": "928S2L",
+        "valor_kg": 0,
+        "fecha": "2026-09-03",
+        "observaciones": "",
+        "remision": "",
+        "valor_total": 0
+      }
+    ],
+    "mes": "mayo",
+    "costo_kg": 34589.33,
+    "items": [],
+    "fecha": "2026-05-28",
+    "valor_total": 8993225.8,
+    "producto_comercial": "CATURRA NITRO",
+    "codigo": "Caturranitro2805-28052026",
+    "nombre": "Caturra nitro 2805"
+  },
+  {
+    "id": "3TTF3R",
+    "items": [
+      {
+        "tipo": "finolote",
+        "valor_kg": 32797,
+        "key": "finolote:sal:0YJ6E0",
+        "valor_total": 1967820,
+        "reprId": "GR0D01",
+        "kg_usado": 60,
+        "codigo": "CF 230-REGIONAL NARIÑO-01092026",
+        "salidaId": "0YJ6E0"
+      },
+      {
+        "valor_total": 2920009,
+        "reprId": "QW46YA",
+        "tipo": "bodegabf",
+        "codigo": "M 543-NR-0207",
+        "valor_kg": 47869,
+        "key": "bodegabf:sal:EIMOH0",
+        "salidaId": "EIMOH0",
+        "kg_usado": 61
+      }
+    ],
+    "valor_total": 4887829,
+    "kg_total": 121,
+    "fecha": "2026-09-05",
+    "costo_kg": 40395.28099173554,
+    "codigo": "TANGERINE-05092026",
+    "salidas": [
+      {
+        "id": "VJRPWV",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "052-2026",
+        "cliente": "VAYGAS SAS TANAT",
+        "destino_key": "otro",
+        "peso_salida": 120,
+        "valor_kg": 40395,
+        "valor_total": 4847400,
+        "observaciones": ""
+      }
+    ],
+    "nombre": "TANGERINE",
+    "producto_comercial": "TANGERINE"
+  },
+  {
+    "id": "3USKHQ",
+    "producto_comercial": "GESHA BIO",
+    "kg_total": 170,
+    "codigo": "GESHABIO-02072026",
+    "fecha": "2026-07-02",
+    "items": [
+      {
+        "key": "bodegabf:sal:G1AKES",
+        "valor_total": 1567611.4000000001,
+        "codigo": "M 531-NR-0806",
+        "reprId": "Z6G88K",
+        "valor_kg": 78380.57,
+        "tipo": "bodegabf",
+        "kg_usado": 20,
+        "salidaId": "G1AKES"
+      },
+      {
+        "valor_kg": 59864,
+        "valor_total": 8979600,
+        "key": "finoblend:sal:UJAOY5",
+        "codigo": "GeshaBio1906-19062026",
+        "salidaId": "UJAOY5",
+        "tipo": "finoblend",
+        "reprId": "R1LWTC",
+        "kg_usado": 150
+      }
+    ],
+    "salidas": [
+      {
+        "observaciones": "",
+        "peso_salida": 170,
+        "remision": "035-2026",
+        "destino_key": "otro",
+        "valor_kg": 62042,
+        "fecha": "2026-07-02",
+        "factura": "17393",
+        "precio_venta_kg": 62053,
+        "cliente": "QIMA",
+        "id": "DO2YD6",
+        "valor_total": 10547140
+      }
+    ],
+    "valor_total": 10547211.4,
+    "costo_kg": 62042.420000000006,
+    "nombre": "GESHA BIO"
+  },
+  {
+    "id": "3VD3HF",
+    "codigo": "MAYPOPV2-31082026",
+    "items": [
+      {
+        "salidaId": "0IOQGP",
+        "codigo": "CF 231-CHIROSO L2-27082026",
+        "valor_total": 499697.39130434784,
+        "key": "finolote:sal:0IOQGP",
+        "reprId": "QYVULD",
+        "kg_usado": 10.4,
+        "tipo": "finolote",
+        "valor_kg": 48047.82608695652
+      },
+      {
+        "valor_kg": 58448,
+        "codigo": "MAYPOP-07082026",
+        "kg_usado": 2.6,
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:IU15SE",
+        "reprId": "PRXFAP",
+        "valor_total": 151964.80000000002,
+        "salidaId": "IU15SE"
+      }
+    ],
+    "producto_comercial": "MAYPOP",
+    "nombre": "MAYPOP V2",
+    "valor_total": 651662.1913043478,
+    "costo_kg": 50127.860869565215,
+    "fecha": "2026-08-31",
+    "kg_total": 13,
+    "salidas": [
+      {
+        "id": "3JFOI7",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "MUESTRA",
+        "destino_key": "otro",
+        "peso_salida": 1,
+        "valor_kg": 50128,
+        "valor_total": 50128,
+        "observaciones": ""
+      },
+      {
+        "id": "1UP638",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "057-2026",
+        "cliente": "MAME",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 50128,
+        "valor_total": 601536,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "45E1C1",
+    "producto_comercial": "MAYPOP",
+    "nombre": "MAYPOP V3",
+    "codigo": "MAYPOPV3-31082026",
+    "fecha": "2026-08-31",
+    "costo_kg": 40468.8,
+    "items": [
+      {
+        "reprId": "TLR42B",
+        "valor_kg": 35974,
+        "kg_usado": 10.4,
+        "key": "finolote:sal:36JZP6",
+        "valor_total": 374129.60000000003,
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "tipo": "finolote",
+        "salidaId": "36JZP6"
+      },
+      {
+        "tipo": "bodegabf",
+        "salidaId": "A0OI1J",
+        "codigo": "MAYPOP-07082026",
+        "kg_usado": 2.6,
+        "key": "bodegabf:sal:A0OI1J",
+        "valor_kg": 58448,
+        "reprId": "PRXFAP",
+        "valor_total": 151964.80000000002
+      }
+    ],
+    "valor_total": 526094.4,
+    "kg_total": 13,
+    "salidas": [
+      {
+        "id": "4Y8M5D",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "MUESTRA",
+        "destino_key": "otro",
+        "peso_salida": 1,
+        "valor_kg": 40469,
+        "valor_total": 40469,
+        "observaciones": ""
+      },
+      {
+        "id": "56DL9L",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "057-2026",
+        "cliente": "MAME",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 40469,
+        "valor_total": 485628,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "4JQKSE",
+    "producto_comercial": "CATURRA NITRO",
+    "valor_total": 20229826.64,
+    "mes": "junio",
+    "items": [],
+    "salidas": [
+      {
+        "peso_salida": 46,
+        "destino_key": "otro",
+        "factura": "",
+        "fecha": "2026-07-14",
+        "id": "B6HPEJ",
+        "remision": "",
+        "valor_total": 1438282,
+        "observaciones": "",
+        "valor_kg": 31267,
+        "cliente": "PASILLA"
+      },
+      {
+        "auto_blend": true,
+        "fecha": "2026-07-14",
+        "cliente": "Blend Fino CATURRANITROUBA-14072026",
+        "peso_salida": 560,
+        "observaciones": "Usado como insumo del blend CATURRANITROUBA-14072026",
+        "id": "BVYM5V",
+        "valor_total": 17509520,
+        "valor_kg": 31267
+      },
+      {
+        "id": "7SMDOS",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 41,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "kg_total": 647,
+    "costo_kg": 31267.12,
+    "nombre": "Caturra nitro 1906",
+    "codigo": "Caturranitro1906-19062026",
+    "fecha": "2026-06-19"
+  },
+  {
+    "id": "5GR4YF",
+    "kg_total": 120,
+    "nombre": "GESHA BIO",
+    "costo_kg": 34005.25,
+    "salidas": [
+      {
+        "id": "5SDLCD",
+        "fecha": "2026-09-03",
+        "factura": "",
+        "remision": "2777",
+        "cliente": "UBA Tostado",
+        "destino_key": "uba_tostado",
+        "peso_salida": 36,
+        "valor_kg": 34005,
+        "valor_total": 1224180,
+        "observaciones": ""
+      }
+    ],
+    "codigo": "GESHABIO-07092026",
+    "fecha": "2026-09-07",
+    "valor_total": 4080630,
+    "producto_comercial": "GESHA BIO",
+    "items": [
+      {
+        "tipo": "bodegabf",
+        "valor_kg": 29368,
+        "codigo": "M 555-REGIONAL-25082026",
+        "key": "bodegabf:sal:MW77NL",
+        "salidaId": "MW77NL",
+        "valor_total": 881040,
+        "reprId": "ESEOBC",
+        "kg_usado": 30
+      },
+      {
+        "valor_kg": 47869,
+        "reprId": "QW46YA",
+        "valor_total": 1436070,
+        "kg_usado": 30,
+        "salidaId": "ZM1P9I",
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:ZM1P9I",
+        "codigo": "M 543-NR-0207"
+      },
+      {
+        "kg_usado": 60,
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:MM0YH5",
+        "reprId": "R0FUL2",
+        "valor_total": 1763520,
+        "codigo": "M 555-REGIONAL-25082026",
+        "salidaId": "MM0YH5",
+        "valor_kg": 29392
+      }
+    ]
+  },
+  {
+    "id": "5NES06",
+    "salidas": [
+      {
+        "peso_salida": 10,
+        "fecha": "2026-08-04",
+        "id": "4H6QJ8",
+        "valor_total": 318480,
+        "observaciones": "",
+        "valor_kg": 31848,
+        "destino_key": "otro",
+        "factura": "17801",
+        "remision": "",
+        "cliente": "QUAT",
+        "precio_venta_kg": 144225
+      }
+    ],
+    "items": [
+      {
+        "tipo": "bodegabf",
+        "kg_usado": 8,
+        "key": "bodegabf:sal:LDYJPT",
+        "codigo": "M 538-REGIONAL-1906",
+        "valor_total": 202168,
+        "salidaId": "LDYJPT",
+        "reprId": "9Q4W4Q",
+        "valor_kg": 25271
+      },
+      {
+        "reprId": "OPNCI0",
+        "valor_total": 243708.90000000002,
+        "codigo": "M 493-MB-2702",
+        "valor_kg": 40618.15,
+        "salidaId": "3SPQ0B",
+        "tipo": "bodegabf",
+        "kg_usado": 6,
+        "key": "bodegabf:sal:3SPQ0B"
+      }
+    ],
+    "producto_comercial": "SUDAN BIO",
+    "nombre": "SUDAN BIO",
+    "codigo": "SUDANBIO-04082026",
+    "valor_total": 445876.9,
+    "fecha": "2026-08-04",
+    "kg_total": 14,
+    "costo_kg": 31848.350000000002
+  },
+  {
+    "id": "5O889C",
+    "nombre": "PINK BOURBON",
+    "fecha": "2026-09-08",
+    "codigo": "PINKBOURBON-08092026",
+    "producto_comercial": "PINK BOURBON",
+    "items": [
+      {
+        "key": "bodegabf:sal:5LKYC2",
+        "salidaId": "5LKYC2",
+        "reprId": "8TDLMZ",
+        "codigo": "M544-DR-14072026",
+        "valor_kg": 57148,
+        "kg_usado": 3.1,
+        "tipo": "bodegabf",
+        "valor_total": 177158.80000000002
+      },
+      {
+        "key": "bodegabf:sal:LDXECB",
+        "salidaId": "LDXECB",
+        "reprId": "QW46YA",
+        "codigo": "M 543-NR-0207",
+        "valor_kg": 47869,
+        "kg_usado": 3.1,
+        "tipo": "bodegabf",
+        "valor_total": 148393.9
+      },
+      {
+        "key": "bodegabf:sal:DTHLQY",
+        "salidaId": "DTHLQY",
+        "reprId": "R0FUL2",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_kg": 29392,
+        "kg_usado": 24.3,
+        "tipo": "bodegabf",
+        "valor_total": 714225.6
+      }
+    ],
+    "kg_total": 30.5,
+    "valor_total": 1039778.3,
+    "costo_kg": 34091.09180327869,
+    "salidas": [
+      {
+        "id": "2PM8H5",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "",
+        "cliente": "KWC",
+        "destino_key": "otro",
+        "peso_salida": 30.5,
+        "valor_kg": 34091,
+        "valor_total": 1039775.5,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "64H33S",
+    "costo_kg": 45245.74909090909,
+    "codigo": "GESHANITRO-24082026",
+    "nombre": "GESHA NITRO",
+    "valor_total": 4977032.4,
+    "salidas": [
+      {
+        "id": "2AIMRA",
+        "fecha": "2026-08-26",
+        "factura": "18334",
+        "remision": "",
+        "cliente": "SUNTERRA",
+        "destino_key": "otro",
+        "peso_salida": 97,
+        "valor_kg": 45246,
+        "valor_total": 4388862,
+        "observaciones": "",
+        "precio_venta_kg": 62000
+      }
+    ],
+    "items": [
+      {
+        "key": "bodegabf:sal:RYAFJP",
+        "salidaId": "RYAFJP",
+        "reprId": "1JHLVX",
+        "codigo": "CTG-SD-11072026",
+        "valor_kg": 71933,
+        "kg_usado": 30,
+        "tipo": "bodegabf",
+        "valor_total": 2157990
+      },
+      {
+        "key": "bodegabf:sal:3LFTHU",
+        "salidaId": "3LFTHU",
+        "reprId": "UYZVJQ",
+        "codigo": "Caturra Chiroso",
+        "valor_kg": 35238.03,
+        "kg_usado": 80,
+        "tipo": "bodegabf",
+        "valor_total": 2819042.4
+      }
+    ],
+    "fecha": "2026-08-24",
+    "producto_comercial": "GESHA NITRO",
+    "kg_total": 110
+  },
+  {
+    "id": "8Z5K8U",
+    "costo_kg": 56047.95986622074,
+    "codigo": "MAYPOPV4-14092026",
+    "nombre": "MAYPOP V4",
+    "items": [
+      {
+        "kg_usado": 3,
+        "key": "finolote:sal:CXOQPL",
+        "reprId": "QYVULD",
+        "tipo": "finolote",
+        "valor_kg": 48047.82608695652,
+        "valor_total": 144143.47826086957,
+        "codigo": "CF 231-CHIROSO L2-27082026",
+        "salidaId": "CXOQPL"
+      },
+      {
+        "key": "bodegabf:sal:NRTH5Z",
+        "salidaId": "NRTH5Z",
+        "reprId": "PRXFAP",
+        "valor_total": 584480,
+        "kg_usado": 10,
+        "codigo": "MAYPOP-07082026",
+        "tipo": "bodegabf",
+        "valor_kg": 58448
+      }
+    ],
+    "producto_comercial": "MAYPOP",
+    "salidas": [
+      {
+        "id": "52IJKM",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "MUESTRA",
+        "destino_key": "otro",
+        "peso_salida": 1,
+        "valor_kg": 56048,
+        "valor_total": 56048,
+        "observaciones": ""
+      },
+      {
+        "id": "SZHHYC",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "057-2026",
+        "cliente": "MAME",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 56048,
+        "valor_total": 672576,
+        "observaciones": ""
+      }
+    ],
+    "kg_total": 13,
+    "fecha": "2026-09-14",
+    "valor_total": 728623.4782608696
+  },
+  {
+    "id": "A89LJK",
+    "valor_total": 261847.97,
+    "kg_total": 6.1,
+    "codigo": "SIDRABIO-04082026",
+    "nombre": "SIDRA BIO",
+    "salidas": [
+      {
+        "valor_kg": 42926,
+        "factura": "17801",
+        "id": "HQ1AC4",
+        "destino_key": "otro",
+        "observaciones": "",
+        "cliente": "QUAT",
+        "peso_salida": 5,
+        "remision": "",
+        "valor_total": 214630,
+        "precio_venta_kg": 48075,
+        "fecha": "2026-08-04"
+      },
+      {
+        "peso_salida": -4.440892098500626e-16,
+        "id": "1MVD39",
+        "remision": "",
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "fecha": "2026-09-03",
+        "factura": "AJUSTE-INV-09-2026",
+        "valor_total": 0,
+        "observaciones": "",
+        "cliente": "Ajuste de Inventario"
+      }
+    ],
+    "fecha": "2026-08-04",
+    "items": [
+      {
+        "reprId": "TLR42B",
+        "valor_total": 183467.4,
+        "salidaId": "QRUD66",
+        "kg_usado": 5.1,
+        "key": "finolote:sal:QRUD66",
+        "valor_kg": 35974,
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "tipo": "finolote"
+      },
+      {
+        "tipo": "bodegabf",
+        "valor_kg": 78380.57,
+        "key": "bodegabf:sal:JH7E51",
+        "kg_usado": 1,
+        "reprId": "Z6G88K",
+        "valor_total": 78380.57,
+        "salidaId": "JH7E51",
+        "codigo": "M 531-NR-0806"
+      }
+    ],
+    "producto_comercial": "SIDRA BIO",
+    "costo_kg": 42925.89672131148
+  },
+  {
+    "id": "AULUGX",
+    "items": [
+      {
+        "valor_total": 4316880,
+        "reprId": "TLR42B",
+        "kg_usado": 120,
+        "valor_kg": 35974,
+        "salidaId": "MS162L",
+        "key": "finolote:sal:MS162L",
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "tipo": "finolote"
+      },
+      {
+        "key": "bodegabf:sal:Q92HDN",
+        "salidaId": "Q92HDN",
+        "reprId": "OPNCI0",
+        "valor_total": 2030907.5,
+        "tipo": "bodegabf",
+        "codigo": "M 493-MB-2702",
+        "valor_kg": 40618.15,
+        "kg_usado": 50
+      }
+    ],
+    "salidas": [
+      {
+        "factura": "",
+        "fecha": "2026-07-17",
+        "valor_total": 560100,
+        "destino_key": "otro",
+        "cliente": "PASILLA",
+        "valor_kg": 37340,
+        "id": "774ME8",
+        "remision": "",
+        "peso_salida": 15,
+        "observaciones": ""
+      },
+      {
+        "fecha": "2026-07-17",
+        "valor_kg": 37340,
+        "valor_total": 5601000,
+        "factura": "16837",
+        "remision": "1407",
+        "observaciones": "",
+        "peso_salida": 150,
+        "id": "B9VOBI",
+        "precio_venta_kg": 59305,
+        "destino_key": "otro",
+        "cliente": "VAYGAS SAS TANAT"
+      },
+      {
+        "id": "FRNBZI",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 5,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "fecha": "2026-07-17",
+    "producto_comercial": "SUDAN BIO",
+    "nombre": "SUDAN BIO",
+    "kg_total": 170,
+    "codigo": "SUDANBIO-17072026",
+    "costo_kg": 37339.92647058824,
+    "valor_total": 6347787.5
+  },
+  {
+    "id": "BL9K05",
+    "kg_total": 436,
+    "items": [
+      {
+        "key": "bodegabf:sal:4HK2U5",
+        "salidaId": "4HK2U5",
+        "reprId": "FAPZ67",
+        "codigo": "CF-CHIROSO L2-06082026",
+        "valor_kg": 27896.4,
+        "kg_usado": 136.2,
+        "tipo": "bodegabf",
+        "valor_total": 3799489.6799999997
+      },
+      {
+        "key": "bodegabf:sal:96U7AO",
+        "salidaId": "96U7AO",
+        "reprId": "JDWR5N",
+        "codigo": "CF-CHIROSO L1-06082026",
+        "valor_kg": 27896.4,
+        "kg_usado": 195.8,
+        "tipo": "bodegabf",
+        "valor_total": 5462115.120000001
+      },
+      {
+        "key": "bodegabf:sal:O44MOA",
+        "salidaId": "O44MOA",
+        "reprId": "SS88SQ",
+        "codigo": "CF-GESHA-06082026",
+        "valor_kg": 51875,
+        "kg_usado": 104,
+        "tipo": "bodegabf",
+        "valor_total": 5395000
+      }
+    ],
+    "fecha": "2026-08-18",
+    "costo_kg": 33616.06605504587,
+    "producto_comercial": "GESHA",
+    "codigo": "CONCURSOCALIDADES-18082026",
+    "salidas": [
+      {
+        "id": "MRW8Y1",
+        "fecha": "2026-08-18",
+        "factura": "",
+        "remision": "",
+        "cliente": "FNC",
+        "destino_key": "otro",
+        "peso_salida": 436,
+        "valor_kg": 33616,
+        "valor_total": 14656576,
+        "observaciones": ""
+      }
+    ],
+    "valor_total": 14656604.8,
+    "nombre": "CONCURSO CALIDADES"
+  },
+  {
+    "id": "D0HJFV",
+    "salidas": [
+      {
+        "id": "QO5OXH",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 14,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "kg_total": 14,
+    "producto_comercial": "WUSH WUSH",
+    "costo_kg": 45072.32,
+    "mes": "mayo",
+    "items": [],
+    "fecha": "2026-05-20",
+    "nombre": "Wush 2005",
+    "codigo": "Wush2005-20052026",
+    "valor_total": 631012.48
+  },
+  {
+    "id": "DTVHF4",
+    "items": [
+      {
+        "tipo": "finolote",
+        "codigo": "CF 229-MB-01092026",
+        "kg_usado": 74,
+        "key": "finolote:sal:QFZGG4",
+        "valor_total": 4176782,
+        "reprId": "VJ80OR",
+        "salidaId": "QFZGG4",
+        "valor_kg": 56443
+      },
+      {
+        "tipo": "bodegabf",
+        "valor_kg": 29392,
+        "key": "bodegabf:sal:200F7G",
+        "salidaId": "200F7G",
+        "codigo": "M 555-REGIONAL-25082026",
+        "kg_usado": 416,
+        "valor_total": 12227072,
+        "reprId": "R0FUL2"
+      }
+    ],
+    "fecha": "2026-09-08",
+    "valor_total": 16403854,
+    "producto_comercial": "SUDAN BIO",
+    "nombre": "SUDAN BIO",
+    "costo_kg": 33477.25306122449,
+    "salidas": [
+      {
+        "id": "KRCHVA",
+        "remision": "",
+        "valor_total": 301293,
+        "fecha": "2026-09-08",
+        "factura": "",
+        "peso_salida": 9,
+        "valor_kg": 33477,
+        "cliente": "PASILLA",
+        "destino_key": "otro",
+        "observaciones": ""
+      },
+      {
+        "id": "291557",
+        "fecha": "2026-09-09",
+        "factura": "",
+        "remision": "",
+        "cliente": "QIMA",
+        "destino_key": "otro",
+        "peso_salida": 481,
+        "valor_kg": 33477,
+        "valor_total": 16102437,
+        "observaciones": ""
+      }
+    ],
+    "codigo": "SUDANBIO-08092026",
+    "kg_total": 490
+  },
+  {
+    "id": "E4ER1N",
+    "valor_total": 904664.28,
+    "salidas": [
+      {
+        "cliente": "SOLAR CANADA",
+        "factura": "17741",
+        "id": "L0L6SJ",
+        "remision": "",
+        "observaciones": "",
+        "valor_total": 822420,
+        "destino_key": "otro",
+        "valor_kg": 41121,
+        "fecha": "2026-08-04",
+        "peso_salida": 20,
+        "precio_venta_kg": 96150
+      }
+    ],
+    "producto_comercial": "GESHA",
+    "items": [
+      {
+        "tipo": "bodegabf",
+        "kg_usado": 19,
+        "valor_kg": 35238.03,
+        "codigo": "Caturra Chiroso",
+        "reprId": "UYZVJQ",
+        "key": "bodegabf:sal:YL04WV",
+        "salidaId": "YL04WV",
+        "valor_total": 669522.57
+      },
+      {
+        "reprId": "Z6G88K",
+        "codigo": "M 531-NR-0806",
+        "valor_total": 235141.71000000002,
+        "kg_usado": 3,
+        "valor_kg": 78380.57,
+        "salidaId": "VJOK62",
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:VJOK62"
+      }
+    ],
+    "fecha": "2026-08-04",
+    "nombre": "GESHA",
+    "kg_total": 22,
+    "codigo": "GESHA-04082026",
+    "costo_kg": 41121.10363636364
+  },
+  {
+    "id": "EUM4PT",
+    "costo_kg": 49969.9,
+    "producto_comercial": "CATURRA NITRO",
+    "kg_total": 400,
+    "nombre": "CATURRAA NITRO",
+    "codigo": "CATURRAANITRO-05092026",
+    "items": [
+      {
+        "reprId": "GR0D01",
+        "salidaId": "S0H8E5",
+        "key": "finolote:sal:S0H8E5",
+        "kg_usado": 100,
+        "codigo": "CF 230-REGIONAL NARIÑO-01092026",
+        "tipo": "finolote",
+        "valor_total": 3279700,
+        "valor_kg": 32797
+      },
+      {
+        "salidaId": "7B3I6E",
+        "tipo": "bodegabf",
+        "valor_total": 3524160,
+        "key": "bodegabf:sal:7B3I6E",
+        "kg_usado": 120,
+        "reprId": "ESEOBC",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_kg": 29368
+      },
+      {
+        "kg_usado": 180,
+        "codigo": "M 526-SD-2505",
+        "tipo": "bodegabf",
+        "salidaId": "0UPVT0",
+        "reprId": "IL9BIL",
+        "key": "bodegabf:sal:0UPVT0",
+        "valor_kg": 73245,
+        "valor_total": 13184100
+      }
+    ],
+    "valor_total": 19987960,
+    "salidas": [
+      {
+        "id": "KM5XUV",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "052-2026",
+        "cliente": "VAYGAS SAS TANAT",
+        "destino_key": "otro",
+        "peso_salida": 33,
+        "valor_kg": 49970,
+        "valor_total": 1649010,
+        "observaciones": ""
+      }
+    ],
+    "fecha": "2026-09-05"
+  },
+  {
+    "id": "G23I80",
+    "kg_total": 166,
+    "valor_total": 6475450.96,
+    "producto_comercial": "TOFFEE",
+    "salidas": [
+      {
+        "valor_kg": 39009,
+        "factura": "17800",
+        "peso_salida": 120,
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "destino_key": "otro",
+        "remision": "",
+        "id": "5ZK4H3",
+        "observaciones": "",
+        "precio_venta_kg": 53516,
+        "fecha": "2026-07-31",
+        "valor_total": 4681080
+      },
+      {
+        "observaciones": "",
+        "valor_total": 1501846.5,
+        "remision": "",
+        "valor_kg": 39009,
+        "cliente": "UBA Tostado",
+        "fecha": "2026-08-26",
+        "destino_key": "uba_tostado",
+        "id": "K4J4AW",
+        "peso_salida": 38.5,
+        "factura": ""
+      },
+      {
+        "fecha": "2026-09-03",
+        "valor_kg": 0,
+        "factura": "AJUSTE-INV-09-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "valor_total": 0,
+        "id": "QNMS85",
+        "peso_salida": -2,
+        "observaciones": "",
+        "destino_key": "ajuste_inventario"
+      }
+    ],
+    "costo_kg": 39008.74072289157,
+    "fecha": "2026-08-03",
+    "nombre": "TOFFEE",
+    "codigo": "TOFFEE-03082026",
+    "items": [
+      {
+        "key": "bodegabf:sal:X6WLCK",
+        "salidaId": "X6WLCK",
+        "valor_total": 5493368.46,
+        "tipo": "bodegabf",
+        "codigo": "BB 1401",
+        "valor_kg": 38960.06,
+        "reprId": "KSJF2O",
+        "kg_usado": 141
+      },
+      {
+        "tipo": "bodegabf",
+        "valor_total": 982082.5000000001,
+        "key": "bodegabf:sal:2HSGO5",
+        "kg_usado": 25,
+        "valor_kg": 39283.3,
+        "reprId": "WDXN7X",
+        "codigo": "BB 1111",
+        "salidaId": "2HSGO5"
+      }
+    ]
+  },
+  {
+    "id": "G7R3E1",
+    "valor_total": 3376595.35,
+    "salidas": [
+      {
+        "valor_total": 135064,
+        "observaciones": "",
+        "valor_kg": 67532,
+        "cliente": "PASILLA",
+        "fecha": "2026-07-17",
+        "peso_salida": 2,
+        "factura": "",
+        "id": "NAIW9R",
+        "destino_key": "otro",
+        "remision": ""
+      },
+      {
+        "peso_salida": 48,
+        "cliente": "VAYGAS SAS TANAT",
+        "id": "9A7W3M",
+        "remision": "1407",
+        "valor_total": 3241536,
+        "fecha": "2026-07-17",
+        "destino_key": "otro",
+        "valor_kg": 67532,
+        "observaciones": "",
+        "factura": "16837",
+        "precio_venta_kg": 75504
+      }
+    ],
+    "fecha": "2026-07-17",
+    "producto_comercial": "GESHA",
+    "nombre": "GESHA 2",
+    "costo_kg": 67531.907,
+    "kg_total": 50,
+    "items": [
+      {
+        "codigo": "CF-149-GESHA LUIS-01052026",
+        "valor_total": 2984692.5,
+        "salidaId": "O04QWW",
+        "valor_kg": 66326.5,
+        "kg_usado": 45,
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:O04QWW",
+        "reprId": "ETMJGU"
+      },
+      {
+        "salidaId": "8FY67O",
+        "key": "bodegabf:sal:8FY67O",
+        "valor_total": 391902.85000000003,
+        "valor_kg": 78380.57,
+        "tipo": "bodegabf",
+        "codigo": "M 531-NR-0806",
+        "reprId": "Z6G88K",
+        "kg_usado": 5
+      }
+    ],
+    "codigo": "GESHA2-17072026"
+  },
+  {
+    "id": "GW3B7G",
+    "kg_total": 24,
+    "costo_kg": 49820.66,
+    "producto_comercial": "SIDRA BIO",
+    "salidas": [
+      {
+        "id": "LT7KON",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 24,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "valor_total": 1195695.84,
+    "fecha": "2026-05-13",
+    "codigo": "SidraBio1305-13052026",
+    "mes": "mayo",
+    "nombre": "Sidra Bio 1305",
+    "items": []
+  },
+  {
+    "id": "HIAQVJ",
+    "nombre": "MAYPOP COMPETITION",
+    "fecha": "2026-06-04",
+    "codigo": "MAYPOPCOMPETITION-04062026",
+    "mes": "junio",
+    "producto_comercial": "MAYPOP",
+    "items": [],
+    "kg_total": 26,
+    "valor_total": 1512699.5,
+    "costo_kg": 58180.75,
+    "salidas": []
+  },
+  {
+    "id": "ILWZ4T",
+    "costo_kg": 36403.292297476764,
+    "salidas": [
+      {
+        "valor_kg": 36403,
+        "destino_key": "otro",
+        "fecha": "2026-08-26",
+        "observaciones": "",
+        "factura": "18334",
+        "id": "1Z4FE4",
+        "remision": "",
+        "peso_salida": 179,
+        "valor_total": 6516137,
+        "cliente": "SUNTERRA",
+        "precio_venta_kg": 62000
+      },
+      {
+        "valor_kg": 36403,
+        "id": "VWCUVR",
+        "destino_key": "otro",
+        "peso_salida": 122,
+        "fecha": "2026-08-26",
+        "factura": "18334",
+        "cliente": "SUNTERRA",
+        "remision": "",
+        "valor_total": 4441166,
+        "observaciones": "",
+        "precio_venta_kg": 62000
+      },
+      {
+        "fecha": "2026-08-26",
+        "observaciones": "",
+        "valor_kg": 36403,
+        "destino_key": "otro",
+        "id": "0RTM3E",
+        "peso_salida": 14,
+        "factura": "",
+        "valor_total": 509642,
+        "remision": "",
+        "cliente": "PASILLA"
+      },
+      {
+        "peso_salida": 72,
+        "fecha": "2026-08-26",
+        "valor_total": 2621016,
+        "valor_kg": 36403,
+        "id": "QJQ2SQ",
+        "precio_venta_kg": 95354,
+        "observaciones": "",
+        "cliente": "AMBERA SAS",
+        "factura": "18308",
+        "destino_key": "otro",
+        "remision": ""
+      },
+      {
+        "id": "Q5RVBA",
+        "fecha": "2026-08-26",
+        "factura": "18333",
+        "remision": "",
+        "cliente": "SUNTERRA",
+        "destino_key": "otro",
+        "peso_salida": 352,
+        "valor_kg": 36403,
+        "valor_total": 12813856,
+        "observaciones": "",
+        "precio_venta_kg": 62000
+      }
+    ],
+    "nombre": "SUDAN BIO",
+    "kg_total": 753,
+    "codigo": "SUDANBIO-24082026",
+    "items": [
+      {
+        "tipo": "finolote",
+        "salidaId": "1NZU7B",
+        "codigo": "CF221-BIO-30072026",
+        "reprId": "4OLCRZ",
+        "key": "finolote:sal:1NZU7B",
+        "kg_usado": 70,
+        "valor_kg": 68300,
+        "valor_total": 4781000
+      },
+      {
+        "reprId": "VBN44V",
+        "codigo": "CF222-BIO-30072026",
+        "kg_usado": 49,
+        "key": "finolote:sal:0I4R0M",
+        "valor_kg": 55468,
+        "salidaId": "0I4R0M",
+        "valor_total": 2717932,
+        "tipo": "finolote"
+      },
+      {
+        "reprId": "9Q4W4Q",
+        "key": "bodegabf:sal:TQW329",
+        "kg_usado": 76,
+        "codigo": "M 538-REGIONAL-1906",
+        "valor_kg": 25271,
+        "valor_total": 1920596,
+        "salidaId": "TQW329",
+        "tipo": "bodegabf"
+      },
+      {
+        "valor_kg": 26196,
+        "key": "bodegabf:sal:X1U13T",
+        "kg_usado": 324,
+        "valor_total": 8487504,
+        "reprId": "KZSLGC",
+        "tipo": "bodegabf",
+        "codigo": "M 530-REGIONAL 1-0406",
+        "salidaId": "X1U13T"
+      },
+      {
+        "valor_total": 9504647.1,
+        "salidaId": "UWB4GD",
+        "kg_usado": 234,
+        "valor_kg": 40618.15,
+        "tipo": "bodegabf",
+        "reprId": "OPNCI0",
+        "codigo": "M 493-MB-2702",
+        "key": "bodegabf:sal:UWB4GD"
+      }
+    ],
+    "valor_total": 27411679.1,
+    "producto_comercial": "SUDAN BIO",
+    "fecha": "2026-08-24"
+  },
+  {
+    "id": "JQ16KG",
+    "producto_comercial": "BORBON SIDRA",
+    "items": [
+      {
+        "key": "finolote:sal:IV9KPE",
+        "salidaId": "IV9KPE",
+        "tipo": "finolote",
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "valor_kg": 35974,
+        "valor_total": 2374284,
+        "reprId": "TLR42B",
+        "kg_usado": 66
+      },
+      {
+        "valor_kg": 78380.57,
+        "codigo": "M 531-NR-0806",
+        "salidaId": "R3UJWK",
+        "kg_usado": 17,
+        "key": "bodegabf:sal:R3UJWK",
+        "valor_total": 1332469.6900000002,
+        "tipo": "bodegabf",
+        "reprId": "Z6G88K"
+      }
+    ],
+    "nombre": "BORBON SIDRA",
+    "fecha": "2026-07-17",
+    "valor_total": 3706753.6900000004,
+    "salidas": [
+      {
+        "valor_total": 267960,
+        "observaciones": "",
+        "destino_key": "otro",
+        "remision": "",
+        "cliente": "PASILLA",
+        "factura": "",
+        "peso_salida": 6,
+        "fecha": "2026-07-17",
+        "valor_kg": 44660,
+        "id": "19TTL0"
+      },
+      {
+        "cliente": "AGROPECUARIA ORGANICA TATAMA",
+        "valor_total": 3349500,
+        "fecha": "2026-07-17",
+        "destino_key": "otro",
+        "valor_kg": 44660,
+        "id": "GEMAOT",
+        "factura": "17522",
+        "observaciones": "",
+        "remision": "1407",
+        "peso_salida": 75,
+        "precio_venta_kg": 99161
+      },
+      {
+        "valor_kg": 44660,
+        "factura": "",
+        "peso_salida": 2,
+        "remision": "",
+        "observaciones": "",
+        "cliente": "MUESTRA",
+        "id": "P1OYBZ",
+        "destino_key": "otro",
+        "fecha": "2026-07-17",
+        "valor_total": 89320
+      }
+    ],
+    "kg_total": 83,
+    "costo_kg": 44659.6830120482,
+    "codigo": "BORBONSIDRA-17072026"
+  },
+  {
+    "id": "JXQAZR",
+    "salidas": [
+      {
+        "valor_kg": 37178,
+        "id": "A2U7ZZ",
+        "fecha": "2026-07-17",
+        "observaciones": "",
+        "valor_total": 223068,
+        "cliente": "PASILLA",
+        "factura": "",
+        "remision": "",
+        "destino_key": "otro",
+        "peso_salida": 6
+      },
+      {
+        "valor_kg": 37178,
+        "id": "PARMWC",
+        "fecha": "2026-07-17",
+        "observaciones": "",
+        "cliente": "DEVOTION",
+        "valor_total": 1784544,
+        "remision": "1607",
+        "factura": "",
+        "destino_key": "otro",
+        "peso_salida": 48
+      }
+    ],
+    "items": [
+      {
+        "key": "finolote:sal:A25M1E",
+        "tipo": "finolote",
+        "salidaId": "A25M1E",
+        "reprId": "TLR42B",
+        "valor_total": 1438960,
+        "valor_kg": 35974,
+        "kg_usado": 40,
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026"
+      },
+      {
+        "key": "bodegabf:sal:4E443V",
+        "tipo": "bodegabf",
+        "reprId": "OPNCI0",
+        "valor_total": 568654.1,
+        "salidaId": "4E443V",
+        "valor_kg": 40618.15,
+        "kg_usado": 14,
+        "codigo": "M 493-MB-2702"
+      }
+    ],
+    "valor_total": 2007614.1,
+    "codigo": "SUDANBIO-2-17072026",
+    "kg_total": 54,
+    "costo_kg": 37178.03888888889,
+    "fecha": "2026-07-17",
+    "producto_comercial": "SUDAN BIO ",
+    "nombre": "SUDAN BIO -2"
+  },
+  {
+    "id": "K0TM8J",
+    "nombre": "SUDAN BIO",
+    "fecha": "2026-09-04",
+    "codigo": "SUDANBIO-04092026",
+    "producto_comercial": "SUDAN BIO",
+    "kg_total": 780,
+    "valor_total": 31279297.5,
+    "items": [
+      {
+        "codigo": "CF 230-REGIONAL NARIÑO-01092026",
+        "salidaId": "CBX4C7",
+        "kg_usado": 550,
+        "valor_kg": 32797,
+        "valor_total": 18038350,
+        "key": "finolote:sal:CBX4C7",
+        "tipo": "finolote",
+        "reprId": "GR0D01"
+      },
+      {
+        "valor_total": 8725507.5,
+        "valor_kg": 58170.05,
+        "kg_usado": 150,
+        "reprId": "OFY986",
+        "salidaId": "FVXQ0G",
+        "codigo": "CF 187-L 17-0406",
+        "key": "finolote:sal:FVXQ0G",
+        "tipo": "finolote"
+      },
+      {
+        "reprId": "VJ80OR",
+        "tipo": "finolote",
+        "valor_kg": 56443,
+        "codigo": "CF 229-MB-01092026",
+        "salidaId": "CEIHR6",
+        "key": "finolote:sal:CEIHR6",
+        "valor_total": 4515440,
+        "kg_usado": 80
+      }
+    ],
+    "salidas": [
+      {
+        "factura": "",
+        "observaciones": "",
+        "valor_total": 601530,
+        "peso_salida": 15,
+        "fecha": "2026-09-04",
+        "id": "MMR20Y",
+        "destino_key": "otro",
+        "cliente": "PASILLA",
+        "remision": "",
+        "valor_kg": 40102
+      },
+      {
+        "id": "LHJ1VK",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "052-2026",
+        "cliente": "VAYGAS SAS TANAT",
+        "destino_key": "otro",
+        "peso_salida": 480,
+        "valor_kg": 40102,
+        "valor_total": 19248960,
+        "observaciones": ""
+      }
+    ],
+    "costo_kg": 40101.66346153846
+  },
+  {
+    "id": "K1V8QQ",
+    "producto_comercial": "SIDRA BIO",
+    "nombre": "SIDRA BIO",
+    "items": [
+      {
+        "key": "finolote:sal:C3TEXA",
+        "reprId": "GR0D01",
+        "kg_usado": 495,
+        "salidaId": "C3TEXA",
+        "codigo": "CF 230-REGIONAL NARIÑO-01092026",
+        "valor_total": 16234515,
+        "tipo": "finolote",
+        "valor_kg": 32797
+      },
+      {
+        "key": "bodegabf:sal:PFDQAJ",
+        "valor_total": 1340332,
+        "codigo": "M 543-NR-0207",
+        "valor_kg": 47869,
+        "reprId": "QW46YA",
+        "tipo": "bodegabf",
+        "salidaId": "PFDQAJ",
+        "kg_usado": 28
+      },
+      {
+        "kg_usado": 27,
+        "tipo": "bodegabf",
+        "reprId": "Z6G88K",
+        "codigo": "M 531-NR-0806",
+        "key": "bodegabf:sal:3JQZV4",
+        "salidaId": "3JQZV4",
+        "valor_kg": 78380.57,
+        "valor_total": 2116275.39
+      }
+    ],
+    "codigo": "SIDRABIO-04092026",
+    "kg_total": 550,
+    "costo_kg": 35802.04070909091,
+    "valor_total": 19691122.39,
+    "fecha": "2026-09-04",
+    "salidas": [
+      {
+        "valor_kg": 35802,
+        "observaciones": "",
+        "factura": "",
+        "cliente": "PASILLA",
+        "fecha": "2026-09-04",
+        "peso_salida": 13,
+        "id": "EQOZY6",
+        "remision": "",
+        "valor_total": 465426,
+        "destino_key": "otro"
+      },
+      {
+        "id": "13MD4V",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "052-2026",
+        "cliente": "VAYGAS SAS TANAT",
+        "destino_key": "otro",
+        "peso_salida": 480,
+        "valor_kg": 35802,
+        "valor_total": 17184960,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "K67JMX",
+    "kg_total": 13,
+    "producto_comercial": "MAYPOP",
+    "items": [
+      {
+        "valor_total": 681397.6,
+        "salidaId": "5SFOZ0",
+        "codigo": "CF210-SL 28 150726-15072026",
+        "valor_kg": 65519,
+        "tipo": "finolote",
+        "key": "finolote:sal:5SFOZ0",
+        "reprId": "LF4715",
+        "kg_usado": 10.4
+      },
+      {
+        "reprId": "PRXFAP",
+        "kg_usado": 2.6,
+        "key": "bodegabf:sal:AJSV9T",
+        "valor_kg": 58448,
+        "codigo": "MAYPOP-07082026",
+        "salidaId": "AJSV9T",
+        "valor_total": 151964.80000000002,
+        "tipo": "bodegabf"
+      }
+    ],
+    "salidas": [
+      {
+        "id": "K096JS",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "MUESTRA",
+        "destino_key": "otro",
+        "peso_salida": 1,
+        "valor_kg": 64105,
+        "valor_total": 64105,
+        "observaciones": ""
+      },
+      {
+        "id": "5SJYPI",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "057-2026",
+        "cliente": "MAME",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 64105,
+        "valor_total": 769260,
+        "observaciones": ""
+      }
+    ],
+    "costo_kg": 64104.8,
+    "codigo": "MAYPOPV1-31082026",
+    "valor_total": 833362.4,
+    "fecha": "2026-08-31",
+    "nombre": "MAYPOP V1"
+  },
+  {
+    "id": "M6S6CS",
+    "nombre": "LOGAN",
+    "salidas": [
+      {
+        "valor_kg": 33910,
+        "cliente": "AMBERA SAS",
+        "destino_key": "otro",
+        "observaciones": "",
+        "factura": "18308",
+        "peso_salida": 96,
+        "remision": "",
+        "id": "4W7AZZ",
+        "fecha": "2026-08-26",
+        "precio_venta_kg": 58802,
+        "valor_total": 3255360
+      },
+      {
+        "destino_key": "otro",
+        "cliente": "SABO INC",
+        "valor_kg": 33910,
+        "peso_salida": 145,
+        "fecha": "2026-08-25",
+        "factura": "",
+        "remision": "",
+        "valor_total": 4916950,
+        "id": "X5V5Z2",
+        "observaciones": ""
+      },
+      {
+        "factura": "AJUSTE-INV-09-2026",
+        "remision": "",
+        "valor_total": 0,
+        "cliente": "Ajuste de Inventario",
+        "valor_kg": 0,
+        "fecha": "2026-09-03",
+        "peso_salida": -26,
+        "observaciones": "",
+        "id": "IGU6LP",
+        "destino_key": "ajuste_inventario"
+      },
+      {
+        "remision": "2779",
+        "peso_salida": 24,
+        "id": "R9KEMK",
+        "destino_key": "otro",
+        "observaciones": "",
+        "factura": "",
+        "valor_kg": 33910,
+        "valor_total": 813840,
+        "cliente": "LA COLINA",
+        "fecha": "2026-09-08"
+      },
+      {
+        "id": "H2KKQE",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "OTHER WORLDLY SAS",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 33910,
+        "valor_total": 406920,
+        "observaciones": ""
+      }
+    ],
+    "kg_total": 310,
+    "fecha": "2026-08-24",
+    "valor_total": 10512109,
+    "items": [
+      {
+        "valor_total": 580957,
+        "tipo": "bodegabf",
+        "salidaId": "MPPYHJ",
+        "key": "bodegabf:sal:MPPYHJ",
+        "valor_kg": 25259,
+        "kg_usado": 23,
+        "reprId": "6ZWXU9",
+        "codigo": "M 538-REGIONAL-1906"
+      },
+      {
+        "salidaId": "2NVRKO",
+        "valor_kg": 26196,
+        "kg_usado": 187,
+        "key": "bodegabf:sal:2NVRKO",
+        "valor_total": 4898652,
+        "codigo": "M 530-REGIONAL 1-0406",
+        "reprId": "KZSLGC",
+        "tipo": "bodegabf"
+      },
+      {
+        "valor_kg": 50325,
+        "codigo": "M 497-AR-0603",
+        "kg_usado": 100,
+        "reprId": "VHD119",
+        "tipo": "bodegabf",
+        "salidaId": "44RB59",
+        "key": "bodegabf:sal:44RB59",
+        "valor_total": 5032500
+      }
+    ],
+    "costo_kg": 33910.02903225806,
+    "producto_comercial": "LOGAN",
+    "codigo": "LOGAN-24082026"
+  },
+  {
+    "id": "NZAEM1",
+    "codigo": "BORBONSIDRABIO2307-23072026",
+    "nombre": "BORBON SIDRA BIO 2307",
+    "valor_total": 588449.14,
+    "costo_kg": 42032.08142857143,
+    "fecha": "2026-07-23",
+    "kg_total": 14,
+    "salidas": [
+      {
+        "observaciones": "",
+        "precio_venta_kg": 100337,
+        "valor_kg": 42032,
+        "factura": "17811",
+        "destino_key": "otro",
+        "fecha": "2026-07-23",
+        "valor_total": 546416,
+        "id": "7Z3Q4R",
+        "cliente": "TUYO COFFEE",
+        "remision": "039",
+        "peso_salida": 13
+      },
+      {
+        "factura": "AJUSTE-INV-08-2026",
+        "id": "6WESDU",
+        "valor_total": 0,
+        "valor_kg": 0,
+        "observaciones": "",
+        "peso_salida": 1,
+        "remision": "",
+        "destino_key": "ajuste_inventario",
+        "cliente": "Ajuste de Inventario",
+        "fecha": "2026-08-05"
+      }
+    ],
+    "producto_comercial": "BORBON SIDRA BIO",
+    "items": [
+      {
+        "valor_total": 431688,
+        "salidaId": "8AAT29",
+        "tipo": "finolote",
+        "kg_usado": 12,
+        "key": "finolote:sal:8AAT29",
+        "valor_kg": 35974,
+        "reprId": "TLR42B",
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026"
+      },
+      {
+        "kg_usado": 2,
+        "codigo": "M 531-NR-0806",
+        "key": "bodegabf:sal:N2FZN0",
+        "salidaId": "N2FZN0",
+        "tipo": "bodegabf",
+        "reprId": "Z6G88K",
+        "valor_kg": 78380.57,
+        "valor_total": 156761.14
+      }
+    ]
+  },
+  {
+    "id": "O0EHCZ",
+    "nombre": "BORBON SIDRA",
+    "fecha": "2016-02-28",
+    "codigo": "BORBONSIDRA-28022016",
+    "mes": "febrero",
+    "producto_comercial": "BORBON SIDRA",
+    "items": [],
+    "kg_total": 19,
+    "valor_total": 768493,
+    "costo_kg": 40447,
+    "salidas": []
+  },
+  {
+    "id": "OBWZ46",
+    "fecha": "2026-07-01",
+    "items": [
+      {
+        "valor_total": 11418130.8,
+        "kg_usado": 404,
+        "valor_kg": 28262.7,
+        "codigo": "M 529-REGIONAL 2-0306",
+        "tipo": "bodegabf",
+        "salidaId": "88KIE2",
+        "key": "bodegabf:sal:88KIE2",
+        "reprId": "JDYKC9"
+      },
+      {
+        "tipo": "bodegabf",
+        "reprId": "KNEM1O",
+        "valor_total": 10920559.72,
+        "valor_kg": 50325.16,
+        "kg_usado": 217,
+        "codigo": "M 497-AR-0603",
+        "salidaId": "BEOMRK",
+        "key": "bodegabf:sal:BEOMRK"
+      }
+    ],
+    "codigo": "LOGAN-01072026",
+    "costo_kg": 35972.12644122384,
+    "nombre": "LOGAN",
+    "salidas": [
+      {
+        "peso_salida": 24,
+        "cliente": "PASILLA",
+        "destino_key": "otro",
+        "remision": "",
+        "factura": "",
+        "valor_total": 863328,
+        "id": "SLKO39",
+        "fecha": "2026-07-14",
+        "observaciones": "",
+        "valor_kg": 35972
+      },
+      {
+        "valor_kg": 35972,
+        "destino_key": "otro",
+        "id": "PRUKUD",
+        "peso_salida": 350,
+        "factura": "17394",
+        "observaciones": "",
+        "remision": "036-2026",
+        "precio_venta_kg": 55505,
+        "cliente": "SUNTERRA",
+        "valor_total": 12590200,
+        "fecha": "2026-07-14"
+      },
+      {
+        "observaciones": "",
+        "destino_key": "otro",
+        "remision": "1407",
+        "cliente": "VAYGAS SAS TANAT",
+        "peso_salida": 48,
+        "valor_kg": 35972,
+        "fecha": "2026-07-17",
+        "factura": "16837",
+        "precio_venta_kg": 68640,
+        "id": "RICHPY",
+        "valor_total": 1726656
+      },
+      {
+        "fecha": "2026-07-23",
+        "peso_salida": 80,
+        "id": "K9XW82",
+        "remision": "2107",
+        "valor_kg": 35972,
+        "cliente": "AMATIVO",
+        "destino_key": "otro",
+        "precio_venta_kg": 52500,
+        "valor_total": 2877760,
+        "observaciones": "",
+        "factura": "17570"
+      },
+      {
+        "cliente": "OM World Octavia",
+        "valor_total": 2589984,
+        "precio_venta_kg": 56100,
+        "factura": "17379",
+        "observaciones": "",
+        "valor_kg": 35972,
+        "destino_key": "otro",
+        "remision": "N-38-2026",
+        "fecha": "2026-07-23",
+        "peso_salida": 72,
+        "id": "ARIUKQ"
+      },
+      {
+        "id": "GQ2Q5R",
+        "fecha": "2026-08-25",
+        "factura": "",
+        "remision": "",
+        "cliente": "SABO INC",
+        "destino_key": "otro",
+        "peso_salida": 47,
+        "valor_kg": 35972,
+        "valor_total": 1690684,
+        "observaciones": ""
+      }
+    ],
+    "valor_total": 22338690.520000003,
+    "kg_total": 621,
+    "producto_comercial": "LOGAN"
+  },
+  {
+    "id": "OCVXGP",
+    "salidas": [
+      {
+        "valor_total": 600210,
+        "valor_kg": 40014,
+        "factura": "",
+        "observaciones": "",
+        "peso_salida": 15,
+        "id": "W6D35W",
+        "fecha": "2026-07-14",
+        "cliente": "PASILLA",
+        "remision": "",
+        "destino_key": "otro"
+      },
+      {
+        "factura": "17393",
+        "destino_key": "otro",
+        "remision": "035-2026",
+        "fecha": "2026-07-14",
+        "valor_total": 9603360,
+        "observaciones": "",
+        "id": "YS9GSQ",
+        "valor_kg": 40014,
+        "peso_salida": 240,
+        "precio_venta_kg": 40014,
+        "cliente": "QIMA"
+      },
+      {
+        "valor_kg": 40014,
+        "id": "ZTZOY9",
+        "factura": "17535",
+        "peso_salida": 47,
+        "fecha": "2026-07-17",
+        "valor_total": 1880658,
+        "remision": "1607",
+        "destino_key": "otro",
+        "observaciones": "",
+        "cliente": "Andres Elizalde",
+        "precio_venta_kg": 69000
+      },
+      {
+        "valor_total": 120042,
+        "cliente": "MUESTRA",
+        "observaciones": "",
+        "fecha": "2026-07-17",
+        "peso_salida": 3,
+        "remision": "",
+        "id": "FAN0NZ",
+        "destino_key": "otro",
+        "factura": "",
+        "valor_kg": 40014
+      },
+      {
+        "peso_salida": 3,
+        "remision": "",
+        "factura": "",
+        "valor_total": 120042,
+        "observaciones": "",
+        "valor_kg": 40014,
+        "destino_key": "otro",
+        "id": "ZH1XZ4",
+        "fecha": "2026-07-10",
+        "cliente": "MUESTRA"
+      },
+      {
+        "valor_total": 0,
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "id": "EY7XFS",
+        "peso_salida": 2,
+        "cliente": "Ajuste de Inventario",
+        "fecha": "2026-08-05",
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "observaciones": ""
+      }
+    ],
+    "valor_total": 12404234,
+    "costo_kg": 40013.65806451613,
+    "items": [
+      {
+        "kg_usado": 210,
+        "salidaId": "G9AG3K",
+        "reprId": "9Q4W4Q",
+        "tipo": "bodegabf",
+        "valor_total": 5306910,
+        "key": "bodegabf:sal:G9AG3K",
+        "valor_kg": 25271,
+        "codigo": "M 538-REGIONAL-1906"
+      },
+      {
+        "tipo": "bodegabf",
+        "valor_total": 7097324.000000001,
+        "kg_usado": 100,
+        "salidaId": "AJ3N4C",
+        "key": "bodegabf:sal:AJ3N4C",
+        "reprId": "JD21G5",
+        "codigo": "M 540-SD-2406",
+        "valor_kg": 70973.24
+      }
+    ],
+    "producto_comercial": "CATURRA NITRO",
+    "fecha": "2026-07-02",
+    "codigo": "CATURRANITRO-02072026",
+    "nombre": "CATURRA NITRO",
+    "kg_total": 310
+  },
+  {
+    "id": "PMJW8L",
+    "nombre": "SAKURA",
+    "fecha": "2026-09-08",
+    "codigo": "SAKURA-08092026",
+    "producto_comercial": "SAKURA",
+    "items": [
+      {
+        "key": "bodegabf:sal:L2QW9C",
+        "salidaId": "L2QW9C",
+        "reprId": "8TDLMZ",
+        "codigo": "M544-DR-14072026",
+        "valor_kg": 57148,
+        "kg_usado": 3.5,
+        "tipo": "bodegabf",
+        "valor_total": 200018
+      },
+      {
+        "key": "bodegabf:sal:AXT8IQ",
+        "salidaId": "AXT8IQ",
+        "reprId": "N2KSSN",
+        "codigo": "AGI1506-15062026",
+        "valor_kg": 30700,
+        "kg_usado": 3.2,
+        "tipo": "bodegabf",
+        "valor_total": 98240
+      },
+      {
+        "key": "bodegabf:sal:7B4836",
+        "salidaId": "7B4836",
+        "reprId": "QW46YA",
+        "codigo": "M 543-NR-0207",
+        "valor_kg": 47869,
+        "kg_usado": 6.2,
+        "tipo": "bodegabf",
+        "valor_total": 296787.8
+      },
+      {
+        "key": "bodegabf:sal:5GYQJA",
+        "salidaId": "5GYQJA",
+        "reprId": "R0FUL2",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_kg": 29392,
+        "kg_usado": 12,
+        "tipo": "bodegabf",
+        "valor_total": 352704
+      }
+    ],
+    "kg_total": 24.9,
+    "valor_total": 947749.8,
+    "costo_kg": 38062.24096385542,
+    "salidas": []
+  },
+  {
+    "id": "PXYGQS",
+    "nombre": "NG",
+    "fecha": "2026-09-10",
+    "codigo": "NG-10092026",
+    "producto_comercial": "NG",
+    "items": [
+      {
+        "key": "bodegabf:sal:GT3I4I",
+        "salidaId": "GT3I4I",
+        "reprId": "40KXAF",
+        "codigo": "NG1205-12052026",
+        "valor_kg": 31781,
+        "kg_usado": 10,
+        "tipo": "bodegabf",
+        "valor_total": 317810
+      },
+      {
+        "key": "bodegabf:sal:MR61NI",
+        "salidaId": "MR61NI",
+        "reprId": "J3DNE7",
+        "codigo": "M 528-MR-0206",
+        "valor_kg": 76991,
+        "kg_usado": 13,
+        "tipo": "bodegabf",
+        "valor_total": 1000883
+      },
+      {
+        "key": "bodegabf:sal:ZUAHIO",
+        "salidaId": "ZUAHIO",
+        "reprId": "R0FUL2",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_kg": 29392,
+        "kg_usado": 25,
+        "tipo": "bodegabf",
+        "valor_total": 734800
+      }
+    ],
+    "kg_total": 48,
+    "valor_total": 2053493,
+    "costo_kg": 42781.104166666664,
+    "salidas": [
+      {
+        "id": "NMZX6Q",
+        "fecha": "2026-09-12",
+        "factura": "",
+        "remision": "",
+        "cliente": "DBA",
+        "destino_key": "otro",
+        "peso_salida": 48,
+        "valor_kg": 42781,
+        "valor_total": 2053488,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "QIR71N",
+    "costo_kg": 39235.18228070176,
+    "producto_comercial": "SAKURA",
+    "valor_total": 24600459.290000003,
+    "fecha": "2026-08-25",
+    "items": [
+      {
+        "salidaId": "68TIIH",
+        "codigo": "M 538-REGIONAL-1906",
+        "kg_usado": 312,
+        "valor_kg": 25259,
+        "key": "bodegabf:sal:68TIIH",
+        "valor_total": 7880808,
+        "reprId": "6ZWXU9",
+        "tipo": "bodegabf"
+      },
+      {
+        "tipo": "bodegabf",
+        "reprId": "8TDLMZ",
+        "key": "bodegabf:sal:QX28RT",
+        "valor_kg": 57148,
+        "kg_usado": 70,
+        "valor_total": 4000360,
+        "codigo": "M544-DR-14072026",
+        "salidaId": "QX28RT"
+      },
+      {
+        "codigo": "AGRAZ 2611",
+        "salidaId": "ZFNB5V",
+        "valor_total": 889267.92,
+        "kg_usado": 24,
+        "key": "bodegabf:sal:ZFNB5V",
+        "tipo": "bodegabf",
+        "valor_kg": 37052.83,
+        "reprId": "QI1DG6"
+      },
+      {
+        "valor_kg": 47869,
+        "tipo": "bodegabf",
+        "reprId": "QW46YA",
+        "kg_usado": 180,
+        "key": "bodegabf:sal:6Z3ZRW",
+        "salidaId": "6Z3ZRW",
+        "valor_total": 8616420,
+        "codigo": "M 543-NR-0207"
+      },
+      {
+        "valor_kg": 78380.57,
+        "tipo": "bodegabf",
+        "salidaId": "EFV7UL",
+        "kg_usado": 41,
+        "codigo": "M 531-NR-0806",
+        "valor_total": 3213603.37,
+        "reprId": "Z6G88K",
+        "key": "bodegabf:sal:EFV7UL"
+      }
+    ],
+    "nombre": "SAKURA",
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "id": "1Z8O0T",
+        "fecha": "2026-08-25",
+        "observaciones": "",
+        "factura": "",
+        "valor_total": 18832800,
+        "peso_salida": 480,
+        "valor_kg": 39235,
+        "remision": "",
+        "cliente": "SABO INC"
+      },
+      {
+        "valor_total": 470820,
+        "peso_salida": 12,
+        "id": "BHPSE1",
+        "fecha": "2026-09-03",
+        "destino_key": "uba_tostado",
+        "factura": "",
+        "valor_kg": 39235,
+        "observaciones": "",
+        "cliente": "UBA Tostado",
+        "remision": ""
+      },
+      {
+        "id": "MALU1J",
+        "fecha": "2026-09-03",
+        "factura": "",
+        "remision": "2777",
+        "cliente": "UBA Tostado",
+        "destino_key": "uba_tostado",
+        "peso_salida": 12,
+        "valor_kg": 39235,
+        "valor_total": 470820,
+        "observaciones": ""
+      }
+    ],
+    "kg_total": 627,
+    "codigo": "SAKURA-25082026"
+  },
+  {
+    "id": "R1LWTC",
+    "items": [],
+    "salidas": [
+      {
+        "observaciones": "Usado como insumo del blend GESHABIO-02072026",
+        "cliente": "Blend Fino GESHABIO-02072026",
+        "peso_salida": 150,
+        "valor_total": 8979600,
+        "id": "UJAOY5",
+        "auto_blend": true,
+        "valor_kg": 59864,
+        "fecha": "2026-07-14"
+      },
+      {
+        "id": "K24V3Y",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 105,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "fecha": "2026-06-19",
+    "valor_total": 15265383.75,
+    "producto_comercial": "GESHA BIO",
+    "nombre": "Gesha Bio 1906",
+    "mes": "junio",
+    "codigo": "GeshaBio1906-19062026",
+    "kg_total": 255,
+    "costo_kg": 59864.25
+  },
+  {
+    "id": "SRO9KA",
+    "costo_kg": 34862.45493372607,
+    "kg_total": 679,
+    "valor_total": 23671606.9,
+    "nombre": "SAKURA",
+    "codigo": "SAKURA-26082026",
+    "fecha": "2026-08-26",
+    "producto_comercial": "SAKURA",
+    "salidas": [
+      {
+        "observaciones": "",
+        "cliente": "AMBERA SAS",
+        "destino_key": "otro",
+        "valor_kg": 34862,
+        "id": "5EIWWM",
+        "factura": "18308",
+        "remision": "",
+        "valor_total": 16733760,
+        "fecha": "2026-08-26",
+        "precio_venta_kg": 55623,
+        "peso_salida": 480
+      },
+      {
+        "valor_total": 871550,
+        "peso_salida": 25,
+        "valor_kg": 34862,
+        "observaciones": "",
+        "id": "GLL9LU",
+        "fecha": "2026-08-26",
+        "destino_key": "otro",
+        "factura": "18334",
+        "cliente": "SUNTERRA",
+        "remision": "",
+        "precio_venta_kg": 68200
+      },
+      {
+        "peso_salida": 15,
+        "factura": "",
+        "remision": "",
+        "id": "6Z4UU1",
+        "valor_total": 522930,
+        "cliente": "PASILLA",
+        "observaciones": "",
+        "valor_kg": 34862,
+        "destino_key": "otro",
+        "fecha": "2026-08-26"
+      },
+      {
+        "id": "46ZVHR",
+        "fecha": "2026-08-26",
+        "factura": "18333",
+        "remision": "",
+        "cliente": "SUNTERRA",
+        "destino_key": "otro",
+        "peso_salida": 141,
+        "valor_kg": 34862,
+        "valor_total": 4915542,
+        "observaciones": "",
+        "precio_venta_kg": 68200
+      }
+    ],
+    "items": [
+      {
+        "codigo": "M 538-REGIONAL-1906",
+        "reprId": "6ZWXU9",
+        "kg_usado": 30,
+        "key": "bodegabf:sal:VWQS1E",
+        "valor_kg": 25259,
+        "tipo": "bodegabf",
+        "salidaId": "VWQS1E",
+        "valor_total": 757770
+      },
+      {
+        "tipo": "bodegabf",
+        "valor_total": 8465785,
+        "codigo": "M 538-REGIONAL-1906",
+        "kg_usado": 335,
+        "valor_kg": 25271,
+        "reprId": "9Q4W4Q",
+        "salidaId": "5O730F",
+        "key": "bodegabf:sal:5O730F"
+      },
+      {
+        "valor_total": 4514692,
+        "reprId": "8TDLMZ",
+        "kg_usado": 79,
+        "valor_kg": 57148,
+        "codigo": "M544-DR-14072026",
+        "salidaId": "U5WXE3",
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:U5WXE3"
+      },
+      {
+        "key": "bodegabf:sal:MFQ6FT",
+        "salidaId": "MFQ6FT",
+        "reprId": "KZSLGC",
+        "codigo": "M 530-REGIONAL 1-0406",
+        "tipo": "bodegabf",
+        "valor_kg": 26196,
+        "valor_total": 3536460,
+        "kg_usado": 135
+      },
+      {
+        "valor_total": 910260,
+        "kg_usado": 30,
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:V1F5G5",
+        "valor_kg": 30342,
+        "salidaId": "V1F5G5",
+        "codigo": "M547-REGIONAL-23072026",
+        "reprId": "S1R21N"
+      },
+      {
+        "salidaId": "ORU4S4",
+        "tipo": "bodegabf",
+        "valor_total": 5486639.9,
+        "codigo": "M 531-NR-0806",
+        "key": "bodegabf:sal:ORU4S4",
+        "valor_kg": 78380.57,
+        "reprId": "Z6G88K",
+        "kg_usado": 70
+      }
+    ]
+  },
+  {
+    "id": "TGTNZ8",
+    "items": [],
+    "codigo": "SakuraCompetition0406-04062026",
+    "nombre": "Sakura Competition 0406",
+    "valor_total": 900246.2999999999,
+    "kg_total": 15,
+    "costo_kg": 60016.42,
+    "fecha": "2026-06-04",
+    "producto_comercial": "SAKURA",
+    "mes": "junio",
+    "salidas": [
+      {
+        "id": "6SRU75",
+        "fecha": "2026-08-18",
+        "factura": "",
+        "remision": "2769",
+        "cliente": "UBA Tostado",
+        "destino_key": "uba_tostado",
+        "peso_salida": 15,
+        "valor_kg": 60016,
+        "valor_total": 900240,
+        "observaciones": "Parte de 36 kg de sakura, se unen con 21 de sakura 2606"
+      }
+    ]
+  },
+  {
+    "id": "UNYJ1P",
+    "nombre": "CATURRA NITRO UBA",
+    "valor_total": 24606844,
+    "salidas": [
+      {
+        "destino_key": "otro",
+        "cliente": "PASILLA",
+        "valor_total": 1677735,
+        "fecha": "2026-07-02",
+        "remision": "",
+        "valor_kg": 37283,
+        "observaciones": "",
+        "id": "Z6TUDB",
+        "peso_salida": 45,
+        "factura": ""
+      },
+      {
+        "destino_key": "uba_tostado",
+        "cliente": "UBA Tostado",
+        "valor_total": 22929045,
+        "remision": "3372",
+        "valor_kg": 37283,
+        "fecha": "2026-07-02",
+        "observaciones": "",
+        "factura": "",
+        "peso_salida": 615,
+        "id": "8S2ZRJ"
+      }
+    ],
+    "fecha": "2026-07-14",
+    "items": [
+      {
+        "salidaId": "58NYXY",
+        "valor_total": 7097324.000000001,
+        "codigo": "M 540-SD-2406",
+        "reprId": "JD21G5",
+        "tipo": "bodegabf",
+        "kg_usado": 100,
+        "key": "bodegabf:sal:58NYXY",
+        "valor_kg": 70973.24
+      },
+      {
+        "kg_usado": 560,
+        "tipo": "finoblend",
+        "valor_total": 17509520,
+        "salidaId": "BVYM5V",
+        "reprId": "4JQKSE",
+        "codigo": "Caturranitro1906-19062026",
+        "valor_kg": 31267,
+        "key": "finoblend:sal:BVYM5V"
+      }
+    ],
+    "producto_comercial": "CATURRA NITRO",
+    "kg_total": 660,
+    "codigo": "CATURRANITROUBA-14072026",
+    "costo_kg": 37283.09696969697
+  },
+  {
+    "id": "V3AP9E",
+    "valor_total": 933007.71,
+    "kg_total": 26,
+    "producto_comercial": "GESHA BIO",
+    "codigo": "GESHABIO-26082026",
+    "items": [
+      {
+        "key": "bodegabf:sal:UGMB0P",
+        "salidaId": "UGMB0P",
+        "reprId": "S1R21N",
+        "codigo": "M547-REGIONAL-23072026",
+        "valor_kg": 30342,
+        "kg_usado": 23,
+        "tipo": "bodegabf",
+        "valor_total": 697866
+      },
+      {
+        "key": "bodegabf:sal:NDQIPD",
+        "salidaId": "NDQIPD",
+        "reprId": "Z6G88K",
+        "codigo": "M 531-NR-0806",
+        "valor_kg": 78380.57,
+        "kg_usado": 3,
+        "tipo": "bodegabf",
+        "valor_total": 235141.71000000002
+      }
+    ],
+    "nombre": "GESHA BIO",
+    "costo_kg": 35884.91192307692,
+    "salidas": [
+      {
+        "id": "OFJOCQ",
+        "fecha": "2026-08-26",
+        "factura": "",
+        "remision": "",
+        "cliente": "UBA Tostado",
+        "destino_key": "uba_tostado",
+        "peso_salida": 26,
+        "valor_kg": 35885,
+        "valor_total": 933010,
+        "observaciones": ""
+      }
+    ],
+    "fecha": "2026-08-26"
+  },
+  {
+    "id": "V974I3",
+    "valor_total": 22113136,
+    "codigo": "NG-01072026",
+    "salidas": [
+      {
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "peso_salida": 52,
+        "factura": "AJUSTE-INV-08-2026",
+        "id": "PZRCSA",
+        "valor_kg": 0,
+        "observaciones": "",
+        "fecha": "2026-08-05",
+        "destino_key": "ajuste_inventario",
+        "valor_total": 0
+      },
+      {
+        "cliente": "AMBERA SAS",
+        "valor_kg": 34552,
+        "peso_salida": 240,
+        "precio_venta_kg": 55623,
+        "id": "734T9E",
+        "observaciones": "",
+        "factura": "18308",
+        "fecha": "2026-08-26",
+        "remision": "",
+        "valor_total": 8292480,
+        "destino_key": "otro"
+      },
+      {
+        "valor_total": 5390112,
+        "destino_key": "otro",
+        "remision": "",
+        "fecha": "2026-08-25",
+        "observaciones": "",
+        "id": "ZQYK1C",
+        "peso_salida": 156,
+        "cliente": "SABO INC",
+        "factura": "",
+        "valor_kg": 34552
+      },
+      {
+        "destino_key": "otro",
+        "id": "FEB25M",
+        "valor_total": 829248,
+        "remision": "2779",
+        "observaciones": "",
+        "peso_salida": 24,
+        "cliente": "LA COLINA",
+        "valor_kg": 34552,
+        "factura": "",
+        "fecha": "2026-09-08"
+      },
+      {
+        "id": "07Q9C9",
+        "fecha": "2026-09-08",
+        "factura": "",
+        "remision": "052-2026",
+        "cliente": "VAYGAS SAS TANAT",
+        "destino_key": "otro",
+        "peso_salida": 168,
+        "valor_kg": 34552,
+        "valor_total": 5804736,
+        "observaciones": "3-2692-00309"
+      }
+    ],
+    "costo_kg": 34551.775,
+    "producto_comercial": "NG",
+    "nombre": "NG",
+    "items": [
+      {
+        "valor_total": 10993896,
+        "codigo": "M 520-LYCHE-0805",
+        "kg_usado": 200,
+        "valor_kg": 54969.48,
+        "reprId": "7Q10EB",
+        "key": "bodegabf:sal:FPX64V",
+        "tipo": "bodegabf",
+        "salidaId": "FPX64V"
+      },
+      {
+        "valor_total": 11119240,
+        "kg_usado": 440,
+        "valor_kg": 25271,
+        "codigo": "M 538-REGIONAL-1906",
+        "key": "bodegabf:sal:65IBKR",
+        "salidaId": "65IBKR",
+        "tipo": "bodegabf",
+        "reprId": "9Q4W4Q"
+      }
+    ],
+    "kg_total": 640,
+    "fecha": "2026-07-01"
+  },
+  {
+    "id": "VDATNY",
+    "codigo": "APRIL-08072026",
+    "fecha": "2026-07-08",
+    "nombre": "APRIL",
+    "salidas": [
+      {
+        "remision": "",
+        "valor_total": 531300,
+        "valor_kg": 44275,
+        "factura": "",
+        "observaciones": "",
+        "fecha": "2026-07-14",
+        "peso_salida": 12,
+        "id": "3R1T2V",
+        "destino_key": "otro",
+        "cliente": "PASILLA"
+      },
+      {
+        "valor_kg": 44275,
+        "factura": "17570",
+        "fecha": "2026-07-23",
+        "precio_venta_kg": 52500,
+        "peso_salida": 200,
+        "id": "0HHPRH",
+        "destino_key": "otro",
+        "remision": "",
+        "valor_total": 8855000,
+        "cliente": "AMATIVO",
+        "observaciones": ""
+      },
+      {
+        "observaciones": "",
+        "factura": "17379",
+        "id": "67X5GS",
+        "precio_venta_kg": 56100,
+        "valor_total": 3187800,
+        "destino_key": "otro",
+        "valor_kg": 44275,
+        "cliente": "OM World Octavia",
+        "fecha": "2026-07-23",
+        "remision": "N-38-2026",
+        "peso_salida": 72
+      },
+      {
+        "observaciones": "",
+        "peso_salida": 25,
+        "id": "BAHROE",
+        "destino_key": "otro",
+        "precio_venta_kg": 56000,
+        "factura": "17922",
+        "valor_total": 1106875,
+        "remision": "040",
+        "fecha": "2026-07-30",
+        "valor_kg": 44275,
+        "cliente": "SUNTERRA"
+      },
+      {
+        "id": "Y84DPU",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 157,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "valor_total": 20632316.28,
+    "items": [
+      {
+        "key": "bodegabf:sal:U299W9",
+        "salidaId": "U299W9",
+        "reprId": "9Q4W4Q",
+        "valor_total": 7581300,
+        "tipo": "bodegabf",
+        "codigo": "M 538-REGIONAL-1906",
+        "valor_kg": 25271,
+        "kg_usado": 300
+      },
+      {
+        "reprId": "WNKY8V",
+        "salidaId": "AFDBUV",
+        "valor_total": 13051016.280000001,
+        "key": "bodegabf:sal:AFDBUV",
+        "codigo": "M 515-DR-2304",
+        "valor_kg": 78620.58,
+        "kg_usado": 166,
+        "tipo": "bodegabf"
+      }
+    ],
+    "kg_total": 466,
+    "producto_comercial": "APRIL",
+    "costo_kg": 44275.35682403434
+  },
+  {
+    "id": "VTCLFC",
+    "nombre": "Pink borbon 2606",
+    "codigo": "Pinkborbon2606-26062026",
+    "mes": "junio",
+    "salidas": [
+      {
+        "peso_salida": 96,
+        "remision": "N-38-2026",
+        "cliente": "OM World Octavia",
+        "destino_key": "otro",
+        "factura": "17379",
+        "valor_kg": 38567,
+        "observaciones": "",
+        "valor_total": 3702432,
+        "id": "E8H481",
+        "fecha": "2026-07-23",
+        "precio_venta_kg": 56100
+      }
+    ],
+    "fecha": "2026-06-26",
+    "items": [],
+    "valor_total": 4242339.2,
+    "producto_comercial": "PINK BOURBON",
+    "kg_total": 110,
+    "costo_kg": 38566.72
+  },
+  {
+    "id": "VTLF1P",
+    "fecha": "2026-06-11",
+    "kg_total": 361,
+    "costo_kg": 58154.7,
+    "nombre": "Maypop 1106",
+    "codigo": "Maypop1106-11062026",
+    "producto_comercial": "MAYPOP",
+    "valor_total": 20993846.7,
+    "items": [],
+    "salidas": [
+      {
+        "precio_venta_kg": 68640,
+        "destino_key": "otro",
+        "peso_salida": 48,
+        "valor_total": 2791440,
+        "fecha": "2026-07-17",
+        "cliente": "VAYGAS SAS TANAT",
+        "id": "QXF0GX",
+        "factura": "16837",
+        "valor_kg": 58155,
+        "observaciones": "",
+        "remision": "1407"
+      },
+      {
+        "valor_kg": 58155,
+        "fecha": "2026-07-10",
+        "valor_total": 174465,
+        "peso_salida": 3,
+        "factura": "",
+        "remision": "",
+        "destino_key": "otro",
+        "cliente": "MUESTRA",
+        "id": "QFBMDN",
+        "observaciones": ""
+      },
+      {
+        "cliente": "OM World Octavia",
+        "observaciones": "",
+        "valor_kg": 58155,
+        "factura": "17379",
+        "id": "4FS5LH",
+        "remision": "N-38-2026",
+        "destino_key": "otro",
+        "fecha": "2026-07-23",
+        "valor_total": 4187160,
+        "peso_salida": 72,
+        "precio_venta_kg": 56100
+      },
+      {
+        "peso_salida": 24,
+        "valor_total": 1395720,
+        "destino_key": "otro",
+        "remision": "39",
+        "observaciones": "",
+        "fecha": "2026-07-23",
+        "precio_venta_kg": 67137,
+        "valor_kg": 58155,
+        "cliente": "TUYO COFFEE",
+        "id": "XSIIII",
+        "factura": "17811"
+      },
+      {
+        "remision": "3384",
+        "valor_kg": 58155,
+        "observaciones": "",
+        "id": "ETVX4F",
+        "cliente": "UBA Tostado",
+        "factura": "",
+        "valor_total": 2558820,
+        "peso_salida": 44,
+        "fecha": "2026-07-30",
+        "destino_key": "uba_tostado"
+      },
+      {
+        "cliente": "LA COLINA",
+        "factura": "",
+        "id": "UXLXST",
+        "valor_kg": 58155,
+        "fecha": "2026-07-30",
+        "observaciones": "",
+        "valor_total": 697860,
+        "peso_salida": 12,
+        "destino_key": "otro",
+        "remision": "3385"
+      },
+      {
+        "precio_venta_kg": 56000,
+        "valor_kg": 58155,
+        "fecha": "2026-07-30",
+        "remision": "040",
+        "observaciones": "",
+        "valor_total": 1453875,
+        "factura": "17922",
+        "peso_salida": 25,
+        "cliente": "SUNTERRA",
+        "destino_key": "otro",
+        "id": "GNZDF3"
+      },
+      {
+        "destino_key": "ajuste_inventario",
+        "id": "0RUM95",
+        "peso_salida": 73,
+        "valor_total": 0,
+        "cliente": "Ajuste de Inventario",
+        "factura": "AJUSTE-INV-08-2026",
+        "observaciones": "",
+        "valor_kg": 0,
+        "fecha": "2026-08-05",
+        "remision": ""
+      },
+      {
+        "fecha": "2026-07-31",
+        "valor_total": 3489300,
+        "peso_salida": 60,
+        "factura": "17800",
+        "precio_venta_kg": 53156,
+        "destino_key": "otro",
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "observaciones": "",
+        "remision": "",
+        "valor_kg": 58155,
+        "id": "X5ITS0"
+      }
+    ],
+    "mes": "junio"
+  },
+  {
+    "id": "W8GRXV",
+    "producto_comercial": "Pink Borbon mame",
+    "fecha": "2026-08-04",
+    "kg_total": 11.3,
+    "items": [
+      {
+        "reprId": "8TDLMZ",
+        "codigo": "M544-DR-14072026",
+        "tipo": "bodegabf",
+        "valor_total": 102866.40000000001,
+        "kg_usado": 1.8,
+        "valor_kg": 57148,
+        "key": "bodegabf:sal:ZQSJQ0",
+        "salidaId": "ZQSJQ0"
+      },
+      {
+        "tipo": "bodegabf",
+        "salidaId": "FDO02J",
+        "key": "bodegabf:sal:FDO02J",
+        "reprId": "Z6G88K",
+        "codigo": "M 531-NR-0806",
+        "kg_usado": 1.8,
+        "valor_kg": 78380.57,
+        "valor_total": 141085.026
+      },
+      {
+        "reprId": "9Q4W4Q",
+        "salidaId": "OR0OII",
+        "valor_total": 194586.7,
+        "kg_usado": 7.7,
+        "key": "bodegabf:sal:OR0OII",
+        "valor_kg": 25271,
+        "codigo": "M 538-REGIONAL-1906",
+        "tipo": "bodegabf"
+      }
+    ],
+    "costo_kg": 38808.683716814165,
+    "codigo": "PinkBorbonmame-04082026",
+    "nombre": "Pink Borbon mame",
+    "valor_total": 438538.12600000005,
+    "salidas": [
+      {
+        "precio_venta_kg": 62497,
+        "valor_total": 388090,
+        "fecha": "2026-08-04",
+        "cliente": "QUAT",
+        "factura": "17801",
+        "observaciones": "",
+        "destino_key": "otro",
+        "valor_kg": 38809,
+        "peso_salida": 10,
+        "remision": "",
+        "id": "OX4LW9"
+      },
+      {
+        "id": "AIXA15",
+        "valor_total": 0,
+        "factura": "AJUSTE-INV-09-2026",
+        "remision": "",
+        "peso_salida": 6.661338147750939e-16,
+        "fecha": "2026-09-03",
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "observaciones": "",
+        "cliente": "Ajuste de Inventario"
+      }
+    ]
+  },
+  {
+    "id": "WXTCIF",
+    "nombre": "PINK BOURBON MAME",
+    "fecha": "2026-09-14",
+    "codigo": "PINKBOURBONMAME-14092026",
+    "producto_comercial": "PINK BOURBON MAME",
+    "items": [
+      {
+        "key": "bodegabf:sal:1JGKF7",
+        "salidaId": "1JGKF7",
+        "reprId": "8TDLMZ",
+        "codigo": "M544-DR-14072026",
+        "valor_kg": 57148,
+        "kg_usado": 1.3,
+        "tipo": "bodegabf",
+        "valor_total": 74292.40000000001
+      },
+      {
+        "key": "bodegabf:sal:H3OA6B",
+        "salidaId": "H3OA6B",
+        "reprId": "QW46YA",
+        "codigo": "M 543-NR-0207",
+        "valor_kg": 47869,
+        "kg_usado": 1.3,
+        "tipo": "bodegabf",
+        "valor_total": 62229.700000000004
+      },
+      {
+        "key": "bodegabf:sal:DL6FMY",
+        "salidaId": "DL6FMY",
+        "reprId": "R0FUL2",
+        "codigo": "M 555-REGIONAL-25082026",
+        "valor_kg": 29392,
+        "kg_usado": 10.4,
+        "tipo": "bodegabf",
+        "valor_total": 305676.8
+      }
+    ],
+    "kg_total": 13,
+    "valor_total": 442198.9,
+    "costo_kg": 34015.3,
+    "salidas": [
+      {
+        "id": "2HPNNS",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "OTHER WORLDLY SAS",
+        "destino_key": "otro",
+        "peso_salida": 12,
+        "valor_kg": 34015,
+        "valor_total": 408180,
+        "observaciones": ""
+      },
+      {
+        "id": "WQJQGK",
+        "fecha": "2026-09-14",
+        "factura": "",
+        "remision": "",
+        "cliente": "MUESTRA",
+        "destino_key": "otro",
+        "peso_salida": 1,
+        "valor_kg": 34015,
+        "valor_total": 34015,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "X9DYW5",
+    "kg_total": 454,
+    "items": [],
+    "costo_kg": 25965.67,
+    "codigo": "Capitan1305-13052026",
+    "mes": "mayo",
+    "fecha": "2026-05-13",
+    "valor_total": 11788414.18,
+    "nombre": "Capitan 1305",
+    "producto_comercial": "CAPITAN MARK",
+    "salidas": [
+      {
+        "valor_total": 1038640,
+        "destino_key": "otro",
+        "id": "NSLK5E",
+        "cliente": "AMATIVO",
+        "precio_venta_kg": 52500,
+        "fecha": "2026-07-23",
+        "remision": "",
+        "factura": "17570",
+        "observaciones": "",
+        "valor_kg": 25966,
+        "peso_salida": 40
+      },
+      {
+        "observaciones": "",
+        "precio_venta_kg": 56100,
+        "id": "RIMY1H",
+        "peso_salida": 48,
+        "valor_kg": 25966,
+        "fecha": "2026-07-23",
+        "cliente": "OM World Octavia",
+        "factura": "17379",
+        "valor_total": 1246368,
+        "destino_key": "otro",
+        "remision": "N-38-2026"
+      },
+      {
+        "remision": "3389",
+        "factura": "",
+        "fecha": "2026-07-30",
+        "destino_key": "uba_tostado",
+        "valor_total": 623184,
+        "cliente": "UBA Tostado",
+        "peso_salida": 24,
+        "valor_kg": 25966,
+        "id": "XAZ53V",
+        "observaciones": ""
+      },
+      {
+        "factura": "AJUSTE-INV-08-2026",
+        "valor_kg": 0,
+        "peso_salida": -18,
+        "fecha": "2026-08-05",
+        "valor_total": 0,
+        "destino_key": "ajuste_inventario",
+        "id": "NF1SPT",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "observaciones": ""
+      },
+      {
+        "valor_total": 1246368,
+        "destino_key": "uba_tostado",
+        "id": "6F7SJR",
+        "observaciones": "",
+        "remision": "2769",
+        "factura": "",
+        "cliente": "UBA Tostado",
+        "peso_salida": 48,
+        "fecha": "2026-08-18",
+        "valor_kg": 25966
+      },
+      {
+        "destino_key": "otro",
+        "valor_total": 1869552,
+        "factura": "17800",
+        "id": "8QN2QE",
+        "fecha": "2026-07-31",
+        "valor_kg": 25966,
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "precio_venta_kg": 53156,
+        "observaciones": "",
+        "remision": "",
+        "peso_salida": 72
+      },
+      {
+        "valor_kg": 0,
+        "id": "O2DSFE",
+        "factura": "AJUSTE-INV-09-2026",
+        "fecha": "2026-09-03",
+        "peso_salida": 12,
+        "destino_key": "ajuste_inventario",
+        "valor_total": 0,
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "observaciones": ""
+      },
+      {
+        "peso_salida": 24,
+        "id": "ZQW9TR",
+        "valor_kg": 25966,
+        "cliente": "UBA Tostado",
+        "fecha": "2026-09-03",
+        "observaciones": "",
+        "factura": "",
+        "remision": "2777",
+        "valor_total": 623184,
+        "destino_key": "uba_tostado"
+      },
+      {
+        "id": "LPAML6",
+        "fecha": "2026-09-12",
+        "factura": "",
+        "remision": "",
+        "cliente": "DBA",
+        "destino_key": "otro",
+        "peso_salida": 24,
+        "valor_kg": 25966,
+        "valor_total": 623184,
+        "observaciones": ""
+      }
+    ]
+  },
+  {
+    "id": "XFNSJZ",
+    "valor_total": 2176565.2800000003,
+    "salidas": [
+      {
+        "factura": "17800",
+        "valor_kg": 45345,
+        "cliente": "TERRACORE COFFEE TRADING LLC",
+        "valor_total": 2176560,
+        "peso_salida": 48,
+        "remision": "",
+        "precio_venta_kg": 53156,
+        "fecha": "2026-07-31",
+        "destino_key": "otro",
+        "observaciones": "",
+        "id": "Q72OM6"
+      }
+    ],
+    "producto_comercial": "TROPICAL",
+    "nombre": "TROPICAL",
+    "codigo": "TROPICAL-31072026",
+    "items": [
+      {
+        "kg_usado": 24,
+        "tipo": "bodegabf",
+        "key": "bodegabf:sal:G1SY9J",
+        "valor_total": 1282128,
+        "codigo": "MAYPOP1106-11062026",
+        "reprId": "D7CWLA",
+        "valor_kg": 53422,
+        "salidaId": "G1SY9J"
+      },
+      {
+        "key": "bodegabf:sal:YKSNZ9",
+        "valor_kg": 37268.22,
+        "salidaId": "YKSNZ9",
+        "codigo": "NIU 3003",
+        "kg_usado": 24,
+        "tipo": "bodegabf",
+        "valor_total": 894437.28,
+        "reprId": "L3D0RA"
+      }
+    ],
+    "kg_total": 48,
+    "costo_kg": 45345.11000000001,
+    "fecha": "2026-07-31"
+  },
+  {
+    "id": "ZCN2Q3",
+    "producto_comercial": "NIU",
+    "salidas": [
+      {
+        "cliente": "OM World Octavia",
+        "precio_venta_kg": 56100,
+        "factura": "17379",
+        "valor_kg": 52486,
+        "peso_salida": 48,
+        "remision": "N-38-2026",
+        "observaciones": "",
+        "destino_key": "otro",
+        "id": "BLF2N6",
+        "valor_total": 2519328,
+        "fecha": "2026-07-23"
+      },
+      {
+        "id": "RRKK9Z",
+        "valor_total": 2519328,
+        "precio_venta_kg": 59811,
+        "observaciones": "",
+        "cliente": "DEVOTION",
+        "remision": "2907-26",
+        "factura": "17897",
+        "fecha": "2026-07-30",
+        "peso_salida": 48,
+        "destino_key": "otro",
+        "valor_kg": 52486
+      },
+      {
+        "factura": "",
+        "fecha": "2026-07-30",
+        "valor_kg": 52486,
+        "cliente": "UBA Tostado",
+        "remision": "3381",
+        "peso_salida": 21,
+        "destino_key": "uba_tostado",
+        "id": "DT5CLB",
+        "observaciones": "",
+        "valor_total": 1102206
+      },
+      {
+        "valor_kg": 52486,
+        "observaciones": "",
+        "valor_total": 2466842,
+        "cliente": "UBA Tostado",
+        "factura": "",
+        "remision": "3384",
+        "fecha": "2026-07-30",
+        "peso_salida": 47,
+        "destino_key": "uba_tostado",
+        "id": "XW1MF8"
+      },
+      {
+        "fecha": "2026-07-30",
+        "peso_salida": 47,
+        "destino_key": "uba_tostado",
+        "remision": "3384",
+        "valor_kg": 52486,
+        "valor_total": 2466842,
+        "factura": "",
+        "id": "57QJXF",
+        "observaciones": "",
+        "cliente": "UBA Tostado"
+      },
+      {
+        "peso_salida": 79,
+        "valor_kg": 0,
+        "destino_key": "ajuste_inventario",
+        "observaciones": "",
+        "cliente": "Ajuste de Inventario",
+        "id": "GZHRRO",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "fecha": "2026-08-05",
+        "valor_total": 0
+      }
+    ],
+    "codigo": "NIU3006-30062026",
+    "mes": "junio",
+    "valor_total": 15221009.6,
+    "items": [],
+    "nombre": "NIU 3006",
+    "fecha": "2026-06-30",
+    "kg_total": 290,
+    "costo_kg": 52486.24
+  },
+  {
+    "id": "ZVVCMK",
+    "fecha": "2026-07-23",
+    "salidas": [
+      {
+        "id": "UJYL1D",
+        "fecha": "2026-08-05",
+        "factura": "AJUSTE-INV-08-2026",
+        "remision": "",
+        "cliente": "Ajuste de Inventario",
+        "destino_key": "ajuste_inventario",
+        "peso_salida": 20,
+        "valor_kg": 0,
+        "valor_total": 0,
+        "observaciones": ""
+      }
+    ],
+    "producto_comercial": "GESHA NITRO",
+    "items": [
+      {
+        "valor_total": 539610,
+        "codigo": "CF208-Borbon Rosado Luis Hernesto 010726-02072026",
+        "kg_usado": 15,
+        "valor_kg": 35974,
+        "reprId": "TLR42B",
+        "salidaId": "C4KNSA",
+        "tipo": "finolote",
+        "key": "finolote:sal:C4KNSA"
+      },
+      {
+        "reprId": "UTTCHW",
+        "valor_total": 210230,
+        "salidaId": "VAHLVR",
+        "key": "bodegabf:sal:VAHLVR",
+        "codigo": "CATURRANITRO1706-17062026",
+        "tipo": "bodegabf",
+        "kg_usado": 5,
+        "valor_kg": 42046
+      }
+    ],
+    "codigo": "GESHANITRO-23072026",
+    "nombre": "GESHA NITRO",
+    "kg_total": 20,
+    "valor_total": 749840,
+    "costo_kg": 37492
+  }
+]

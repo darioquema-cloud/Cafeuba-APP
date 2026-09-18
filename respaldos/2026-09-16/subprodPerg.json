@@ -1,0 +1,92 @@
+[
+  {
+    "id": "5Z56AX",
+    "semana": 33,
+    "valor_kg": 1,
+    "codigo": "Flote mayo",
+    "mes": "agosto",
+    "fecha": "2026-08-15",
+    "kg": 1711,
+    "salidas": [
+      {
+        "peso_salida": 1711,
+        "destino": "Trilla",
+        "lote_generado_id": "JDBUJC",
+        "id": "DXDNMQ",
+        "fecha": "2026-08-13"
+      }
+    ]
+  },
+  {
+    "id": "81W60I",
+    "salidas": [
+      {
+        "peso_salida": 569,
+        "id": "95K1P5",
+        "destino": "Trilla",
+        "lote_generado_id": "Y84VLC",
+        "fecha": "2026-08-13"
+      }
+    ],
+    "fecha": "2026-08-15",
+    "kg": 569,
+    "codigo": "Flote abril",
+    "mes": "agosto",
+    "valor_kg": 1,
+    "semana": 33
+  },
+  {
+    "id": "9CDH7Z",
+    "valor_kg": 1,
+    "codigo": "Flote julio",
+    "salidas": [
+      {
+        "destino": "Trilla",
+        "id": "3MBV9P",
+        "lote_generado_id": "HS90XH",
+        "fecha": "2026-08-13",
+        "peso_salida": 1989
+      }
+    ],
+    "kg": 1989,
+    "mes": "agosto",
+    "fecha": "2026-08-15",
+    "semana": 33
+  },
+  {
+    "id": "TO68SN",
+    "valor_kg": 1,
+    "codigo": "Flote junio",
+    "salidas": [
+      {
+        "id": "A6X5NC",
+        "fecha": "2026-08-13",
+        "lote_generado_id": "B23RXN",
+        "peso_salida": 1465,
+        "destino": "Trilla"
+      }
+    ],
+    "semana": 33,
+    "mes": "agosto",
+    "fecha": "2026-08-15",
+    "kg": 1465
+  },
+  {
+    "id": "XSSVXF",
+    "semana": 33,
+    "kg": 960,
+    "codigo": "flote agosto",
+    "fecha": "2026-08-15",
+    "valor_kg": 1,
+    "mes": "agosto",
+    "salidas": [
+      {
+        "lote_generado_id": "HFHLPI",
+        "peso_salida": 960,
+        "id": "D6JMO6",
+        "fecha": "2026-08-13",
+        "destino": "Trilla"
+      }
+    ]
+  }
+]
