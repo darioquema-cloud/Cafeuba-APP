@@ -2,7 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP,fmtFecha,today,dateToCode}from"../../../lib/format";
-import{mesDe,mesTrillaDe,mesAnioTrillaDe}from"../../../lib/dates";
+import{mesAnioDe,mesAnioTrillaDe,ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{calcCosto,calcCostoTri,costoKgExDe,ponderarFactor,esVentaExterna,construirGruposBTF,stockGrupoBTF,costoKgExFinoDe}from"../../../lib/costing";
 import{pesoATrilladora,pesoATrilladoraCafeFino}from"../../../lib/stock";
 import{DonutChart}from"../../ui/DonutChart";
@@ -17,56 +17,56 @@ const SeccionTitulo=({n,children})=>(
 
 export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFino,blendsTostado,empaques,subprodPerg,subprodVerde}){
   const [filtroMes,setFiltroMes]=useState("todos");
-  const mesesDisp=MESES.filter(m=>lotes.some(l=>l.mes===m));
+  const mesesDisp=ordenarMesAnio(lotes.map(l=>l.mesAnio));
   // Excluye cargas directas, trilla directa y registros manuales: no representan cereza
   // recibida real. Mismo criterio que lotesCP en DashboardCentral.jsx.
   const lotesCP=lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
 
   // ---- BLOQUE 1: Resumen Ejecutivo ----
-  const lotesMes=lotesCP.filter(l=>filtroMes==="todos"||l.mes===filtroMes);
+  const lotesMes=lotesCP.filter(l=>filtroMes==="todos"||l.mesAnio===filtroMes);
   const lotesTerminadosMes=lotesMes.filter(l=>(l.kg_producto||0)>0);
   const kgCereza=lotesMes.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const kgPergamino=lotesTerminadosMes.reduce((s,l)=>s+(l.kg_producto||0),0);
-  const kgExcelsoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
-  const kgExcelsoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
+  const kgExcelsoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesAnioTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
+  const kgExcelsoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesAnioTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
   const kgExcelsoTotal=kgExcelsoVerde+kgExcelsoFino;
-  const kgTostado=blendsTostado.filter(t=>filtroMes==="todos"||t.mes===filtroMes).reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
+  const kgTostado=blendsTostado.filter(t=>filtroMes==="todos"||t.mesAnio===filtroMes).reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
 
   // ---- BLOQUE: Producción y Rendimientos ----
   const kgCerezaTerminados=lotesTerminadosMes.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const relacionCerezaPergVerde=kgPergamino>0?kgCerezaTerminados/kgPergamino:0;
-  const kgPergTrilladoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+pesoATrilladora(l),0);
+  const kgPergTrilladoVerde=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesAnioTrillaDe(l)===filtroMes)).reduce((s,l)=>s+pesoATrilladora(l),0);
   const pctMermaTrillaVerde=kgPergTrilladoVerde>0?(1-(kgExcelsoVerde/kgPergTrilladoVerde))*100:0;
 
   // Factor Rendimiento Industrial Ponderado y Desviación vs. Pretrilla — misma lógica que DashboardTrilla.jsx (líneas ~41-53)
-  const lotesTrillaVerdeMes=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes));
+  const lotesTrillaVerdeMes=lotes.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesAnioTrillaDe(l)===filtroMes));
   const ponderarIM=(arr,campo)=>ponderarFactor(arr,campo);
   const factorIndustrialPonderado=ponderarIM(lotesTrillaVerdeMes,"factor_industrial");
   const factorPretrillaPonderadoIM=ponderarIM(lotesTrillaVerdeMes,"factor_pretrilla_ponderado");
   const desviacionFactor=(factorIndustrialPonderado!=null&&factorPretrillaPonderadoIM!=null)?(factorIndustrialPonderado-factorPretrillaPonderadoIM):null;
 
-  const kgPergTrilladoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
+  const kgPergTrilladoFino=lotesFino.filter(l=>l.trilla?.kg_excelso>0&&(filtroMes==="todos"||mesAnioTrillaDe(l)===filtroMes)).reduce((s,l)=>s+(l.trilla.entrada_usada||0),0);
   const pctMermaTrillaFino=kgPergTrilladoFino>0?(1-(kgExcelsoFino/kgPergTrilladoFino))*100:0;
   const pctRendTrillaFino=kgPergTrilladoFino>0?(kgExcelsoFino/kgPergTrilladoFino)*100:0;
 
   // ---- BLOQUE: Subproductos ----
-  // subprodPerg/subprodVerde guardan su propio campo "mes" (calculado con mesDe al registrarse,
+  // subprodPerg/subprodVerde guardan su propio campo "mesAnio" (calculado al registrarse,
   // igual que se muestra en la columna "Mes" de la tabla Subproductos Verde en Trilla.jsx) —
-  // se filtra directo por sp.mes, sin pasar por mesTrillaDe (que espera un lote con l.trilla).
-  const subprodPergMes=(subprodPerg||[]).filter(sp=>filtroMes==="todos"||sp.mes===filtroMes).reduce((s,sp)=>s+(sp.kg||0),0);
-  const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
-  const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mes===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  // se filtra directo por sp.mesAnio, sin pasar por mesAnioTrillaDe (que espera un lote con l.trilla).
+  const subprodPergMes=(subprodPerg||[]).filter(sp=>filtroMes==="todos"||sp.mesAnio===filtroMes).reduce((s,sp)=>s+(sp.kg||0),0);
+  const subprodVerdeConProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mesAnio===filtroMes)&&sp.con_proceso==="Con Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
+  const subprodVerdeSinProcesoMes=(subprodVerde||[]).filter(sp=>(filtroMes==="todos"||sp.mesAnio===filtroMes)&&sp.con_proceso==="Sin Proceso").reduce((s,sp)=>s+(sp.pasilla_elec||0)+(sp.catadora_dens||0)+(sp.inferiores||0),0);
 
   // ---- BLOQUE: Inventarios ----
-  // Stock al cierre del mes filtrado (histórico) — se asume el año actual para construir la
-  // fecha de corte, ya que los meses se guardan como texto ("julio") sin año. Si el informe
-  // se usa para un mes de un año distinto al actual, este cálculo quedaría desalineado.
-  const anioActual=new Date().getFullYear();
-  const idxMesFiltro=MESES.indexOf(filtroMes);
+  // Stock al cierre del mes filtrado (histórico) — usa el año real seleccionado en filtroMes
+  // (mesAnio, ej. "agosto-2026"), ya no asume el año actual.
+  const[mesNombreFiltro,anioFiltroStr]=filtroMes==="todos"?[null,null]:filtroMes.split("-");
+  const idxMesFiltro=mesNombreFiltro?MESES.indexOf(mesNombreFiltro):-1;
   const finDeMesCutoff=filtroMes==="todos"||idxMesFiltro<0?null:(()=>{
     const mesNum=idxMesFiltro+1;
-    const ultimoDia=new Date(anioActual,mesNum,0).getDate();
-    return `${anioActual}-${String(mesNum).padStart(2,"0")}-${String(ultimoDia).padStart(2,"0")}`;
+    const anioCutoff=+anioFiltroStr;
+    const ultimoDia=new Date(anioCutoff,mesNum,0).getDate();
+    return `${anioCutoff}-${String(mesNum).padStart(2,"0")}-${String(ultimoDia).padStart(2,"0")}`;
   })();
   const kgHastaCutoff=(salidas)=>(salidas||[]).filter(s=>!finDeMesCutoff||s.fecha<=finDeMesCutoff).reduce((s,x)=>s+(x.peso_salida||0),0);
 
@@ -175,7 +175,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
   // Ingreso real facturado — replica esExterno de Ventas.jsx (mismas 7 fuentes, sin blendsTostado)
   const esExternoIM=esVentaExterna;
-  const enMesIM=s=>filtroMes==="todos"||(mesDe(s.fecha)||"")===filtroMes;
+  const enMesIM=s=>filtroMes==="todos"||(mesAnioDe(s.fecha)||"")===filtroMes;
   const ingresoDeArrIM=(arr,campo)=>(arr||[]).flatMap(x=>(x[campo]||[]).filter(esExternoIM).filter(enMesIM)).reduce((s,sal)=>s+(sal.peso_salida||0)*(sal.precio_venta_kg||0),0);
   const ingresoRealMes=
     ingresoDeArrIM(lotes,"salidas_bodega")+
@@ -204,7 +204,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const tcTerminados=lotesTerminadosCP.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);
   const INS_KEYS=[["jugo","Jugo"],["panela","Panela"],["harina","Harina"],["levadura","Levadura"]];
   const totalInsTerminados=INS_KEYS.reduce((s,[k])=>s+lotesTerminadosCP.reduce((ss,l)=>{const ins=l.insumos||{};return ss+(ins[k]||0)*(ins["vr_"+k]||0);},0),0);
-  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMes==="todos"||c.mes===filtroMes));
+  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMes==="todos"||c.mesAnio===filtroMes));
   const cbPorTipo={};cbCosFiltrados.forEach(c=>{cbPorTipo[c.tipo]=(cbPorTipo[c.tipo]||0)+c.valor;});
   const cbPieTotal=Object.values(cbPorTipo).reduce((s,v)=>s+v,0);
   const promA=tp>0?tcTerminados/tp:0;
@@ -218,14 +218,9 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   // caso se calcula un promedio ponderado real: se suma costosTri y kgEx de TODOS los meses que
   // tuvieron trilla (llamando a calcCostoTri por cada uno, sin reinventar su logica) y se divide
   // el total de costos entre el total de kg — evita elegir arbitrariamente el mes del primer lote.
-  // PARCHE TEMPORAL (Fase 2 del ajuste de ano): filtroMes en este archivo todavia es solo el
-  // nombre del mes (sin selector de ano en su UI) — se reutiliza anioActual (ya declarado
-  // arriba) para que la comparacion siga siendo correcta mientras se rediseña su filtro en
-  // una fase posterior (Fase 3). Cuando eso se haga, reemplazar esto por el mesAnio real
-  // seleccionado.
   const mesesConTrilla=[...new Set(lotes.filter(l=>l.trilla?.kg_excelso>0).map(l=>mesAnioTrillaDe(l)).filter(Boolean))];
   const D=filtroMes!=="todos"
-    ?calcCostoTri(filtroMes+"-"+anioActual,costos,lotes).costoTriKg
+    ?calcCostoTri(filtroMes,costos,lotes).costoTriKg
     :(()=>{
         const tot=mesesConTrilla.reduce((acc,m)=>{const r=calcCostoTri(m,costos,lotes);return{costos:acc.costos+r.costosTri,kg:acc.kg+r.kgEx};},{costos:0,kg:0});
         return tot.kg>0?tot.costos/tot.kg:0;
@@ -233,7 +228,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
   const costoTotalConD=promTotal+D;
 
   const exportarInformePDF=()=>{
-    const mesLabel=filtroMes==="todos"?"Todos los meses":filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1);
+    const mesLabel=filtroMes==="todos"?"Todos los meses":formatMesAnio(filtroMes);
     const doc=new jsPDF();
     doc.setFillColor(30,58,95);
     doc.rect(0,0,210,32,"F");
@@ -283,7 +278,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
 
     if(y>250){doc.addPage();y=20;}
     doc.setFont("helvetica","bold");doc.setFontSize(11);
-    doc.text("3. Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+filtroMes+")"),14,y);
+    doc.text("3. Inventarios"+(filtroMes==="todos"?" (actual)":" (al cierre de "+formatMesAnio(filtroMes)+")"),14,y);
     autoTable(doc,{
       startY:y+4,
       head:[["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."]],
@@ -370,9 +365,9 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
       <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
       <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-        {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMes(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMes===m?C.navy:C.border),background:filtroMes===m?C.navy:"transparent",color:filtroMes===m?"#fff":C.text,fontSize:11,fontWeight:filtroMes===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMes(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMes===m?C.navy:C.border),background:filtroMes===m?C.navy:"transparent",color:filtroMes===m?"#fff":C.text,fontSize:11,fontWeight:filtroMes===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
       </div>
-      {filtroMes!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</span>}
+      {filtroMes!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMes)}</span>}
     </div>
 
     <SeccionTitulo n={1}>Ventas</SeccionTitulo>
@@ -388,7 +383,7 @@ export function DashboardInformeMensual({lotes,costos,lotesFino,blends,blendsFin
     </div>
 
     <SeccionTitulo n={3}>Inventarios</SeccionTitulo>
-    <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+filtroMes.charAt(0).toUpperCase()+filtroMes.slice(1)}</div>
+    <div style={{fontSize:11,color:C.textFaint,marginBottom:10}}>{filtroMes==="todos"?"Stock actual":"Stock al cierre de "+formatMesAnio(filtroMes)}</div>
     <div style={S.card}>
       <table style={{width:"100%",borderCollapse:"collapse",marginBottom:14}}>
         <thead><tr>{["Etapa","Kg en Stock","Valor Total","Valor/kg Prom."].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>

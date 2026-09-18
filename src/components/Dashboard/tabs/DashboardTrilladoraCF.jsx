@@ -1,8 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
-import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt,fmtFecha}from"../../../lib/format";
-import{semanaISO,mesTrillaDe,mesAnioTrillaDe}from"../../../lib/dates";
+import{semanaISO,mesAnioTrillaDe,ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{calcCosto,calcCostoTriCF}from"../../../lib/costing";
 import{Bdg,TablaScrollV}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
@@ -11,8 +10,8 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
   const [filtroMesTR,setFiltroMesTR]=useState("todos");
   const [busquedaCorte,setBusquedaCorte]=useState("");
   const lotesTrillaCF=(lotesFino||[]).filter(l=>l.trilla?.kg_excelso>0);
-  const mesesTR=MESES.filter(m=>lotesTrillaCF.some(l=>mesTrillaDe(l)===m));
-  const lotesTF=filtroMesTR==="todos"?lotesTrillaCF:lotesTrillaCF.filter(l=>mesTrillaDe(l)===filtroMesTR);
+  const mesesTR=ordenarMesAnio(lotesTrillaCF.map(l=>mesAnioTrillaDe(l)));
+  const lotesTF=filtroMesTR==="todos"?lotesTrillaCF:lotesTrillaCF.filter(l=>mesAnioTrillaDe(l)===filtroMesTR);
   const stockDe=(l)=>l.kg_producto-(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);
 
   const triExcelso=lotesTF.reduce((s,l)=>s+(l.trilla.kg_excelso||0),0);
@@ -83,11 +82,11 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
 
   // Costo/kg Excelso Trilladora: calcCostoTriCF (local, centro "Bodega Cafe Fino") ya existente para un mes
   // especifico; para "todos" se suma el costo del centro de todos los meses y se divide entre el total de kg excelso.
-  const costoTriFiltrado=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&(filtroMesTR==="todos"||c.mes===filtroMesTR)).reduce((s,c)=>s+c.valor,0);
+  const costoTriFiltrado=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&(filtroMesTR==="todos"||c.mesAnio===filtroMesTR)).reduce((s,c)=>s+c.valor,0);
   const costoTriKgDash=triExcelso>0?costoTriFiltrado/triExcelso:0;
 
   // Valor Total por Tipo — mismo patron que DashboardTrilla.jsx, aplicado al centro "Bodega Cafe Fino"
-  const triCosFiltrados=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&(filtroMesTR==="todos"||c.mes===filtroMesTR));
+  const triCosFiltrados=(costos||[]).filter(c=>c.centro==="Bodega Cafe Fino"&&(filtroMesTR==="todos"||c.mesAnio===filtroMesTR));
   const triPorTipo={};triCosFiltrados.forEach(c=>{triPorTipo[c.tipo]=(triPorTipo[c.tipo]||0)+c.valor;});
   const triPieTotal=Object.values(triPorTipo).reduce((s,v)=>s+v,0);
   const triPieData=Object.entries(triPorTipo).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([tipo,val])=>({tipo,val,pct:triPieTotal>0?((val/triPieTotal)*100).toFixed(1):"0.0"}));
@@ -105,9 +104,9 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
       <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
       <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-        {["todos",...mesesTR].map(m=>(<button key={m} onClick={()=>setFiltroMesTR(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesTR===m?C.navy:C.border),background:filtroMesTR===m?C.navy:"transparent",color:filtroMesTR===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesTR===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        {["todos",...mesesTR].map(m=>(<button key={m} onClick={()=>setFiltroMesTR(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesTR===m?C.navy:C.border),background:filtroMesTR===m?C.navy:"transparent",color:filtroMesTR===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesTR===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
       </div>
-      {filtroMesTR!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesTR.charAt(0).toUpperCase()+filtroMesTR.slice(1)}</span>}
+      {filtroMesTR!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesTR)}</span>}
     </div>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
@@ -227,7 +226,7 @@ export function DashboardTrilladoraCF({lotesFino,costos}){
 
     <div style={S.card}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-        <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Valor Total por Tipo — Bodega Café Fino</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro · {filtroMesTR==="todos"?"todos los meses":filtroMesTR.charAt(0).toUpperCase()+filtroMesTR.slice(1)}</div></div>
+        <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Valor Total por Tipo — Bodega Café Fino</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro · {filtroMesTR==="todos"?"todos los meses":formatMesAnio(filtroMesTR)}</div></div>
         <div style={{textAlign:"right"}}><div style={{fontSize:10,color:C.textDim}}>Total</div><div style={{fontSize:14,fontWeight:800,color:C.orange}}>{fmtCOP(triPieTotal)}</div></div>
       </div>
       {triPieData.length===0

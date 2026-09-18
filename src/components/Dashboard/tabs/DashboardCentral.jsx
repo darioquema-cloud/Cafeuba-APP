@@ -2,13 +2,13 @@ import{useState}from"react";
 import{C,S}from"../../../theme";
 import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
-import{mesDe}from"../../../lib/dates";
+import{mesDe,ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{Bdg,TablaScrollV}from"../../ui";
 export function DashboardCentral({lotes,costos}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
   const [hoverMes,setHoverMes]=useState(null);
   const lotesCP=lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
-  const lotesCPFilt=filtroMesDash==="todos"?lotesCP:lotesCP.filter(l=>l.mes===filtroMesDash);
+  const lotesCPFilt=filtroMesDash==="todos"?lotesCP:lotesCP.filter(l=>l.mesAnio===filtroMesDash);
   const lotesTerminadosCP=lotesCPFilt.filter(l=>(l.kg_producto||0)>0);
   const tkq=lotesCPFilt.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);
   const tp=lotesCPFilt.reduce((s,l)=>s+(l.kg_producto||0),0);
@@ -34,7 +34,7 @@ export function DashboardCentral({lotes,costos}){
   const insumosData=INS_KEYS.map(([k,nombre])=>{const qty=lotesCPFilt.reduce((s,l)=>s+(l.insumos?.[k]||0),0);const val=lotesCPFilt.reduce((s,l)=>{const ins=l.insumos||{};return s+(ins[k]||0)*(ins["vr_"+k]||0);},0);return{nombre,qty,val};});
   const totalInsCP=insumosData.reduce((s,d)=>s+d.val,0);
   const totalInsTerminados=INS_KEYS.reduce((s,[k])=>s+lotesTerminadosCP.reduce((ss,l)=>{const ins=l.insumos||{};return ss+(ins[k]||0)*(ins["vr_"+k]||0);},0),0);
-  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMesDash==="todos"||c.mes===filtroMesDash));
+  const cbCosFiltrados=costos.filter(c=>c.centro==="Central de Beneficio"&&(filtroMesDash==="todos"||c.mesAnio===filtroMesDash));
   const cbPorTipo={};cbCosFiltrados.forEach(c=>{cbPorTipo[c.tipo]=(cbPorTipo[c.tipo]||0)+c.valor;});
   const cbPieTotal=Object.values(cbPorTipo).reduce((s,v)=>s+v,0);
   const cbPieData=Object.entries(cbPorTipo).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([tipo,val])=>({tipo,val,pct:cbPieTotal>0?((val/cbPieTotal)*100).toFixed(1):"0.0"}));
@@ -43,12 +43,12 @@ export function DashboardCentral({lotes,costos}){
   const promC=tp>0?cbPieTotal/tp:0;
   const promTotal=promA+promB+promC;
   return(<>
-    {(()=>{const mesesDisp=MESES.filter(m=>lotesCP.some(l=>l.mes===m)||costos.some(c=>c.centro==="Central de Beneficio"&&c.mes===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+    {(()=>{const mesesDisp=ordenarMesAnio([...lotesCP.map(l=>l.mesAnio),...costos.filter(c=>c.centro==="Central de Beneficio").map(c=>c.mesAnio)]);return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
       <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
       <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-        {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
       </div>
-      {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</span>}
+      {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesDash)}</span>}
     </div>);})()}
     <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
       {[{label:"Cereza Recibida",value:fmt(tkq)+" kg",sub:lotesCPFilt.length+" lotes",col:C.teal,icon:"☕"},{label:"Producto Terminado",value:fmt(tp)+" kg",sub:"café seco / pergamino",col:C.accent,icon:"📦"},{label:"Lotes Procesados",value:lotesCPFilt.filter(l=>l.kg_producto>0).length,sub:"con producto terminado",col:C.navy,icon:"🔢"},{label:"Valor Materia Prima",value:fmtCOP(tc),sub:"costo total cereza",col:C.gold,icon:"💰"},{label:"Costo Insumos",value:fmtCOP(totalInsCP),sub:"jugo·panela·harina·lev",col:C.purple,icon:"🧪"},{label:"Total Costos CB",value:fmtCOP(cbPieTotal),sub:"costos registrados CB",col:C.orange,icon:"📊",fs:15}].map(k=>(
@@ -222,7 +222,7 @@ export function DashboardCentral({lotes,costos}){
     <div style={{display:"grid",gridTemplateColumns:"1.6fr 1fr",gap:16,alignItems:"start",marginTop:20}}>
       <div style={S.card}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Distribución de Costos — Central de Beneficio</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro · {filtroMesDash==="todos"?"todos los meses":filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</div></div>
+          <div><div style={{fontWeight:700,fontSize:14,color:C.navy}}>Distribución de Costos — Central de Beneficio</div><div style={{fontSize:11,color:C.textDim,marginTop:2}}>% por rubro · {filtroMesDash==="todos"?"todos los meses":formatMesAnio(filtroMesDash)}</div></div>
           <div style={{textAlign:"right"}}><div style={{fontSize:10,color:C.textDim}}>Total</div><div style={{fontSize:14,fontWeight:800,color:C.orange}}>{fmtCOP(cbPieTotal)}</div></div>
         </div>
         {cbPieData.length===0

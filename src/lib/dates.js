@@ -9,3 +9,14 @@ export const mesAnioDe=(d)=>{
 export const mesTrillaDe=(l)=>mesDe(l?.trilla?.fecha_trilla);
 export const mesAnioTrillaDe=(l)=>mesAnioDe(l?.trilla?.fecha_trilla);
 export const diasEntre=(a,b)=>a&&b?Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000):null;
+export const ordenarMesAnio=(lista)=>{
+  return[...new Set(lista)].filter(Boolean).sort((a,b)=>{
+    const[ma,aa]=a.split("-"),[mb,ab]=b.split("-");
+    return(+aa)*100+MESES.indexOf(ma)-((+ab)*100+MESES.indexOf(mb));
+  });
+};
+export const formatMesAnio=(mesAnio)=>{
+  if(!mesAnio)return"";
+  const[m,a]=mesAnio.split("-");
+  return m?`${m.charAt(0).toUpperCase()+m.slice(1)} ${a}`:"";
+};

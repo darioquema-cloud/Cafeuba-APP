@@ -1,12 +1,12 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
-import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP}from"../../../lib/format";
+import{ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{KPI}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
 export function DashboardUbaTostado({blendsTostado,empaques,lotesFino,blendsFino}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
-  const tostAll=(blendsTostado||[]).filter(t=>filtroMesDash==="todos"||t.mes===filtroMesDash);
+  const tostAll=(blendsTostado||[]).filter(t=>filtroMesDash==="todos"||t.mesAnio===filtroMesDash);
   const emp=empaques||[];
   const kgTostado=tostAll.reduce((s,t)=>s+(t.kg_cafe_tostado||0),0);
   const kgSalidas=tostAll.reduce((s,t)=>s+(t.salidas||[]).reduce((a,si)=>a+si.peso_salida,0),0);
@@ -65,13 +65,13 @@ export function DashboardUbaTostado({blendsTostado,empaques,lotesFino,blendsFino
   });
   const filaProductos=Object.entries(porProducto).map(([prod,d])=>({prod,kg:d.kg,valorTotal:d.valorTotal,valorUnit:d.kg>0?d.valorTotal/d.kg:0})).filter(f=>f.kg>0).sort((a,b)=>b.kg-a.kg);
   return(<>
-    {(()=>{const mesesDisp=MESES.filter(m=>(blendsTostado||[]).some(t=>t.mes===m));return(
+    {(()=>{const mesesDisp=ordenarMesAnio((blendsTostado||[]).map(t=>t.mesAnio));return(
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
         <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-          {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
         </div>
-        {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</span>}
+        {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesDash)}</span>}
       </div>
     );})()}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:20}}>

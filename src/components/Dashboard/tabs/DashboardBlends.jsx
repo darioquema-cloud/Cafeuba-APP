@@ -1,8 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
-import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
-import{mesDe}from"../../../lib/dates";
+import{ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{Bdg,TablaScrollV,DonutChart}from"../../ui";
 export function DashboardBlends({blends,blendsFino}){
   const [tabBlends,setTabBlends]=useState("blend");
@@ -10,7 +9,7 @@ export function DashboardBlends({blends,blendsFino}){
   const [filtroMesBlendf,setFiltroMesBlendf]=useState("todos");
   const _stockB=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
   const blendsAll=blends||[];
-  const blendsFilt=filtroMesBlend==="todos"?blendsAll:blendsAll.filter(b=>mesDe(b.fecha)===filtroMesBlend);
+  const blendsFilt=filtroMesBlend==="todos"?blendsAll:blendsAll.filter(b=>b.mesAnio===filtroMesBlend);
   const blendsKgTotal=blendsFilt.reduce((s,b)=>s+b.kg_total,0);
   const blendsValTotal=blendsFilt.reduce((s,b)=>s+(b.valor_total||0),0);
   const blendsStockKg=blendsFilt.reduce((s,b)=>s+_stockB(b),0);
@@ -20,7 +19,7 @@ export function DashboardBlends({blends,blendsFino}){
   const blendsProdData=Object.entries(blendsPorProd).sort((a,b)=>b[1].kgTotal-a[1].kgTotal).map(([prod,d])=>({prod,count:d.count,kgTotal:d.kgTotal,costoUk:d.kgTotal>0?d.valTotal/d.kgTotal:0,kgSal:d.kgSal,kgStock:d.kgStock}));
   const _stockBF=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
   const blendsFAll=blendsFino||[];
-  const blendsFfilt=filtroMesBlendf==="todos"?blendsFAll:blendsFAll.filter(b=>mesDe(b.fecha)===filtroMesBlendf);
+  const blendsFfilt=filtroMesBlendf==="todos"?blendsFAll:blendsFAll.filter(b=>b.mesAnio===filtroMesBlendf);
   const blendsFKgTotal=blendsFfilt.reduce((s,b)=>s+b.kg_total,0);
   const blendsFValTotal=blendsFfilt.reduce((s,b)=>s+(b.valor_total||0),0);
   const blendsFStockKg=blendsFfilt.reduce((s,b)=>s+_stockBF(b),0);
@@ -33,12 +32,12 @@ export function DashboardBlends({blends,blendsFino}){
       {[["blend","Blend"],["blend_fino","Blend Cafe Fino"]].map(([k,v])=>(<button key={k} onClick={()=>setTabBlends(k)} style={{padding:"7px 18px",cursor:"pointer",fontSize:12,fontWeight:tabBlends===k?700:400,color:tabBlends===k?C.purple:C.textDim,background:"transparent",border:"none",borderBottom:tabBlends===k?"3px solid "+C.purple:"3px solid transparent",marginBottom:-2,fontFamily:"'Inter',sans-serif",whiteSpace:"nowrap"}}>{v}</button>))}
     </div>
     {tabBlends==="blend"&&(<>
-      {(()=>{const mesesB=MESES.filter(m=>blendsAll.some(b=>mesDe(b.fecha)===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+      {(()=>{const mesesB=ordenarMesAnio(blendsAll.map(b=>b.mesAnio));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
         <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-          {["todos",...mesesB].map(m=>(<button key={m} onClick={()=>setFiltroMesBlend(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlend===m?C.purple:C.border),background:filtroMesBlend===m?C.purple:"transparent",color:filtroMesBlend===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlend===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          {["todos",...mesesB].map(m=>(<button key={m} onClick={()=>setFiltroMesBlend(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlend===m?C.purple:C.border),background:filtroMesBlend===m?C.purple:"transparent",color:filtroMesBlend===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlend===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
         </div>
-        {filtroMesBlend!=="todos"&&<span style={{fontSize:11,color:C.purple,fontWeight:700,whiteSpace:"nowrap",background:C.purpleBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesBlend.charAt(0).toUpperCase()+filtroMesBlend.slice(1)}</span>}
+        {filtroMesBlend!=="todos"&&<span style={{fontSize:11,color:C.purple,fontWeight:700,whiteSpace:"nowrap",background:C.purpleBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesBlend)}</span>}
       </div>);})()}
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
         {[{label:"Blends Creados",value:blendsFilt.length,sub:"periodo seleccionado",col:C.navy,icon:"🔀"},{label:"kg Producidos",value:fmt(blendsKgTotal)+" kg",sub:"acumulado",col:C.teal,icon:"⚖️"},{label:"Valor Producido",value:fmtCOP(blendsValTotal),sub:"costo total",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(blendsKgSal)+" kg",sub:"despachado",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(blendsValSal),sub:"facturado salidas",col:C.accent,icon:"💸",fs:14},{label:"kg en Stock",value:fmt(blendsStockKg)+" kg",sub:"disponible",col:C.green,icon:"🏪"}].map(k=>(
@@ -92,12 +91,12 @@ export function DashboardBlends({blends,blendsFino}){
       </div>
     </>)}
     {tabBlends==="blend_fino"&&(<>
-      {(()=>{const mesesBF2=MESES.filter(m=>blendsFAll.some(b=>mesDe(b.fecha)===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+      {(()=>{const mesesBF2=ordenarMesAnio(blendsFAll.map(b=>b.mesAnio));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
         <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-          {["todos",...mesesBF2].map(m=>(<button key={m} onClick={()=>setFiltroMesBlendf(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlendf===m?C.green:C.border),background:filtroMesBlendf===m?C.green:"transparent",color:filtroMesBlendf===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlendf===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          {["todos",...mesesBF2].map(m=>(<button key={m} onClick={()=>setFiltroMesBlendf(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesBlendf===m?C.green:C.border),background:filtroMesBlendf===m?C.green:"transparent",color:filtroMesBlendf===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesBlendf===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
         </div>
-        {filtroMesBlendf!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesBlendf.charAt(0).toUpperCase()+filtroMesBlendf.slice(1)}</span>}
+        {filtroMesBlendf!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesBlendf)}</span>}
       </div>);})()}
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:10,marginBottom:18}}>
         {[{label:"Blends Creados",value:blendsFfilt.length,sub:"periodo seleccionado",col:C.navy,icon:"🔀"},{label:"kg Producidos",value:fmt(blendsFKgTotal)+" kg",sub:"acumulado",col:C.teal,icon:"⚖️"},{label:"Valor Producido",value:fmtCOP(blendsFValTotal),sub:"costo total",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(blendsFKgSal)+" kg",sub:"despachado",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(blendsFValSal),sub:"facturado salidas",col:C.accent,icon:"💸",fs:14},{label:"kg en Stock",value:fmt(blendsFStockKg)+" kg",sub:"disponible",col:C.green,icon:"🏪"}].map(k=>(

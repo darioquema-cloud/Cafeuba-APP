@@ -1,12 +1,12 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
-import{MESES}from"../../../data/constants";
 import{fmt,fmtCOP}from"../../../lib/format";
+import{ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{KPI}from"../../ui";
 import{DonutChart}from"../../ui/DonutChart";
 export function DashboardMaquila({maquilas}){
   const [filtroMesDash,setFiltroMesDash]=useState("todos");
-  const maqAll=(maquilas||[]).filter(m=>filtroMesDash==="todos"||m.mes===filtroMesDash);
+  const maqAll=(maquilas||[]).filter(m=>filtroMesDash==="todos"||m.mesAnio===filtroMesDash);
   const maqActivas=maqAll.filter(m=>m.estado_pipeline!=="entregado");
   const maqEntregadas=maqAll.filter(m=>m.estado_pipeline==="entregado");
   const maqKg=maqAll.reduce((s,m)=>s+(m.kg_recibidos||0),0);
@@ -26,13 +26,13 @@ export function DashboardMaquila({maquilas}){
     {label:"Kg Tostado",valor:kgTostados,col:C.purple},
   ];
   return(<>
-    {(()=>{const mesesDisp=MESES.filter(m=>(maquilas||[]).some(x=>x.mes===m));return(
+    {(()=>{const mesesDisp=ordenarMesAnio((maquilas||[]).map(x=>x.mesAnio));return(
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
         <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-          {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+          {["todos",...mesesDisp].map(m=>(<button key={m} onClick={()=>setFiltroMesDash(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesDash===m?C.navy:C.border),background:filtroMesDash===m?C.navy:"transparent",color:filtroMesDash===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesDash===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
         </div>
-        {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesDash.charAt(0).toUpperCase()+filtroMesDash.slice(1)}</span>}
+        {filtroMesDash!=="todos"&&<span style={{fontSize:11,color:C.accent,fontWeight:700,whiteSpace:"nowrap",background:C.accentBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesDash)}</span>}
       </div>
     );})()}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:20}}>

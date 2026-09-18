@@ -1,12 +1,12 @@
 import{useState}from"react";
 import{C,S}from"../../../theme";
-import{MESES}from"../../../data/constants";
 import{fmtCOP,fmt}from"../../../lib/format";
+import{ordenarMesAnio,formatMesAnio}from"../../../lib/dates";
 import{Bdg,TablaScrollV}from"../../ui";
 export function DashboardBodegaCF({lotesFino}){
   const [filtroMesCF,setFiltroMesCF]=useState("todos");
   const lotesBCF=(lotesFino||[]).filter(l=>!l.para_trilladora);
-  const lotesBCFFilt=filtroMesCF==="todos"?lotesBCF:lotesBCF.filter(l=>l.mes===filtroMesCF);
+  const lotesBCFFilt=filtroMesCF==="todos"?lotesBCF:lotesBCF.filter(l=>l.mesAnio===filtroMesCF);
   const bcfDetalle=lotesBCFFilt.map(l=>{const sal=(l.salidas_bodega||[]).reduce((a,s)=>a+s.peso_salida,0);const ck=l.costo_compra_kg||0;return{...l,_stock:l.kg_producto-sal,_salTot:sal,_costoKg:ck,_costoTotal:ck*l.kg_producto};});
   const bcfEntradas=bcfDetalle.reduce((s,l)=>s+l.kg_producto,0);
   const bcfValEnt=bcfDetalle.reduce((s,l)=>s+l._costoTotal,0);
@@ -17,12 +17,12 @@ export function DashboardBodegaCF({lotesFino}){
   const bcfPorProd={};bcfDetalle.forEach(l=>{const p=l.producto||"Sin Producto";if(!bcfPorProd[p])bcfPorProd[p]={kgEnt:0,costoTot:0,kgSal:0,kgStock:0};bcfPorProd[p].kgEnt+=l.kg_producto;bcfPorProd[p].costoTot+=l._costoTotal;bcfPorProd[p].kgSal+=l._salTot;bcfPorProd[p].kgStock+=l._stock;});
   const bcfProdData=Object.entries(bcfPorProd).sort((a,b)=>b[1].kgEnt-a[1].kgEnt).map(([prod,d])=>({prod,kgEnt:d.kgEnt,costoUk:d.kgEnt>0?d.costoTot/d.kgEnt:0,kgSal:d.kgSal,kgStock:d.kgStock}));
   return(<>
-    {(()=>{const mesesCF=MESES.filter(m=>lotesBCF.some(l=>l.mes===m));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
+    {(()=>{const mesesCF=ordenarMesAnio(lotesBCF.map(l=>l.mesAnio));return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 16px",background:C.panel,borderRadius:12,border:"1px solid "+C.border,flexWrap:"wrap"}}>
       <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5,whiteSpace:"nowrap"}}>Periodo</span>
       <div style={{display:"flex",gap:5,flexWrap:"wrap",flex:1}}>
-        {["todos",...mesesCF].map(m=>(<button key={m} onClick={()=>setFiltroMesCF(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesCF===m?C.green:C.border),background:filtroMesCF===m?C.green:"transparent",color:filtroMesCF===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesCF===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":m.charAt(0).toUpperCase()+m.slice(1)}</button>))}
+        {["todos",...mesesCF].map(m=>(<button key={m} onClick={()=>setFiltroMesCF(m)} style={{padding:"4px 13px",borderRadius:20,border:"1px solid "+(filtroMesCF===m?C.green:C.border),background:filtroMesCF===m?C.green:"transparent",color:filtroMesCF===m?"#fff":C.text,fontSize:11,fontWeight:filtroMesCF===m?700:400,cursor:"pointer",fontFamily:"'Inter',sans-serif",textTransform:"capitalize"}}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
       </div>
-      {filtroMesCF!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {filtroMesCF.charAt(0).toUpperCase()+filtroMesCF.slice(1)}</span>}
+      {filtroMesCF!=="todos"&&<span style={{fontSize:11,color:C.green,fontWeight:700,whiteSpace:"nowrap",background:C.greenBg,padding:"3px 10px",borderRadius:20}}>📅 {formatMesAnio(filtroMesCF)}</span>}
     </div>);})()}
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:10,marginBottom:18}}>
       {[{label:"Lotes Entrada",value:bcfDetalle.length,sub:lotesBCF.length+" lotes total",col:C.navy,icon:"📥"},{label:"kg Entrada",value:fmt(bcfEntradas)+" kg",sub:"café fino",col:C.teal,icon:"⚖️"},{label:"Valor Entrada",value:fmtCOP(bcfValEnt),sub:"costo total entrada",col:C.gold,icon:"💰",fs:14},{label:"kg Salidas",value:fmt(bcfSalidas)+" kg",sub:"transferido / vendido",col:C.orange,icon:"📤"},{label:"Valor Salidas",value:fmtCOP(bcfValSalidas),sub:"valor total salidas",col:C.accent,icon:"💸",fs:14},{label:"kg Stock",value:fmt(bcfStock)+" kg",sub:"disponible en bodega",col:C.green,icon:"🏪"},{label:"Valor Stock",value:fmtCOP(bcfValStock),sub:"valorización a costo",col:C.purple,icon:"📊",fs:14}].map(k=>(

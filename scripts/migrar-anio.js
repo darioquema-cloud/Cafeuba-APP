@@ -64,6 +64,7 @@ const COLECCIONES=[
   { nombre:"maquilas",        campoFecha:["fecha"] },
   { nombre:"blendsTostado",   campoFecha:["fecha"] },
   { nombre:"subprodVerde",    campoFecha:["fecha"] },
+  { nombre:"subprodPerg",     campoFecha:["fecha"] },
   { nombre:"mezclasSubKorea", campoFecha:["fecha"] },
   { nombre:"inventariosMensuales", campoFecha:["fecha_conteo"] },
   { nombre:"pedidos",         campoFecha:["fecha_registro"] },
