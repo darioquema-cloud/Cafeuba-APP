@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,Modal,AutoFitText,TablaScrollV,SelectDestino}from"../ui";
 import{EQUIPOS_SECADO}from"../../data/constants";
 import{fmt,fmtCOP,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{semanaISO,mesDe}from"../../lib/dates";
+import{semanaISO,mesDe,mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCosto}from"../../lib/costing";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
@@ -84,10 +84,10 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const [filtroProdSal,setFiltroProdSal]=useState("");
   const [filtroDestinoSal,setFiltroDestinoSal]=useState("");
   const lotesB=lotes.filter(l=>l.kg_producto>0&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual");
-  const mesesB=[...new Set(lotesB.map(l=>l.mes).filter(Boolean))].sort();
+  const mesesB=ordenarMesAnio(lotesB.map(l=>l.mesAnio));
   const productosB=[...new Set(lotesB.map(l=>l.producto).filter(Boolean))].sort();
   const lotesBFiltrados=lotesB.filter(l=>{
-    if(filtroMes&&l.mes!==filtroMes)return false;
+    if(filtroMes&&l.mesAnio!==filtroMes)return false;
     if(filtroProducto&&l.producto!==filtroProducto)return false;
     if(busqueda&&!l.codigo.toLowerCase().includes(busqueda.toLowerCase()))return false;
     return true;
@@ -285,11 +285,11 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   };
   const DESTI_LABEL_B={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro",ajuste_inventario:"Ajuste Inventario"};
   const todasSalidasB=lotes.flatMap(l=>(l.salidas_bodega||[]).map(s=>({...s,codigo:l.codigo,loteId:l.id,loteRef:l}))).sort((a,b)=>(a.loteRef.fecha_proceso||"").localeCompare(b.loteRef.fecha_proceso||"")||(a.fecha||"").localeCompare(b.fecha||""));
-  const mesesSalB=[...new Set(todasSalidasB.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
+  const mesesSalB=ordenarMesAnio(todasSalidasB.map(s=>mesAnioDe(s.fecha||"")));
   const prodsSalB=[...new Set(todasSalidasB.map(s=>s.loteRef.producto).filter(Boolean))].sort();
   const destiSalB=[...new Set(todasSalidasB.map(s=>s.destino_key).filter(Boolean))];
   const salidasBodFiltradas=todasSalidasB.filter(s=>{
-    if(filtroMesSal&&mesDe(s.fecha||"")!==filtroMesSal)return false;
+    if(filtroMesSal&&mesAnioDe(s.fecha||"")!==filtroMesSal)return false;
     if(filtroProdSal&&s.loteRef.producto!==filtroProdSal)return false;
     if(filtroDestinoSal&&s.destino_key!==filtroDestinoSal)return false;
     if(busquedaSal){const q=busquedaSal.toLowerCase();if(!s.codigo.toLowerCase().includes(q)&&!(s.cliente||"").toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}
@@ -386,7 +386,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     </div>
     {tab==="inventario"&&(<><div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesB.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesB.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosB.map(p=>(<option key={p}>{p}</option>))}</select>
       {(filtroMes||filtroProducto||busqueda)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("");setFiltroProducto("");setBusqueda("");}}>✕ Limpiar</button>}
       <span style={{color:C.textFaint,fontSize:12,alignSelf:"center"}}>{lotesBFiltrados.length} de {lotesB.length} lotes</span>
@@ -603,7 +603,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
       </div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}>
         <input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar por lote, cliente, factura..." value={busquedaSal} onChange={e=>setBusquedaSal(e.target.value)}/>
-        <select style={{...S.select,width:140}} value={filtroMesSal} onChange={e=>setFiltroMesSal(e.target.value)}><option value="">Todos los meses</option>{mesesSalB.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:140}} value={filtroMesSal} onChange={e=>setFiltroMesSal(e.target.value)}><option value="">Todos los meses</option>{mesesSalB.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
         <select style={{...S.select,width:160}} value={filtroProdSal} onChange={e=>setFiltroProdSal(e.target.value)}><option value="">Todos los productos</option>{prodsSalB.map(p=>(<option key={p}>{p}</option>))}</select>
         <select style={{...S.select,width:150}} value={filtroDestinoSal} onChange={e=>setFiltroDestinoSal(e.target.value)}><option value="">Todos los destinos</option>{destiSalB.map(d=>(<option key={d} value={d}>{DESTI_LABEL_B[d]||d}</option>))}</select>
         {(busquedaSal||filtroMesSal||filtroProdSal||filtroDestinoSal)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaSal("");setFiltroMesSal("");setFiltroProdSal("");setFiltroDestinoSal("");}}>✕ Limpiar</button>}

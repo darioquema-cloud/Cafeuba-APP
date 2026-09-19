@@ -2,7 +2,7 @@ import{useState,useEffect}from"react";
 import{C,S}from"../../theme";
 import{NORMAS}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{mesDe,semanaISO}from"../../lib/dates";
+import{mesDe,mesAnioDe,semanaISO,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
 import{jsPDF}from"jspdf";
@@ -304,11 +304,11 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
   };
 
   const productosDeBlend=(b)=>[...new Set(b.items.map(it=>lotes.find(x=>x.id===it.reprId)?.producto).filter(Boolean))];
-  const mesesBlend=[...new Set(blends.map(b=>mesDe(b.fecha)).filter(Boolean))].sort();
+  const mesesBlend=ordenarMesAnio(blends.map(b=>b.mesAnio));
   const productosBlend=[...new Set(blends.flatMap(b=>productosDeBlend(b)))].sort();
   const nomComBlend=[...new Set(blends.map(b=>b.producto_comercial).filter(Boolean))].sort();
   const blendsFiltrados=blends.filter(b=>{
-    if(filtroMes&&mesDe(b.fecha)!==filtroMes)return false;
+    if(filtroMes&&b.mesAnio!==filtroMes)return false;
     if(filtroProducto&&!productosDeBlend(b).includes(filtroProducto))return false;
     if(filtroNomCom&&b.producto_comercial!==filtroNomCom)return false;
     if(busqueda){
@@ -328,11 +328,11 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
   const totalKgSalidasB=blends.reduce((s,b)=>s+(b.salidas||[]).filter(x=>x.destino_key!=="ajuste_inventario").reduce((a,x)=>a+(x.peso_salida||0),0),0);
   const DESTI_LABEL_BL={trilla:"Trilla",blend:"Blend",bodega_cf:"Cafe Fino",trilla_cf:"Trilla CF",blend_cf:"Blend CF",uba_tostado:"Tostado",muestras:"Muestras",otro:"Otro"};
   const todasSalidasBl=blends.flatMap(b=>(b.salidas||[]).filter(s=>!s.auto_blend).map(s=>({...s,codigo:b.codigo,blendRef:b}))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  const mesesSalBl=[...new Set(todasSalidasBl.map(s=>mesDe(s.fecha||"")).filter(Boolean))].sort();
+  const mesesSalBl=ordenarMesAnio(todasSalidasBl.map(s=>mesAnioDe(s.fecha||"")));
   const nomComSalBl=[...new Set(todasSalidasBl.map(s=>s.blendRef.producto_comercial).filter(Boolean))].sort();
   const destiSalBl=[...new Set(todasSalidasBl.map(s=>s.destino_key).filter(Boolean))];
   const salidasBlFiltradas=todasSalidasBl.filter(s=>{
-    if(filtroMesBH&&mesDe(s.fecha||"")!==filtroMesBH)return false;
+    if(filtroMesBH&&mesAnioDe(s.fecha||"")!==filtroMesBH)return false;
     if(filtroProductoBH&&s.blendRef.producto_comercial!==filtroProductoBH)return false;
     if(filtroDestinoBH&&s.destino_key!==filtroDestinoBH)return false;
     if(busquedaBH){const q=busquedaBH.toLowerCase();if(!s.codigo.toLowerCase().includes(q)&&!(s.cliente||"").toLowerCase().includes(q)&&!(s.factura||"").toLowerCase().includes(q))return false;}
@@ -366,7 +366,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
     </div>
     {tab==="inventario"&&(<><div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote o blend..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesBlend.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesBlend.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosBlend.map(p=>(<option key={p}>{p}</option>))}</select>
       <select style={{...S.select,width:180}} value={filtroNomCom} onChange={e=>setFiltroNomCom(e.target.value)}><option value="">Todos los nombres comerciales</option>{nomComBlend.map(n=>(<option key={n}>{n}</option>))}</select>
       {(filtroMes||filtroProducto||filtroNomCom||busqueda)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMes("");setFiltroProducto("");setFiltroNomCom("");setBusqueda("");}}>✕ Limpiar</button>}
@@ -411,7 +411,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Historico de Salidas - Blend</div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}>
         <input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar por blend, cliente, factura..." value={busquedaBH} onChange={e=>setBusquedaBH(e.target.value)}/>
-        <select style={{...S.select,width:140}} value={filtroMesBH} onChange={e=>setFiltroMesBH(e.target.value)}><option value="">Todos los meses</option>{mesesSalBl.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:140}} value={filtroMesBH} onChange={e=>setFiltroMesBH(e.target.value)}><option value="">Todos los meses</option>{mesesSalBl.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
         <select style={{...S.select,width:180}} value={filtroProductoBH} onChange={e=>setFiltroProductoBH(e.target.value)}><option value="">Todos los productos</option>{nomComSalBl.map(p=>(<option key={p}>{p}</option>))}</select>
         <select style={{...S.select,width:150}} value={filtroDestinoBH} onChange={e=>setFiltroDestinoBH(e.target.value)}><option value="">Todos los destinos</option>{destiSalBl.map(d=>(<option key={d} value={d}>{DESTI_LABEL_BL[d]||d}</option>))}</select>
         {(busquedaBH||filtroMesBH||filtroProductoBH||filtroDestinoBH)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaBH("");setFiltroMesBH("");setFiltroProductoBH("");setFiltroDestinoBH("");}}>✕ Limpiar</button>}

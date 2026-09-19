@@ -4,7 +4,7 @@ import{KPI,Modal,Fld,Bdg,TablaScrollV}from"../ui";
 import{DonutChart}from"../ui/DonutChart";
 import{MESES,TIPOS_COSTO,CENTROS,CENTRO_COL,CENTRO_BG}from"../../data/constants";
 import{fmtCOP,today,genId}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 export function Costos({costos,setCostos}){
   const [modal,setModal]=useState(false);const [editId,setEditId]=useState(null);const [form,setForm]=useState({fecha:today(),mes:MESES[new Date().getMonth()],tipo:TIPOS_COSTO[0],descripcion:"",valor:"",centro:CENTROS[0]});const [fil,setFil]=useState("todos");
   const [busquedaH,setBusquedaH]=useState("");const [filtroMesH,setFiltroMesH]=useState("");const [filtroCentroH,setFiltroCentroH]=useState("");
@@ -25,8 +25,9 @@ export function Costos({costos,setCostos}){
   const total=data.reduce((s,c)=>s+c.valor,0);
   const porT={};data.forEach(c=>{porT[c.tipo]=(porT[c.tipo]||0)+c.valor;});
   const porC={};costos.forEach(c=>{porC[c.centro]=(porC[c.centro]||0)+c.valor;});
+  const mesesH=ordenarMesAnio(costos.map(c=>c.mesAnio));
   const costosHFiltrados=costos.filter(c=>{
-    if(filtroMesH&&c.mes!==filtroMesH)return false;
+    if(filtroMesH&&c.mesAnio!==filtroMesH)return false;
     if(filtroCentroH&&c.centro!==filtroCentroH)return false;
     if(busquedaH){const q=busquedaH.toLowerCase();if(!c.descripcion.toLowerCase().includes(q)&&!(c.tipo||"").toLowerCase().includes(q))return false;}
     return true;
@@ -53,7 +54,7 @@ export function Costos({costos,setCostos}){
     </div>
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por descripcion o tipo..." value={busquedaH} onChange={e=>setBusquedaH(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMesH} onChange={e=>setFiltroMesH(e.target.value)}><option value="">Todos los meses</option>{MESES.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMesH} onChange={e=>setFiltroMesH(e.target.value)}><option value="">Todos los meses</option>{mesesH.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:180}} value={filtroCentroH} onChange={e=>setFiltroCentroH(e.target.value)}><option value="">Todos los centros</option>{CENTROS.map(c=>(<option key={c}>{c}</option>))}</select>
       {(filtroMesH||filtroCentroH||busquedaH)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMesH("");setFiltroCentroH("");setBusquedaH("");}}>✕ Limpiar</button>}
       <span style={{color:C.textFaint,fontSize:12,alignSelf:"center"}}>{costosHFiltrados.length} de {costos.length} registros</span>
