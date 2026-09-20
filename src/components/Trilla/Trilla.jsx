@@ -2,7 +2,7 @@ import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
 import{NORMAS}from"../../data/constants";
 import{fmtCOP,fmt,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{semanaISO,mesDe,mesAnioDe}from"../../lib/dates";
+import{semanaISO,mesDe,mesAnioDe,mesAnioTrillaDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 import{Bdg,Fld,KPI,Modal,AutoFitText,TablaScrollV}from"../ui";
@@ -45,12 +45,12 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
       alert("Lote revertido a Bodega Milán.");
     }
   };
-  // FIX A: opciones de mes/producto incluyen tanto lotes pendientes (l.mes) como ya trillados (mes real de trilla), para que el filtro sirva en ambos paneles
-  const mesesD=[...new Set([...disp.map(l=>l.mes),...tril.map(l=>mesDe(l.trilla?.fecha_trilla))].filter(Boolean))].sort();
+  // FIX A: opciones de mes/producto incluyen tanto lotes pendientes (l.mesAnio) como ya trillados (mesAnio real de trilla), para que el filtro sirva en ambos paneles
+  const mesesD=ordenarMesAnio([...disp.map(l=>l.mesAnio),...tril.map(l=>mesAnioTrillaDe(l))]);
   const productosD=[...new Set([...disp.map(l=>l.producto),...tril.map(l=>l.producto)].filter(Boolean))].sort();
   const cortesD=[...new Set(tril.map(l=>l.trilla?.codigo_corte).filter(Boolean))].sort();
   const dispFiltrados=disp.filter(l=>{
-    if(filtroMes&&l.mes!==filtroMes)return false;
+    if(filtroMes&&l.mesAnio!==filtroMes)return false;
     if(filtroProducto&&l.producto!==filtroProducto)return false;
     if(busqueda&&!l.codigo.toLowerCase().includes(busqueda.toLowerCase()))return false;
     return true;
@@ -193,10 +193,10 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     gruposHistoricoAll.push(grupo);
   });
   // FIX A: filtro de mes/producto/busqueda/corte conectado al Historico (antes solo aplicaba al panel de lotes disponibles).
-  // El mes se deriva de la fecha real de trilla (mesDe(trilla.fecha_trilla)), no del mes de ingreso del lote (l.mes).
+  // El mes se deriva de la fecha real de trilla (mesAnioTrillaDe(repr)), no del mes de ingreso del lote (l.mesAnio).
   const gruposHistorico=gruposHistoricoAll.filter(grupo=>{
     const repr=grupo[0];
-    if(filtroMes&&mesDe(repr.trilla.fecha_trilla)!==filtroMes)return false;
+    if(filtroMes&&mesAnioTrillaDe(repr)!==filtroMes)return false;
     if(filtroProducto&&!grupo.some(x=>x.producto===filtroProducto))return false;
     if(filtroCorte&&repr.trilla.codigo_corte!==filtroCorte)return false;
     if(busqueda&&!grupo.some(x=>x.codigo.toLowerCase().includes(busqueda.toLowerCase())))return false;
@@ -383,7 +383,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
 
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesD.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}><option value="">Todos los meses</option>{mesesD.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProducto} onChange={e=>setFiltroProducto(e.target.value)}><option value="">Todos los productos</option>{productosD.map(p=>(<option key={p}>{p}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroCorte} onChange={e=>setFiltroCorte(e.target.value)}><option value="">Todos los cortes</option>{cortesD.map(c=>(<option key={c}>{c}</option>))}</select>
       <button style={{...S.btn,background:C.orange,borderColor:C.orange,whiteSpace:"nowrap"}} onClick={()=>{setFormManual(blankManual());setModalManual(true);}}>+ Lote Manual</button>

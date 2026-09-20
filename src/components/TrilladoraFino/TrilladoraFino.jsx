@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,KPIDoble,Bdg,Fld,TablaScrollV,AutoFitText}from"../ui";
 import{NORMAS}from"../../data/constants";
 import{fmt,fmtCOP,dateToCode}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesDe,mesAnioTrillaDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{costoKgExDeCafeFino,construirGruposBTF,costoKgExFinoDe,calcCostoTriCF}from"../../lib/costing";
 export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const MAX_LOTES=8;
@@ -20,12 +20,12 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
   const disp=lotesFino.filter(l=>l.para_trilladora&&!l.trilla?.kg_excelso&&stockDe(l)>0);
   const tril=lotesFino.filter(l=>l.trilla?.kg_excelso>0);
   const gruposTrillados=construirGruposBTF(tril,lotesFino);
-  const mesesDTF=[...new Set([...disp.map(l=>l.mes),...tril.map(l=>mesDe(l.trilla?.fecha_trilla))].filter(Boolean))].sort();
+  const mesesDTF=ordenarMesAnio([...disp.map(l=>l.mesAnio),...tril.map(l=>mesAnioTrillaDe(l))]);
   const productosDTF=[...new Set([...disp.map(l=>l.producto),...tril.map(l=>l.producto)].filter(Boolean))].sort();
   const cortesDTF=[...new Set(tril.map(l=>l.trilla?.codigo_corte).filter(Boolean))].sort();
 
   const dispFiltrados=disp.filter(l=>{
-    if(filtroMesTF&&l.mes!==filtroMesTF)return false;
+    if(filtroMesTF&&l.mesAnio!==filtroMesTF)return false;
     if(filtroProductoTF&&l.producto!==filtroProductoTF)return false;
     if(busquedaTF&&!l.codigo.toLowerCase().includes(busquedaTF.toLowerCase()))return false;
     return true;
@@ -33,7 +33,7 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
 
   const gruposTrilladosFiltrados=gruposTrillados.filter(grupo=>{
     const repr=grupo[0];
-    if(filtroMesTF&&mesDe(repr.trilla.fecha_trilla)!==filtroMesTF)return false;
+    if(filtroMesTF&&mesAnioTrillaDe(repr)!==filtroMesTF)return false;
     if(filtroProductoTF&&!grupo.some(x=>x.producto===filtroProductoTF))return false;
     if(filtroCorteTF&&repr.trilla.codigo_corte!==filtroCorteTF)return false;
     if(busquedaTF&&!grupo.some(x=>x.codigo.toLowerCase().includes(busquedaTF.toLowerCase())))return false;
@@ -149,7 +149,7 @@ export function TrilladoraFino({lotesFino,setLotesFino,lotes,costos}){
     </div>
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo de lote..." value={busquedaTF} onChange={e=>setBusquedaTF(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMesTF} onChange={e=>setFiltroMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesDTF.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMesTF} onChange={e=>setFiltroMesTF(e.target.value)}><option value="">Todos los meses</option>{mesesDTF.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProductoTF} onChange={e=>setFiltroProductoTF(e.target.value)}><option value="">Todos los productos</option>{productosDTF.map(p=>(<option key={p}>{p}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroCorteTF} onChange={e=>setFiltroCorteTF(e.target.value)}><option value="">Todos los cortes</option>{cortesDTF.map(c=>(<option key={c}>{c}</option>))}</select>
     </div>
