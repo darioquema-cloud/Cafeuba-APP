@@ -2,7 +2,7 @@ import{useState,useMemo,useEffect}from"react";
 import{C,S}from"../../theme";
 import{TIPOS_TOSTION}from"../../data/constants";
 import{fmtCOP,fmt,numVal,today,genId,dateToCode,fmtFecha}from"../../lib/format";
-import{mesDe,mesAnioDe}from"../../lib/dates";
+import{mesDe,mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCostoTuesteMes}from"../../lib/costing";
 import{Bdg,Fld,KPI,KPIDoble,Modal,TablaScrollV,SelectDestino}from"../ui";
 import*as XLSX from"xlsx";
@@ -129,14 +129,14 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const listosParaTostar=[
     ...pendientes.map(t=>({
       id:t.id,tipo:"pendiente",codigo:t.codigo,producto:t.nombre_producto||"—",
-      kg:t.kg_a_tostar,valorUnit:t.valor_unitario||0,mes:mesDe(t.fecha)||t.mes||"",
+      kg:t.kg_a_tostar,valorUnit:t.valor_unitario||0,mes:t.mesAnio||mesAnioDe(t.fecha)||"",
       origenLabel:t.codigo_lote_origen||(t.lotes_blend||[]).join(", ")||"—",
       _raw:t
     })),
     ...poolDirecto.map(item=>({
       id:item.origen_tipo+"_"+item.salidaId,tipo:"pool",codigo:item.lote_codigo,
       producto:item.nombre||"—",kg:item.kg_disponible,valorUnit:item.valor_unitario||0,
-      mes:mesDe(item.fecha)||"",
+      mes:mesAnioDe(item.fecha)||"",
       origenLabel:item.origen_tipo==="blend_fino"?"Blend CF":item.origen_tipo==="bodega_tri_fino"?"Trilladora CF":"Bodega CF",
       _raw:item
     })),
@@ -144,7 +144,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const [filtroProductoListos,setFiltroProductoListos]=useState("");
   const [filtroMesListos,setFiltroMesListos]=useState("todos");
   const [filtroStockListos,setFiltroStockListos]=useState("todos");
-  const mesesListos=[...new Set(listosParaTostar.map(r=>r.mes).filter(Boolean))];
+  const mesesListos=ordenarMesAnio(listosParaTostar.map(r=>r.mes));
   const listosFiltrados=listosParaTostar.filter(r=>{
     const q=filtroProductoListos.toLowerCase();
     const coincide=!q||r.producto.toLowerCase().includes(q)||(r.codigo||"").toLowerCase().includes(q)||(r.origenLabel||"").toLowerCase().includes(q);
@@ -154,12 +154,12 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const [filtroMesHist,setFiltroMesHist]=useState("todos");
   const [filtroProductoSelectHist,setFiltroProductoSelectHist]=useState("todos");
   const historico=blendsTostado.filter(t=>t.kg_cafe_tostado>0);
-  const mesesHist=[...new Set(historico.map(t=>mesDe(t.fecha)).filter(Boolean))];
+  const mesesHist=ordenarMesAnio(historico.map(t=>mesAnioDe(t.fecha)));
   const productosHist=[...new Set(historico.map(t=>t.nombre_producto).filter(Boolean))];
   const historicoFiltrado=historico.filter(t=>{
     const q=filtroProductoHist.toLowerCase();
     const coincide=!q||(t.nombre_producto||"").toLowerCase().includes(q)||(t.codigo_lote_origen||"").toLowerCase().includes(q)||(t.codigo||"").toLowerCase().includes(q);
-    return (filtroMesHist==="todos"||mesDe(t.fecha)===filtroMesHist)&&coincide&&(filtroProductoSelectHist==="todos"||t.nombre_producto===filtroProductoSelectHist);
+    return (filtroMesHist==="todos"||mesAnioDe(t.fecha)===filtroMesHist)&&coincide&&(filtroProductoSelectHist==="todos"||t.nombre_producto===filtroProductoSelectHist);
   });
   const kgDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg,0);
   const valorDisponiblesTostar=listosParaTostar.filter(r=>r.kg>0).reduce((s,r)=>s+r.kg*(r.valorUnit||0),0);
@@ -297,7 +297,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <input value={filtroProductoListos} onChange={e=>setFiltroProductoListos(e.target.value)} placeholder="Buscar por producto o código..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
         <select value={filtroMesListos} onChange={e=>setFiltroMesListos(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los meses</option>
-          {mesesListos.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+          {mesesListos.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{formatMesAnio(m)}</option>))}
         </select>
         <select value={filtroStockListos} onChange={e=>setFiltroStockListos(e.target.value)} style={{...S.select,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los lotes</option>
@@ -321,7 +321,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
           <td style={{...S.td,fontFamily:"monospace",fontWeight:700,color:C.orange,fontSize:11}}>{r.codigo}</td>
           <td style={{...S.td,fontWeight:600}}>{r.producto}</td>
           <td style={S.td}>{r.tipo==="pendiente"?<Bdg label="Pendiente" col={C.orange} bg={C.orangeBg}/>:(r.kg<=0?<Bdg label="Consumido" col={C.textDim} bg={C.bg}/>:<Bdg label="Pool Directo" col={C.teal} bg={C.tealBg}/>)}</td>
-          <td style={{...S.td,textTransform:"capitalize"}}>{r.mes||"—"}</td>
+          <td style={S.td}>{r.mes?formatMesAnio(r.mes):"—"}</td>
           <td style={{...S.td,color:C.accent,fontWeight:700}}>{fmt(r.kg,1)} kg</td>
           <td style={{...S.td,color:C.gold}}>{r.valorUnit>0?fmtCOP(r.valorUnit):"—"}</td>
           <td style={{...S.td,color:C.textDim,fontSize:12}}>{r.origenLabel}</td>
@@ -401,7 +401,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
         <input value={filtroProductoHist} onChange={e=>setFiltroProductoHist(e.target.value)} placeholder="Buscar por producto o código..." style={{...S.input,width:"auto",flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}/>
         <select value={filtroMesHist} onChange={e=>setFiltroMesHist(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los meses</option>
-          {mesesHist.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+          {mesesHist.map(m=>(<option key={m} value={m} style={{textTransform:"capitalize"}}>{formatMesAnio(m)}</option>))}
         </select>
         <select value={filtroProductoSelectHist} onChange={e=>setFiltroProductoSelectHist(e.target.value)} style={{...S.select,width:"auto",minWidth:150,fontSize:12,padding:"6px 10px"}}>
           <option value="todos">Todos los productos</option>

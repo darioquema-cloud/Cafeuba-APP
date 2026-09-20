@@ -2,7 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../theme";
 import{NORMAS,TIPOS_TOSTION}from"../../data/constants";
 import{fmtCOP,fmt,today,genId,fmtFecha}from"../../lib/format";
-import{mesDe,semanaISO,mesAnioDe}from"../../lib/dates";
+import{mesDe,semanaISO,mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCostoMaquilaMes}from"../../lib/costing";
 import{Bdg,Fld,KPI,Modal,TablaScrollV}from"../ui";
 const SERVICIOS_MAQUILA=["Trilla","Seleccion","Tostado","Marca"];
@@ -23,9 +23,9 @@ export function Maquila({maquilas,setMaquilas,setLotesFino,costos}){
   const enviarTrilla=(m)=>{setMaquilas(p=>p.map(x=>x.id===m.id?{...x,estado_pipeline:"en_trilla"}:x));setTab("trilla");};
   const [filtroMesMQ,setFiltroMesMQ]=useState("todos");
   const [busquedaClienteMQ,setBusquedaClienteMQ]=useState("");
-  const mesesMQ=[...new Set(maquilas.map(m=>m.mes).filter(Boolean))];
+  const mesesMQ=ordenarMesAnio(maquilas.map(m=>m.mesAnio));
   const maquilasFiltradas=maquilas.filter(m=>
-    (filtroMesMQ==="todos"||m.mes===filtroMesMQ)&&
+    (filtroMesMQ==="todos"||m.mesAnio===filtroMesMQ)&&
     (!busquedaClienteMQ||(m.cliente||"").toLowerCase().includes(busquedaClienteMQ.toLowerCase()))
   );
   const kgFiltrados=maquilasFiltradas.reduce((s,m)=>s+(m.kg_recibidos||0),0);
@@ -96,7 +96,7 @@ export function Maquila({maquilas,setMaquilas,setLotesFino,costos}){
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por cliente..." value={busquedaClienteMQ} onChange={e=>setBusquedaClienteMQ(e.target.value)}/>
       <select style={{...S.select,width:"auto",minWidth:150}} value={filtroMesMQ} onChange={e=>setFiltroMesMQ(e.target.value)}>
         <option value="todos">Todos los meses</option>
-        {mesesMQ.map(m=>(<option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+        {mesesMQ.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}
       </select>
       {(filtroMesMQ!=="todos"||busquedaClienteMQ)&&<>
         <span style={{fontSize:12,color:C.textDim}}>Kg filtrados: <b style={{color:C.accent}}>{fmt(kgFiltrados)} kg</b></span>
