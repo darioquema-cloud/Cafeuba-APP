@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,Modal,Fld,AutoFitText,Bdg,TablaScrollV}from"../ui";
 import{FINCAS,TIPOS,ABREV,EQUIPOS_FERM,ECOL,EBG}from"../../data/constants";
 import{fmt,fmtCOP,today,genId,fmtFecha}from"../../lib/format";
-import{semanaISO,mesDe}from"../../lib/dates";
+import{semanaISO,mesDe,mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 export function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState(null);
@@ -24,6 +24,7 @@ export function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
   const tkr=rows.reduce((s,r)=>s+(+r.kg||0),0);const tco=rows.reduce((s,r)=>s+(+r.kg||0)*(+r.valor_kg||0),0);
   const semanaAuto=semanaISO(form.fecha_proceso);
   const mesAuto=mesDe(form.fecha_proceso);
+  const mesAnioAuto=mesAnioDe(form.fecha_proceso);
   const abrirNuevo=()=>{setEditId(null);setForm(blankForm());setRows(blankRows());setModal(true);};
   const abrirEditar=(l)=>{setEditId(l.id);setForm({fecha_proceso:l.fecha_proceso,tipo:l.tipo,producto:l.producto,canecas:l.canecas||"",equipo_ferm:l.equipo_ferm||EQUIPOS_FERM[0],fecha_lavado:l.fecha_lavado||"",notas:l.notas||""});setRows(l.cereza.map(c=>({finca:c.finca,variedad:c.variedad,kg:c.kg,flote:c.flote,kg_proceso:c.kg_proceso,valor_kg:c.valor_kg})));setModal(true);};
   const cerrarModal=()=>{setModal(false);setEditId(null);setErrReg("");};
@@ -35,7 +36,7 @@ export function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
       const loteActual=lotes.find(l=>l.id===editId);
       const codigoNuevo=genCod();
       const codigoAnterior=loteActual?.codigo;
-      setLotes(p=>p.map(l=>l.id===editId?{...l,codigo:codigoNuevo,fecha_recibo:form.fecha_proceso,fecha_proceso:form.fecha_proceso,semana:semanaAuto,mes:mesAuto,tipo:form.tipo,producto:form.producto,fecha_lavado:form.fecha_lavado||null,equipo_ferm:form.equipo_ferm,canecas:+(form.canecas||0),notas:form.notas,cereza:cerezaRows}:l));
+      setLotes(p=>p.map(l=>l.id===editId?{...l,codigo:codigoNuevo,fecha_recibo:form.fecha_proceso,fecha_proceso:form.fecha_proceso,semana:semanaAuto,mes:mesAuto,mesAnio:mesAnioAuto,tipo:form.tipo,producto:form.producto,fecha_lavado:form.fecha_lavado||null,equipo_ferm:form.equipo_ferm,canecas:+(form.canecas||0),notas:form.notas,cereza:cerezaRows}:l));
       if(setLotesFino&&codigoAnterior&&codigoNuevo!==codigoAnterior){
         setLotesFino(p=>p.map(lf=>{
           const traz=lf.trazabilidad;
@@ -46,18 +47,18 @@ export function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
         }));
       }
     }else{
-      setLotes(p=>[{id:genId(),fecha_recibo:form.fecha_proceso,fecha_proceso:form.fecha_proceso,semana:semanaAuto,mes:mesAuto,tipo:form.tipo,producto:form.producto,codigo:genCod(),estado:"Recepcion",fecha_lavado:form.fecha_lavado||null,fecha_fin_secado:null,humedad:"",kg_producto:0,bultos:0,equipo_ferm:form.equipo_ferm,equipo_secado:"",insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},conversion:0,canecas:+(form.canecas||0),notas:form.notas,cereza:cerezaRows,trilla:null,salidas_bodega:[]},...p]);
+      setLotes(p=>[{id:genId(),fecha_recibo:form.fecha_proceso,fecha_proceso:form.fecha_proceso,semana:semanaAuto,mes:mesAuto,mesAnio:mesAnioAuto,tipo:form.tipo,producto:form.producto,codigo:genCod(),estado:"Recepcion",fecha_lavado:form.fecha_lavado||null,fecha_fin_secado:null,humedad:"",kg_producto:0,bultos:0,equipo_ferm:form.equipo_ferm,equipo_secado:"",insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},conversion:0,canecas:+(form.canecas||0),notas:form.notas,cereza:cerezaRows,trilla:null,salidas_bodega:[]},...p]);
     }
     cerrarModal();setRows(blankRows());
   };
   const editLote=editId?lotes.find(l=>l.id===editId):null;
   const lotesRecepcion=useMemo(()=>lotes.filter(l=>l.origen_lote!=="carga_directa"&&l.origen_lote!=="trilla_directa"&&l.tipo!=="Manual"),[lotes]);
   const lotesOrdenados=useMemo(()=>[...lotesRecepcion].sort((a,b)=>(a.fecha_proceso||a.fecha_recibo||"").localeCompare(b.fecha_proceso||b.fecha_recibo||"")),[lotesRecepcion]);
-  const mesesR=[...new Set(lotesOrdenados.map(l=>l.mes).filter(Boolean))].sort();
+  const mesesR=ordenarMesAnio(lotesOrdenados.map(l=>l.mesAnio));
   const productosR=[...new Set(lotesOrdenados.map(l=>l.producto).filter(Boolean))].sort();
   const tiposR=[...new Set(lotesOrdenados.map(l=>l.tipo).filter(Boolean))].sort();
   const lotesRecFiltrados=lotesOrdenados.filter(l=>{
-    if(filtroMesR&&l.mes!==filtroMesR)return false;
+    if(filtroMesR&&l.mesAnio!==filtroMesR)return false;
     if(filtroProductoR&&l.producto!==filtroProductoR)return false;
     if(filtroTipoR&&l.tipo!==filtroTipoR)return false;
     if(busquedaR){const q=busquedaR.toLowerCase();const fi=[...new Set(l.cereza.map(c=>c.finca))];if(!l.codigo.toLowerCase().includes(q)&&!(l.producto||"").toLowerCase().includes(q)&&!fi.some(f=>f.toLowerCase().includes(q)))return false;}
@@ -68,19 +69,19 @@ export function RecepcionTab({lotes,setLotes,lotesFino,setLotesFino}){
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:20}}><KPI label="Total Lotes" value={lotesRecepcion.length} col={C.teal}/><KPI label="kg Cereza" value={fmt(lotesRecepcion.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0))+" kg"} col={C.accent}/><KPI label="Valor Total" value={fmtCOP(lotesRecepcion.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0))} col={C.gold}/><KPI label="Fincas" value={[...new Set(lotesRecepcion.flatMap(l=>l.cereza.map(c=>c.finca)))].length} col={C.green}/></div>
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:8}}>
       <input style={{...S.input,flex:1,minWidth:180}} placeholder="Buscar por codigo, finca, variedad..." value={busquedaR} onChange={e=>setBusquedaR(e.target.value)}/>
-      <select style={{...S.select,width:150}} value={filtroMesR} onChange={e=>setFiltroMesR(e.target.value)}><option value="">Todos los meses</option>{mesesR.map(m=>(<option key={m}>{m}</option>))}</select>
+      <select style={{...S.select,width:150}} value={filtroMesR} onChange={e=>setFiltroMesR(e.target.value)}><option value="">Todos los meses</option>{mesesR.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroProductoR} onChange={e=>setFiltroProductoR(e.target.value)}><option value="">Todos los productos</option>{productosR.map(p=>(<option key={p}>{p}</option>))}</select>
       <select style={{...S.select,width:160}} value={filtroTipoR} onChange={e=>setFiltroTipoR(e.target.value)}><option value="">Todos los tipos</option>{tiposR.map(t=>(<option key={t}>{t}</option>))}</select>
       {(busquedaR||filtroMesR||filtroProductoR||filtroTipoR)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setBusquedaR("");setFiltroMesR("");setFiltroProductoR("");setFiltroTipoR("");}}>✕ Limpiar</button>}
       <span style={{color:C.textFaint,fontSize:12}}>{lotesRecFiltrados.length} de {lotesOrdenados.length} lotes</span>
     </div>
     {(busquedaR||filtroMesR||filtroProductoR||filtroTipoR)&&lotesRecFiltrados.length>0&&(()=>{const sumKgR=lotesRecFiltrados.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg,0),0);const sumValR=lotesRecFiltrados.reduce((s,l)=>s+l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0),0);return(<div style={{background:C.navy,borderRadius:8,padding:"10px 16px",marginBottom:10,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>LOTES</div><div style={{color:C.white,fontWeight:800,fontSize:18}}>{lotesRecFiltrados.length}</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>KG CEREZA</div><div style={{color:"#93c5fd",fontWeight:700,fontSize:15}}>{fmt(sumKgR)} kg</div></div><div style={{textAlign:"center"}}><div style={{color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,letterSpacing:1}}>VALOR TOTAL</div><div style={{color:"#fde68a",fontWeight:700,fontSize:13}}>{fmtCOP(Math.round(sumValR))}</div></div></div>);})()}
-    <div style={S.card}><TablaScrollV minWidth={800}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>{["Codigo","Fecha","Mes","Fincas","kg Cereza","Valor COP","Equipo Ferm.","Proceso","Estado",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{lotesRecFiltrados.map(l=>{const kg=l.cereza.reduce((a,c)=>a+c.kg,0);const cop=l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0);const fi=[...new Set(l.cereza.map(c=>c.finca))];return(<tr key={l.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",maxWidth:160}}><AutoFitText text={l.codigo}/></td><td style={{...S.td,color:C.textDim}}>{fmtFecha(l.fecha_recibo)}</td><td style={{...S.td,textTransform:"capitalize"}}>{l.mes}</td><td style={S.td}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}</div></td><td style={{...S.td,fontWeight:600,color:C.navy}}>{fmt(kg)}</td><td style={{...S.td,color:C.gold,fontWeight:600}}>{fmtCOP(cop)}</td><td style={S.td}><Bdg label={l.equipo_ferm||"-"} col={C.purple} bg={C.purpleBg}/></td><td style={S.td}>{l.tipo} / {l.producto}</td><td style={S.td}><Bdg label={l.estado} col={ECOL[l.estado]||C.textDim} bg={EBG[l.estado]}/></td><td style={S.td}><div style={{display:"flex",gap:6}}><button style={S.btnG} onClick={()=>abrirEditar(l)}>Editar</button>{(()=>{const puedeElim=(l.estado==="Recepcion"||l.estado==="Proceso")&&l.kg_producto===0&&(l.salidas_bodega||[]).length===0;return(<button style={{...S.btnG,color:puedeElim?C.red:C.textFaint,borderColor:puedeElim?C.red+"40":C.border,cursor:puedeElim?"pointer":"not-allowed"}} disabled={!puedeElim} title={!puedeElim?"No se puede eliminar: el lote ya tiene kg o movimientos registrados":""} onClick={()=>{if(window.confirm("¿Eliminar el lote "+l.codigo+"? Esta accion no se puede deshacer."))setLotes(p=>p.filter(x=>x.id!==l.id));}}>Eliminar</button>);})()}</div></td></tr>);})}</tbody></table></TablaScrollV></div>
+    <div style={S.card}><TablaScrollV minWidth={800}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}><thead><tr>{["Codigo","Fecha","Mes","Fincas","kg Cereza","Valor COP","Equipo Ferm.","Proceso","Estado",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{lotesRecFiltrados.map(l=>{const kg=l.cereza.reduce((a,c)=>a+c.kg,0);const cop=l.cereza.reduce((a,c)=>a+c.kg*c.valor_kg,0);const fi=[...new Set(l.cereza.map(c=>c.finca))];return(<tr key={l.id}><td style={{...S.td,color:C.accent,fontWeight:700,fontFamily:"monospace",maxWidth:160}}><AutoFitText text={l.codigo}/></td><td style={{...S.td,color:C.textDim}}>{fmtFecha(l.fecha_recibo)}</td><td style={S.td}>{formatMesAnio(l.mesAnio||mesAnioDe(l.fecha_proceso||l.fecha_recibo))}</td><td style={S.td}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{fi.map(f=>(<Bdg key={f} label={f} col={C.teal} bg={C.tealBg}/>))}</div></td><td style={{...S.td,fontWeight:600,color:C.navy}}>{fmt(kg)}</td><td style={{...S.td,color:C.gold,fontWeight:600}}>{fmtCOP(cop)}</td><td style={S.td}><Bdg label={l.equipo_ferm||"-"} col={C.purple} bg={C.purpleBg}/></td><td style={S.td}>{l.tipo} / {l.producto}</td><td style={S.td}><Bdg label={l.estado} col={ECOL[l.estado]||C.textDim} bg={EBG[l.estado]}/></td><td style={S.td}><div style={{display:"flex",gap:6}}><button style={S.btnG} onClick={()=>abrirEditar(l)}>Editar</button>{(()=>{const puedeElim=(l.estado==="Recepcion"||l.estado==="Proceso")&&l.kg_producto===0&&(l.salidas_bodega||[]).length===0;return(<button style={{...S.btnG,color:puedeElim?C.red:C.textFaint,borderColor:puedeElim?C.red+"40":C.border,cursor:puedeElim?"pointer":"not-allowed"}} disabled={!puedeElim} title={!puedeElim?"No se puede eliminar: el lote ya tiene kg o movimientos registrados":""} onClick={()=>{if(window.confirm("¿Eliminar el lote "+l.codigo+"? Esta accion no se puede deshacer."))setLotes(p=>p.filter(x=>x.id!==l.id));}}>Eliminar</button>);})()}</div></td></tr>);})}</tbody></table></TablaScrollV></div>
     {modal&&(<Modal title={editId?"Editar Lote — "+(editLote?.codigo||""):"Nuevo Lote"} onClose={cerrarModal} wide>
       <div style={{display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
         <Fld label="Fecha Proceso" half><input style={S.input} type="date" value={form.fecha_proceso} onChange={e=>setForm(p=>({...p,fecha_proceso:e.target.value}))}/></Fld>
         <Fld label="Semana (auto)" third><input style={{...S.input,background:C.panel2,color:C.textDim}} value={semanaAuto} readOnly/></Fld>
-        <Fld label="Mes (auto)" third><input style={{...S.input,background:C.panel2,color:C.textDim,textTransform:"capitalize"}} value={mesAuto} readOnly/></Fld>
+        <Fld label="Mes (auto)" third><input style={{...S.input,background:C.panel2,color:C.textDim}} value={formatMesAnio(mesAnioAuto)} readOnly/></Fld>
         <Fld label="Canecas" third><input style={S.input} type="number" step="0.1" value={form.canecas} onChange={e=>setForm(p=>({...p,canecas:e.target.value}))}/></Fld>
         <Fld label="Tipo Proceso" half><select style={S.select} value={form.tipo} onChange={e=>setForm(p=>({...p,tipo:e.target.value}))}>{TIPOS.map(t=>(<option key={t}>{t}</option>))}</select></Fld>
         <Fld label="Producto" half><input style={S.input} value={form.producto} onChange={e=>setForm(p=>({...p,producto:e.target.value}))}/></Fld>

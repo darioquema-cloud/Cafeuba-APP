@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{Bdg,TablaScrollV}from"../ui";
 import{ECOL,EBG}from"../../data/constants";
 import{fmt,fmtCOP,fmtFecha}from"../../lib/format";
-import{mesDe,mesTrillaDe,mesAnioTrillaDe}from"../../lib/dates";
+import{mesTrillaDe,mesAnioDe,mesAnioTrillaDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCosto,calcCostoTri}from"../../lib/costing";
 import{pesoATrilladora}from"../../lib/stock";
 export function Trazabilidad({lotes,costos,blends,blendsFino,lotesFino}){
@@ -15,19 +15,19 @@ export function Trazabilidad({lotes,costos,blends,blendsFino,lotesFino}){
   const [filtroLinea,setFiltroLinea]=useState("");
   const [filtroStock,setFiltroStock]=useState("Todos");
   const PASOS=["Recepcion","Proceso","Secado","Bodega","Finalizado","Cerrado"];
-  const mesesOp=[...new Set(lotes.map(l=>l.mes).filter(Boolean))].sort();
+  const mesesOp=ordenarMesAnio(lotes.map(l=>l.mesAnio));
   const productosOp=[...new Set(lotes.map(l=>l.producto).filter(Boolean))].sort();
   const blendsUnificados=[...(blends||[]).map(b=>({...b,linea:"Verde"})),...(blendsFino||[]).map(b=>({...b,linea:"Café Fino"}))].sort((a,b2)=>(b2.fecha||"").localeCompare(a.fecha||""));
   const productosComercialesBlend=[...new Set(blendsUnificados.map(b=>b.producto_comercial).filter(Boolean))].sort();
-  const mesesBlend=[...new Set(blendsUnificados.map(b=>mesDe(b.fecha)).filter(Boolean))].sort();
+  const mesesBlend=ordenarMesAnio(blendsUnificados.map(b=>mesAnioDe(b.fecha)));
   const stockB=(b)=>b.kg_total-(b.salidas||[]).reduce((a,s)=>a+s.peso_salida,0);
   const lotesOpFiltrados=lotes.filter(l=>{
-    if(filtroMesLotes&&l.mes!==filtroMesLotes)return false;
+    if(filtroMesLotes&&l.mesAnio!==filtroMesLotes)return false;
     if(filtroProductoOp&&l.producto!==filtroProductoOp)return false;
     return true;
   });
   const blendsOpFiltrados=blendsUnificados.filter(b=>{
-    if(filtroMesBlends&&mesDe(b.fecha)!==filtroMesBlends)return false;
+    if(filtroMesBlends&&mesAnioDe(b.fecha)!==filtroMesBlends)return false;
     if(filtroProductoComercialOp&&b.producto_comercial!==filtroProductoComercialOp)return false;
     if(filtroLinea&&b.linea!==filtroLinea)return false;
     const stk=stockB(b);
@@ -58,7 +58,7 @@ export function Trazabilidad({lotes,costos,blends,blendsFino,lotesFino}){
 
     {tab==="lotes_op"&&(<>
       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
-        <select style={{...S.select,width:150}} value={filtroMesLotes} onChange={e=>setFiltroMesLotes(e.target.value)}><option value="">Todos los meses</option>{mesesOp.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:150}} value={filtroMesLotes} onChange={e=>setFiltroMesLotes(e.target.value)}><option value="">Todos los meses</option>{mesesOp.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
         <select style={{...S.select,width:160}} value={filtroProductoOp} onChange={e=>setFiltroProductoOp(e.target.value)}><option value="">Todos los productos</option>{productosOp.map(p=>(<option key={p}>{p}</option>))}</select>
         <span style={{color:C.textDim,fontSize:12,alignSelf:"center"}}>{lotesOpFiltrados.length} resultados</span>
       </div>
@@ -82,7 +82,7 @@ export function Trazabilidad({lotes,costos,blends,blendsFino,lotesFino}){
 
     {tab==="blend_op"&&(<div>
       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
-        <select style={{...S.select,width:150}} value={filtroMesBlends} onChange={e=>setFiltroMesBlends(e.target.value)}><option value="">Todos los meses</option>{mesesBlend.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:150}} value={filtroMesBlends} onChange={e=>setFiltroMesBlends(e.target.value)}><option value="">Todos los meses</option>{mesesBlend.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
         <select style={{...S.select,width:190}} value={filtroProductoComercialOp} onChange={e=>setFiltroProductoComercialOp(e.target.value)}><option value="">Todo producto comercial</option>{productosComercialesBlend.map(p=>(<option key={p}>{p}</option>))}</select>
         <select style={{...S.select,width:155}} value={filtroLinea} onChange={e=>setFiltroLinea(e.target.value)}><option value="">Todas las líneas</option><option>Verde</option><option>Café Fino</option></select>
         <select style={{...S.select,width:140}} value={filtroStock} onChange={e=>setFiltroStock(e.target.value)}><option>Todos</option><option>En Stock</option><option>Vendidos</option></select>

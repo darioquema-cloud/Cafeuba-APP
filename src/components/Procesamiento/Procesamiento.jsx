@@ -3,7 +3,7 @@ import{C,S}from"../../theme";
 import{KPI,Fld,Bdg}from"../ui";
 import{EQUIPOS_SECADO,ECOL,EBG}from"../../data/constants";
 import{fmt,fmtCOP,today,fmtFecha}from"../../lib/format";
-import{diasEntre}from"../../lib/dates";
+import{diasEntre,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{calcCosto}from"../../lib/costing";
 import{RecepcionTab}from"../Recepcion/RecepcionTab";
 export function Procesamiento({lotes,setLotes,costos,lotesFino,setLotesFino}){
@@ -31,10 +31,10 @@ export function Procesamiento({lotes,setLotes,costos,lotesFino,setLotesFino}){
   const [filtroMesH,setFiltroMesH]=useState("");
   const [filtroProductoH,setFiltroProductoH]=useState("");
   const [busquedaH,setBusquedaH]=useState("");
-  const mesesH=[...new Set(historico.map(l=>l.mes).filter(Boolean))].sort();
+  const mesesH=ordenarMesAnio(historico.map(l=>l.mesAnio));
   const productosH=[...new Set(historico.map(l=>l.producto).filter(Boolean))].sort();
   const historicoFiltrado=useMemo(()=>historico.filter(l=>{
-    if(filtroMesH&&l.mes!==filtroMesH)return false;
+    if(filtroMesH&&l.mesAnio!==filtroMesH)return false;
     if(filtroProductoH&&l.producto!==filtroProductoH)return false;
     if(busquedaH){const q=busquedaH.toLowerCase();const fi=[...new Set(l.cereza.map(c=>c.finca))];if(!l.codigo.toLowerCase().includes(q)&&!(l.producto||"").toLowerCase().includes(q)&&!fi.some(f=>f.toLowerCase().includes(q)))return false;}
     return true;
@@ -105,7 +105,7 @@ export function Procesamiento({lotes,setLotes,costos,lotesFino,setLotesFino}){
       <div style={{fontWeight:600,fontSize:14,color:C.navy,marginBottom:12}}>Historico de Lotes Procesados</div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
         <input style={{...S.input,flex:1,minWidth:160}} placeholder="Buscar por codigo, producto, finca..." value={busquedaH} onChange={e=>setBusquedaH(e.target.value)}/>
-        <select style={{...S.select,width:150}} value={filtroMesH} onChange={e=>setFiltroMesH(e.target.value)}><option value="">Todos los meses</option>{mesesH.map(m=>(<option key={m}>{m}</option>))}</select>
+        <select style={{...S.select,width:150}} value={filtroMesH} onChange={e=>setFiltroMesH(e.target.value)}><option value="">Todos los meses</option>{mesesH.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}</select>
         <select style={{...S.select,width:160}} value={filtroProductoH} onChange={e=>setFiltroProductoH(e.target.value)}><option value="">Todos los productos</option>{productosH.map(p=>(<option key={p}>{p}</option>))}</select>
         {(filtroMesH||filtroProductoH||busquedaH)&&<button style={{...S.btnG,color:C.red,borderColor:C.red+"40"}} onClick={()=>{setFiltroMesH("");setFiltroProductoH("");setBusquedaH("");}}>✕ Limpiar</button>}
         <span style={{color:C.textFaint,fontSize:12,alignSelf:"center"}}>{historicoFiltrado.length} de {historico.length} lotes</span>

@@ -1,10 +1,12 @@
 import{useState,useMemo}from"react";
 import{C,S,tg}from"../../theme";
-import{MESES}from"../../data/constants";
 import{fmtCOP,fmt}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesDe,mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 import{esVentaExterna as esExterno}from"../../lib/costing";
 import{Bdg,TablaScrollV,DonutChart}from"../ui";
+// Etiqueta corta para el eje del grafico ("agosto-2026" -> "Ago 26"): el valor real de
+// comparacion sigue siendo el mesAnio completo, aqui solo se acorta lo que se dibuja.
+const etiquetaEjeMes=(ma)=>{const[m,a]=(ma||"").split("-");return m?m.charAt(0).toUpperCase()+m.slice(1,3)+" "+String(a||"").slice(2):"";};
 export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,blendsFino,setBlendsFino,subprodVerde,setSubprodVerde,empaques,mezclasSubKorea}){
   const [tab,setTab]=useState("consolidado");
   const [filtroMes,setFiltroMes]=useState("todos");
@@ -15,21 +17,21 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
 
 
   const todasVentas=useMemo(()=>[
-    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_bodega",origenId:l.id}))),
-    ...(lotes||[]).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Excelso",tipoKey:"excelso",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_trilladora",origenId:l.id}))),
-    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Café Fino",tipoKey:"cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_bodega",origenId:l.id}))),
-    ...(lotesFino||[]).filter(l=>l.para_trilladora).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||l.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Trilladora CF",tipoKey:"trilladora_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_trilladora",origenId:l.id}))),
-    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blends",origenId:b.id}))),
-    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blendsFino",origenId:b.id}))),
-    ...(subprodVerde||[]).flatMap(sp=>(sp.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mes:mesDe(s.fecha)||sp.mes||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:sp.codigo||sp.producto||"Subproducto Verde",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"subprodVerde",origenId:sp.id}))),
+    ...(lotes||[]).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||l.mesAnio||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Pergamino",tipoKey:"pergamino",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_bodega",origenId:l.id}))),
+    ...(lotes||[]).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||l.mesAnio||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Excelso",tipoKey:"excelso",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotes_trilladora",origenId:l.id}))),
+    ...(lotesFino||[]).filter(l=>!l.para_trilladora).flatMap(l=>(l.salidas_bodega||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||l.mesAnio||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Café Fino",tipoKey:"cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_bodega",origenId:l.id}))),
+    ...(lotesFino||[]).filter(l=>l.para_trilladora).flatMap(l=>(l.salidas_trilladora||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||l.mesAnio||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:l.producto||"Sin Producto",tipo:"Trilladora CF",tipoKey:"trilladora_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"lotesFino_trilladora",origenId:l.id}))),
+    ...(blends||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend",tipoKey:"blend",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blends",origenId:b.id}))),
+    ...(blendsFino||[]).flatMap(b=>(b.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:b.producto_comercial||b.nombre||"Sin Nombre",tipo:"Blend CF",tipoKey:"blend_cf",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"blendsFino",origenId:b.id}))),
+    ...(subprodVerde||[]).flatMap(sp=>(sp.salidas||[]).filter(esExterno).map(s=>({id:s.id,fecha:s.fecha||"",mesAnio:mesAnioDe(s.fecha)||sp.mesAnio||"",factura:s.factura||"",remision:s.remision||"",cliente:s.cliente||"Sin Cliente",producto:sp.codigo||sp.producto||"Subproducto Verde",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:s.peso_salida||0,valor_kg:s.valor_kg||0,valor_total:s.valor_total||0,precio_venta_kg:s.precio_venta_kg||0,origenColeccion:"subprodVerde",origenId:sp.id}))),
     ...(empaques||[]).flatMap(e=>(e.ventas||[]).map(v=>{
       const kg=(v.unidades||0)*(e.gramos_por_unidad||0)/1000;
       const valorKgCalc=kg>0?Math.round((v.valor_total||0)/kg):0;
-      return{id:v.id,fecha:v.fecha||"",mes:v.mes||mesDe(v.fecha)||"",factura:v.referencia||"",remision:"",cliente:v.cliente||"Sin Cliente",producto:e.nombre_producto||"Sin Producto",tipo:"UBA Tostado",tipoKey:"uba_tostado",kg,valor_kg:valorKgCalc,valor_total:v.valor_total||0,precio_venta_kg:valorKgCalc,origenColeccion:"empaques_ventas",origenId:e.id,ventaId:v.id};
+      return{id:v.id,fecha:v.fecha||"",mesAnio:mesAnioDe(v.fecha)||"",factura:v.referencia||"",remision:"",cliente:v.cliente||"Sin Cliente",producto:e.nombre_producto||"Sin Producto",tipo:"UBA Tostado",tipoKey:"uba_tostado",kg,valor_kg:valorKgCalc,valor_total:v.valor_total||0,precio_venta_kg:valorKgCalc,origenColeccion:"empaques_ventas",origenId:e.id,ventaId:v.id};
     })),
     ...(mezclasSubKorea||[]).flatMap(m=>[
-      ...(m.salidas_sub_korea||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mes:mesDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea"})),
-      ...(m.salidas_sub_korea_pasilla||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mes:mesDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea Pasilla",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea_pasilla"})),
+      ...(m.salidas_sub_korea||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mesAnio:mesAnioDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea"})),
+      ...(m.salidas_sub_korea_pasilla||[]).map(sd=>({id:sd.id,fecha:sd.fecha||"",mesAnio:mesAnioDe(sd.fecha)||"",factura:sd.factura||"",remision:sd.remision||"",cliente:sd.cliente||"Sin Cliente",producto:"Sub Korea Pasilla",tipo:"Subproducto Verde",tipoKey:"subprod_verde",kg:sd.peso_salida||0,valor_kg:sd.valor_kg||0,valor_total:sd.valor_total||0,precio_venta_kg:sd.valor_kg||0,origenColeccion:"mezclasSubKorea",origenId:m.id,ventaId:sd.id,campoSalida:"salidas_sub_korea_pasilla"})),
     ]),
   ].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")),[lotes,lotesFino,blends,blendsFino,subprodVerde,empaques,mezclasSubKorea]);
 
@@ -56,11 +58,11 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     else if(v.origenColeccion==="subprodVerde")patch(setSubprodVerde,"salidas");
   };
 
-  const mesesDisp=MESES.filter(m=>todasVentas.some(v=>v.mes===m));
+  const mesesDisp=ordenarMesAnio(todasVentas.map(v=>v.mesAnio));
   const tiposDisp=[...new Set(todasVentas.map(v=>v.tipo))];
 
   const ventasFilt=todasVentas.filter(v=>{
-    if(filtroMes!=="todos"&&v.mes!==filtroMes)return false;
+    if(filtroMes!=="todos"&&v.mesAnio!==filtroMes)return false;
     if(filtroTipo!=="todos"&&v.tipo!==filtroTipo)return false;
     if(filtroLinea==="verde_fino"&&v.tipoKey==="uba_tostado")return false;
     if(filtroLinea==="uba_tostado"&&v.tipoKey!=="uba_tostado")return false;
@@ -75,7 +77,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
   const clientesUnicos=[...new Set(ventasFilt.map(v=>v.cliente).filter(c=>c&&c!=="Sin Cliente"))];
 
   const porCliente={};
-  ventasFilt.forEach(v=>{const c=v.cliente||"Sin Cliente";if(!porCliente[c])porCliente[c]={kg:0,valor:0,tx:0,meses:new Set(),tipos:new Set()};porCliente[c].kg+=v.kg;porCliente[c].valor+=v.valor_total;porCliente[c].tx++;porCliente[c].meses.add(v.mes);porCliente[c].tipos.add(v.tipo);});
+  ventasFilt.forEach(v=>{const c=v.cliente||"Sin Cliente";if(!porCliente[c])porCliente[c]={kg:0,valor:0,tx:0,meses:new Set(),tipos:new Set()};porCliente[c].kg+=v.kg;porCliente[c].valor+=v.valor_total;porCliente[c].tx++;porCliente[c].meses.add(v.mesAnio);porCliente[c].tipos.add(v.tipo);});
   const clienteData=Object.entries(porCliente).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,d])=>({cliente,kg:d.kg,valor:d.valor,tx:d.tx,promKg:d.kg>0?d.valor/d.kg:0,meses:[...d.meses].filter(Boolean).length,tipos:[...d.tipos].join(", ")}));
   const maxValCliente=clienteData.length>0?clienteData[0].valor:1;
 
@@ -85,8 +87,8 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
     return true;
   });
 
-  const porMesGraf={};MESES.forEach(m=>{if(todasVentasPorLinea.some(v=>v.mes===m))porMesGraf[m]={kg:0,valor:0};});
-  todasVentasPorLinea.forEach(v=>{if(v.mes&&porMesGraf[v.mes]){porMesGraf[v.mes].kg+=v.kg;porMesGraf[v.mes].valor+=v.valor_total;}});
+  const porMesGraf={};ordenarMesAnio(todasVentasPorLinea.map(v=>v.mesAnio)).forEach(m=>{porMesGraf[m]={kg:0,valor:0};});
+  todasVentasPorLinea.forEach(v=>{if(v.mesAnio&&porMesGraf[v.mesAnio]){porMesGraf[v.mesAnio].kg+=v.kg;porMesGraf[v.mesAnio].valor+=v.valor_total;}});
   const mesesGraf=Object.entries(porMesGraf);
   const maxValMes=mesesGraf.reduce((m,[,d])=>Math.max(m,d.valor),1);
 
@@ -121,7 +123,7 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
       <span style={{fontSize:10,fontWeight:700,color:C.textDim,textTransform:"uppercase",letterSpacing:1.5}}>Filtros</span>
       <select value={filtroMes} onChange={e=>setFiltroMes(e.target.value)} style={{...S.select,width:"auto",minWidth:130,fontSize:12,padding:"6px 10px"}}>
         <option value="todos">Todos los meses</option>
-        {mesesDisp.map(m=>(<option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>))}
+        {mesesDisp.map(m=>(<option key={m} value={m}>{formatMesAnio(m)}</option>))}
       </select>
       <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{...S.select,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}}>
         <option value="todos">Todos los productos</option>
@@ -319,14 +321,14 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
           <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>Ventas por Mes</div>
           <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Valor total facturado</div>
           {mesesGraf.length===0?(<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>):(()=>{
-            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8);
-            return(<svg viewBox="0 0 340 220" width="100%" style={{display:"block"}}>
+            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8),svgW=Math.max(340,mesesGraf.length*(barW+6)+14);
+            return(<svg viewBox={`0 0 ${svgW} 228`} width="100%" style={{display:"block"}}>
               {mesesGraf.map(([mes,d],i)=>{const x=i*(barW+6)+10;const h=maxValMes>0?(d.valor/maxValMes)*(barH-10):0;const y=barH-h+20;const activo=filtroMes===mes;return(<g key={mes}>
                 <rect x={x} y={y} width={barW} height={h} fill={activo?C.navy:C.accent} rx="3" opacity={activo?1:0.75}/>
                 <text x={x+barW/2} y={y-5} textAnchor="middle" fontSize="7.5" fill={C.accent} fontWeight="700" fontFamily="Inter,sans-serif">{d.valor>0?("$"+Math.round(d.valor/1000000)+"M"):"—"}</text>
-                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{mes.slice(0,3)}</text>
+                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{etiquetaEjeMes(mes)}</text>
               </g>);})}
-              <line x1="10" y1={barH+20} x2="330" y2={barH+20} stroke={C.border} strokeWidth="1"/>
+              <line x1="10" y1={barH+20} x2={svgW-10} y2={barH+20} stroke={C.border} strokeWidth="1"/>
             </svg>);
           })()}
         </div>
@@ -334,15 +336,15 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
           <div style={{fontWeight:700,fontSize:14,color:C.navy,marginBottom:4}}>kg Despachados por Mes</div>
           <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Volumen físico vendido</div>
           {mesesGraf.length===0?(<div style={{color:C.textFaint,textAlign:"center",padding:"30px 0"}}>Sin datos</div>):(()=>{
-            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8);
+            const barH=180,barW=Math.max(28,Math.floor(340/mesesGraf.length)-8),svgW=Math.max(340,mesesGraf.length*(barW+6)+14);
             const maxKgMes=mesesGraf.reduce((m,[,d])=>Math.max(m,d.kg),1);
-            return(<svg viewBox="0 0 340 220" width="100%" style={{display:"block"}}>
+            return(<svg viewBox={`0 0 ${svgW} 228`} width="100%" style={{display:"block"}}>
               {mesesGraf.map(([mes,d],i)=>{const x=i*(barW+6)+10;const h=maxKgMes>0?(d.kg/maxKgMes)*(barH-10):0;const y=barH-h+20;const activo=filtroMes===mes;return(<g key={mes}>
                 <rect x={x} y={y} width={barW} height={h} fill={activo?C.navy:C.teal} rx="3" opacity={activo?1:0.78}/>
                 <text x={x+barW/2} y={y-5} textAnchor="middle" fontSize="7.5" fill={C.teal} fontWeight="700" fontFamily="Inter,sans-serif">{d.kg>0?fmt(Math.round(d.kg)):"—"}</text>
-                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{mes.slice(0,3)}</text>
+                <text x={x+barW/2} y={barH+32} textAnchor="middle" fontSize="8" fill={C.textDim} fontFamily="Inter,sans-serif" transform={`rotate(-35,${x+barW/2},${barH+32})`}>{etiquetaEjeMes(mes)}</text>
               </g>);})}
-              <line x1="10" y1={barH+20} x2="330" y2={barH+20} stroke={C.border} strokeWidth="1"/>
+              <line x1="10" y1={barH+20} x2={svgW-10} y2={barH+20} stroke={C.border} strokeWidth="1"/>
             </svg>);
           })()}
         </div>
@@ -354,8 +356,8 @@ export function Ventas({lotes,setLotes,lotesFino,setLotesFino,blends,setBlends,b
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead><tr>{["Mes","Transacciones","kg Vendidos","Valor Total","Precio Prom./kg"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
               <tbody>
-                {mesesGraf.map(([mes,d],i)=>{const txMes=todasVentasPorLinea.filter(v=>v.mes===mes).length;const promM=d.kg>0?d.valor/d.kg:0;return(<tr key={mes} style={{background:filtroMes===mes?C.accentBg:i%2===0?C.panel:C.panel2,cursor:"pointer"}} onClick={()=>setFiltroMes(filtroMes===mes?"todos":mes)}>
-                  <td style={{...S.td,fontWeight:600,textTransform:"capitalize"}}>{mes}</td>
+                {mesesGraf.map(([mes,d],i)=>{const txMes=todasVentasPorLinea.filter(v=>v.mesAnio===mes).length;const promM=d.kg>0?d.valor/d.kg:0;return(<tr key={mes} style={{background:filtroMes===mes?C.accentBg:i%2===0?C.panel:C.panel2,cursor:"pointer"}} onClick={()=>setFiltroMes(filtroMes===mes?"todos":mes)}>
+                  <td style={{...S.td,fontWeight:600}}>{formatMesAnio(mes)}</td>
                   <td style={{...S.td,textAlign:"center",color:C.textDim}}>{txMes}</td>
                   <td style={{...S.td,textAlign:"right",fontWeight:700,color:C.teal,fontVariantNumeric:"tabular-nums"}}>{fmt(d.kg)} kg</td>
                   <td style={{...S.td,textAlign:"right",fontWeight:800,color:C.navy,fontVariantNumeric:"tabular-nums"}}>{fmtCOP(d.valor)}</td>

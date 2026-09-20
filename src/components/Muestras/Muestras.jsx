@@ -2,7 +2,7 @@ import{useState}from"react";
 import{C,S}from"../../theme";
 import{KPI,Bdg,Fld,Modal,TablaScrollV}from"../ui";
 import{fmt,numVal,today,genId,fmtFecha}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesAnioDe,ordenarMesAnio,formatMesAnio}from"../../lib/dates";
 
 const ESTADOS=[
   {key:"enviada",label:"Enviada",col:C.teal},
@@ -64,10 +64,10 @@ export function Muestras({muestras,setMuestras,oportunidades,user}){
     setMuestras(list=>list.filter(m=>m.id!==id));
   };
 
-  const mesesDisponibles=[...new Set(muestras.map(m=>mesDe(m.fecha_envio)).filter(Boolean))];
-  const mesActual=mesDe(today());
+  const mesesDisponibles=ordenarMesAnio(muestras.map(m=>mesAnioDe(m.fecha_envio)));
+  const mesActual=mesAnioDe(today());
   const periodoLabel=mesFiltro==="todos"?mesActual:mesFiltro;
-  const dataPeriodo=muestras.filter(m=>mesDe(m.fecha_envio)===periodoLabel);
+  const dataPeriodo=muestras.filter(m=>mesAnioDe(m.fecha_envio)===periodoLabel);
   const convertidasPeriodo=dataPeriodo.filter(m=>m.estado==="convertida").length;
   const tasaConversion=dataPeriodo.length?Math.round(convertidasPeriodo/dataPeriodo.length*100):0;
   const sinRespuestaPeriodo=dataPeriodo.filter(m=>m.estado==="sin_respuesta").length;
@@ -75,7 +75,7 @@ export function Muestras({muestras,setMuestras,oportunidades,user}){
   const oportunidadDe=(id)=>oportunidades.find(o=>o.id===id);
 
   const muestrasFiltradas=muestras.filter(m=>{
-    if(mesFiltro!=="todos"&&mesDe(m.fecha_envio)!==mesFiltro)return false;
+    if(mesFiltro!=="todos"&&mesAnioDe(m.fecha_envio)!==mesFiltro)return false;
     if(fEstado!=="todos"&&m.estado!==fEstado)return false;
     if(fBusqueda){
       const q=fBusqueda.toLowerCase();
@@ -98,7 +98,7 @@ export function Muestras({muestras,setMuestras,oportunidades,user}){
     </div>
 
     <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-      {["todos",...mesesDisponibles].map(m=>(<button key={m} style={{...S.btnG,background:mesFiltro===m?C.navy:"transparent",color:mesFiltro===m?C.white:C.textDim,fontSize:11,padding:"4px 10px",textTransform:"capitalize"}} onClick={()=>setMesFiltro(m)}>{m==="todos"?"Todos":m}</button>))}
+      {["todos",...mesesDisponibles].map(m=>(<button key={m} style={{...S.btnG,background:mesFiltro===m?C.navy:"transparent",color:mesFiltro===m?C.white:C.textDim,fontSize:11,padding:"4px 10px"}} onClick={()=>setMesFiltro(m)}>{m==="todos"?"Todos":formatMesAnio(m)}</button>))}
     </div>
 
     <div style={{...S.card,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
