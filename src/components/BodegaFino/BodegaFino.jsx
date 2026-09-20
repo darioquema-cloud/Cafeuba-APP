@@ -84,7 +84,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
     if(editId){
       setLotesFino(p=>p.map(l=>l.id===editId?{...l,fecha:form.fecha,producto:form.producto,tipo_ingreso:form.tipo_ingreso,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas}:l));
     }else{
-      setLotesFino(p=>[{id:genId(),codigo:genCod(),fecha:form.fecha,mes:mesDe(form.fecha),semana:semanaISO(form.fecha),producto:form.producto,tipo_ingreso:form.tipo_ingreso,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas,salidas_bodega:[],trilla:null,salidas_trilladora:[]},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:genCod(),fecha:form.fecha,mes:mesDe(form.fecha),mesAnio:mesAnioDe(form.fecha),semana:semanaISO(form.fecha),producto:form.producto,tipo_ingreso:form.tipo_ingreso,proveedor:form.proveedor,kg_producto:+form.kg_producto,costo_compra_kg:+form.costo_compra_kg,notas:form.notas,salidas_bodega:[],trilla:null,salidas_trilladora:[]},...p]);
     }
     setModal(false);
   };
@@ -107,7 +107,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
       return{...l,salidas_bodega:sal};
     }));
     if(esTrilladoraFino){
-      setLotesFino(p=>[{id:genId(),codigo:selLote.codigo,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),semana:semanaISO(formSalida.fecha),producto:selLote.producto||"",proveedor:"Bodega Café Fino",kg_producto:peso,costo_compra_kg:vkg||selLote.costo_compra_kg||0,notas:"Trasladado desde Bodega CF — "+selLote.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:[]},para_trilladora:true},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selLote.codigo,fecha:formSalida.fecha,mes:mesDe(formSalida.fecha),mesAnio:mesAnioDe(formSalida.fecha),semana:semanaISO(formSalida.fecha),producto:selLote.producto||"",proveedor:"Bodega Café Fino",kg_producto:peso,costo_compra_kg:vkg||selLote.costo_compra_kg||0,notas:"Trasladado desde Bodega CF — "+selLote.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:[]},para_trilladora:true},...p]);
     }
     setModalSalida(false);setEditSalidaId(null);setErrSalida("");
     setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:"",nombre_producto_tostado:""});
@@ -161,7 +161,7 @@ export function BodegaFino({lotesFino,setLotesFino,setBlendsFino,setBlendsTostad
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
     const detalle=lotesBodega.map(l=>({lote_id:l.id,lote_codigo:l.codigo,producto:l.producto||"",stock_teorico:stockDe(l),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"bodega_cf",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"bodega_cf",mes:mesDe(formNuevoInv.fecha_conteo),mesAnio:mesAnioDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);

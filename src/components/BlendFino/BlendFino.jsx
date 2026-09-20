@@ -72,7 +72,7 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
     const detalle=blendsFino.map(b=>({lote_id:b.id,lote_codigo:b.codigo,producto:b.producto_comercial||b.nombre||"",stock_teorico:stockBlend(b),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"blend_cf",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"blend_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"blend_cf",mes:mesDe(formNuevoInv.fecha_conteo),mesAnio:mesAnioDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"blend_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);
@@ -259,7 +259,7 @@ export function BlendFino({lotesFino,setLotesFino,blendsFino,setBlendsFino,setBl
     if(editId){
       setBlendsFino(p=>p.map(b=>b.id===editId?{...b,nombre,fecha,codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0}:b));
     }else{
-      setBlendsFino(p=>[{id:genId(),nombre,fecha,codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0,salidas:[]},...p]);
+      setBlendsFino(p=>[{id:genId(),nombre,fecha,mesAnio:mesAnioDe(fecha),codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0,salidas:[]},...p]);
     }
     setModal(false);
   };

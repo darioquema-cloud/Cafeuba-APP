@@ -66,7 +66,7 @@ export function BodegaTrilladoraFino({lotesFino,setLotesFino,setBlendsTostado,co
         fecha_conteo:formNuevoInv.fecha_conteo
       };
     });
-    const nuevo={id:genId(),modulo:"trilladora_cf",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"trilladora_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"trilladora_cf",mes:mesDe(formNuevoInv.fecha_conteo),mesAnio:mesAnioDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"trilladora_cf",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);

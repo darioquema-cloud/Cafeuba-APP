@@ -16,8 +16,8 @@ export function Maquila({maquilas,setMaquilas,setLotesFino,costos}){
   const genCodM=()=>"MAQUILA-"+today().replace(/-/g,"")+"-"+form.cliente.replace(/\s+/g,"");
   const regA=()=>{
     if(!form.cliente||!form.kg_recibidos)return;
-    if(editId){setMaquilas(p=>p.map(m=>m.id===editId?{...m,fecha:form.fecha,mes:mesAuto,semana:semanaAuto,cliente:form.cliente,telefono:form.telefono,kg_recibidos:+form.kg_recibidos,servicio:form.servicio,observaciones:form.observaciones}:m));}
-    else{setMaquilas(p=>[{id:genId(),codigo:genCodM(),fecha:form.fecha,mes:mesAuto,semana:semanaAuto,cliente:form.cliente,telefono:form.telefono,kg_recibidos:+form.kg_recibidos,servicio:form.servicio,observaciones:form.observaciones,salidas:[],estado_pipeline:"registro",trilla_mq:null,tostado_mq:null,entregas_mq:[]},...p]);}
+    if(editId){setMaquilas(p=>p.map(m=>m.id===editId?{...m,fecha:form.fecha,mes:mesAuto,mesAnio:mesAnioDe(form.fecha),semana:semanaAuto,cliente:form.cliente,telefono:form.telefono,kg_recibidos:+form.kg_recibidos,servicio:form.servicio,observaciones:form.observaciones}:m));}
+    else{setMaquilas(p=>[{id:genId(),codigo:genCodM(),fecha:form.fecha,mes:mesAuto,mesAnio:mesAnioDe(form.fecha),semana:semanaAuto,cliente:form.cliente,telefono:form.telefono,kg_recibidos:+form.kg_recibidos,servicio:form.servicio,observaciones:form.observaciones,salidas:[],estado_pipeline:"registro",trilla_mq:null,tostado_mq:null,entregas_mq:[]},...p]);}
     setModal(false);
   };
   const enviarTrilla=(m)=>{setMaquilas(p=>p.map(x=>x.id===m.id?{...x,estado_pipeline:"en_trilla"}:x));setTab("trilla");};

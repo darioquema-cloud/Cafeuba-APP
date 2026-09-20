@@ -67,7 +67,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
     const detalle=blends.map(b=>({lote_id:b.id,lote_codigo:b.codigo,producto:b.producto_comercial||b.nombre||"",stock_teorico:stockBlend(b),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"blend",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"blend",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"blend",mes:mesDe(formNuevoInv.fecha_conteo),mesAnio:mesAnioDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"blend",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);
@@ -265,7 +265,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
     if(editId){
       setBlends(p=>p.map(b=>b.id===editId?{...b,nombre,fecha,codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0}:b));
     }else{
-      setBlends(p=>[{id:genId(),nombre,fecha,codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0,salidas:[]},...p]);
+      setBlends(p=>[{id:genId(),nombre,fecha,mesAnio:mesAnioDe(fecha),codigo:codigoBlend,producto_comercial:productoComercial,items:itemsFinal,kg_total:kgT,valor_total:valT,costo_kg:kgT>0?valT/kgT:0,salidas:[]},...p]);
     }
     setModal(false);
   };
@@ -291,7 +291,7 @@ export function Blend({lotes,setLotes,blends,setBlends,costos,setLotesFino,inven
       return{...b,salidas:sal};
     }));
     if(formSalidaB.destino_key==="bodega_cf"){
-      setLotesFino(p=>[{id:genId(),codigo:selBlend?.codigo||("CF-BL-"+dateToCode(today())),fecha:today(),mes:mesDe(today()),semana:semanaISO(today()),producto:selBlend?.producto_comercial||selBlend?.nombre||"",proveedor:"Blend",kg_producto:peso,costo_compra_kg:vkg||0,valor_total:vtotal,notas:"Auto-transferido desde Blend",salidas_bodega:[],trilla:null,salidas_trilladora:[],trazabilidad:{codigo_lote_origen:selBlend?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend?.items||[]).map(it=>it.codigo)}},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selBlend?.codigo||("CF-BL-"+dateToCode(today())),fecha:today(),mes:mesDe(today()),mesAnio:mesAnioDe(today()),semana:semanaISO(today()),producto:selBlend?.producto_comercial||selBlend?.nombre||"",proveedor:"Blend",kg_producto:peso,costo_compra_kg:vkg||0,valor_total:vtotal,notas:"Auto-transferido desde Blend",salidas_bodega:[],trilla:null,salidas_trilladora:[],trazabilidad:{codigo_lote_origen:selBlend?.codigo||"",fecha_proceso:"",fecha_trilla:"",fecha_secado:"",lotes_blend:(selBlend?.items||[]).map(it=>it.codigo)}},...p]);
     }
     setModalSalidaB(false);setEditSalidaBId(null);setErrB("");
   };

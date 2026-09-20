@@ -151,7 +151,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     const lotesOrigCodigos=selArr.map(l=>l.codigo);
     const subEntry={
       id:genId(),codigo:`${form.codigo_corte}-${prodSub}`,
-      fecha:form.fecha_trilla,mes:mesDe(form.fecha_trilla),semana:semanaISO(form.fecha_trilla),
+      fecha:form.fecha_trilla,mes:mesDe(form.fecha_trilla),mesAnio:mesAnioDe(form.fecha_trilla),semana:semanaISO(form.fecha_trilla),
       nombre_trillado:nombreTr,producto:prodSub,corte:form.codigo_corte,lotes_origen:lotesOrigCodigos,
       pasilla_elec:+form.pasilla_elec||0,catadora_dens:+form.catadora_dens||0,
       inferiores:+form.inferiores||0,cisco:+form.cisco||0,
@@ -173,7 +173,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     const kg=+formManual.kg;const vu=+formManual.valor_unitario;
     if(!formManual.codigo||kg<=0){return;}
     const sid=genId();
-    const nuevo={id:genId(),fecha_proceso:formManual.fecha,fecha_recibo:formManual.fecha,semana:semanaISO(formManual.fecha),mes:mesDe(formManual.fecha),tipo:"Manual",producto:formManual.producto||"Manual",codigo:formManual.codigo,estado:"Bodega",origen_lote:"trilla_directa",cereza:[{finca:"Externo",kg,valor_kg:vu,flote:0,kg_proceso:kg}],kg_producto:kg,bultos:0,humedad:"",conversion:1,notas:formManual.notas||"",insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},equipo_ferm:"",equipo_secado:"",fecha_lavado:null,fecha_fin_secado:null,salidas_bodega:[{id:sid,fecha:formManual.fecha,factura:"MANUAL",remision:"",cliente:"Trilla",destino_key:"trilla",peso_salida:kg,valor_kg:vu,valor_total:kg*vu}],trilla:null,salidas_trilladora:[],pretrilla:null};
+    const nuevo={id:genId(),fecha_proceso:formManual.fecha,fecha_recibo:formManual.fecha,semana:semanaISO(formManual.fecha),mes:mesDe(formManual.fecha),mesAnio:mesAnioDe(formManual.fecha),tipo:"Manual",producto:formManual.producto||"Manual",codigo:formManual.codigo,estado:"Bodega",origen_lote:"trilla_directa",cereza:[{finca:"Externo",kg,valor_kg:vu,flote:0,kg_proceso:kg}],kg_producto:kg,bultos:0,humedad:"",conversion:1,notas:formManual.notas||"",insumos:{jugo:0,panela:0,harina:0,levadura:0,vr_jugo:0,vr_panela:0,vr_harina:0,vr_levadura:0},equipo_ferm:"",equipo_secado:"",fecha_lavado:null,fecha_fin_secado:null,salidas_bodega:[{id:sid,fecha:formManual.fecha,factura:"MANUAL",remision:"",cliente:"Trilla",destino_key:"trilla",peso_salida:kg,valor_kg:vu,valor_total:kg*vu}],trilla:null,salidas_trilladora:[],pretrilla:null};
     setLotes(p=>[nuevo,...p]);
     setModalManual(false);setFormManual(blankManual());
   };
@@ -265,7 +265,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
     if(pe+cd+inf+ci<=0){alert("Ingresa al menos un valor de kg mayor a 0.");return;}
     const nuevo={
       id:genId(),codigo:formRegistroManualSV.producto.trim(),
-      fecha:formRegistroManualSV.fecha,mes:mesDe(formRegistroManualSV.fecha),semana:semanaISO(formRegistroManualSV.fecha),
+      fecha:formRegistroManualSV.fecha,mes:mesDe(formRegistroManualSV.fecha),mesAnio:mesAnioDe(formRegistroManualSV.fecha),semana:semanaISO(formRegistroManualSV.fecha),
       nombre_trillado:formRegistroManualSV.producto.trim(),producto:formRegistroManualSV.producto.trim(),
       corte:"MANUAL",lotes_origen:[],
       pasilla_elec:pe,catadora_dens:cd,inferiores:inf,cisco:ci,
@@ -301,7 +301,7 @@ export function Trilla({lotes,setLotes,costos,subprodVerde,setSubprodVerde,subpr
       return{...sp,salidas:[...(sp.salidas||[]),{id:genId(),fecha:formMezcla.fecha,peso_salida:pesoConsumido,destino_key:"mezcla_sub_korea",destino_label:"Mezcla "+codigoMezcla,observaciones:"Consumido en "+codigoMezcla}]};
     }));
     const nuevaMezcla={
-      id:genId(),codigo:codigoMezcla,fecha:formMezcla.fecha,mes:mesDe(formMezcla.fecha),
+      id:genId(),codigo:codigoMezcla,fecha:formMezcla.fecha,mes:mesDe(formMezcla.fecha),mesAnio:mesAnioDe(formMezcla.fecha),
       lotes_origen:selSubMezcla.map(sp=>sp.codigo),kg_entrada:entradaMezcla,
       kg_sub_korea:+formMezcla.kg_sub_korea||0,valor_kg_sub_korea:+formMezcla.valor_kg_sub_korea||0,
       kg_sub_korea_pasilla:+formMezcla.kg_sub_korea_pasilla||0,valor_kg_sub_korea_pasilla:+formMezcla.valor_kg_sub_korea_pasilla||0,

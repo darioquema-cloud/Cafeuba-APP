@@ -26,7 +26,7 @@ export function TabVentasTostado({empaques,setEmpaques}){
     setErr("");
     const u=+form.unidades,pr=+form.precio_unitario||0,dp=+form.descuento_pct||0;
     const valorTotal=Math.round(u*pr*(1-dp/100));
-    const nuevaVenta={id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),canal:form.canal,cliente:form.cliente,referencia:form.referencia,unidades:u,precio_unitario:pr,descuento_pct:dp,valor_total:valorTotal,notas:form.notas};
+    const nuevaVenta={id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),mesAnio:mesAnioDe(form.fecha),canal:form.canal,cliente:form.cliente,referencia:form.referencia,unidades:u,precio_unitario:pr,descuento_pct:dp,valor_total:valorTotal,notas:form.notas};
     setEmpaques(p=>p.map(e=>e.id===empaqueSel.id?{...e,ventas:[...(e.ventas||[]),nuevaVenta]}:e));
     setModal(false);
   };

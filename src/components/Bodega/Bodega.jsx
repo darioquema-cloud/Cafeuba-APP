@@ -16,7 +16,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const [formSubPerg,setFormSubPerg]=useState({fecha:today(),codigo:"",kg:"",valor_kg:""});
   const guardarSubPerg=()=>{
     if(!formSubPerg.codigo||!formSubPerg.kg)return;
-    const entry={fecha:formSubPerg.fecha,mes:mesDe(formSubPerg.fecha),semana:semanaISO(formSubPerg.fecha),codigo:formSubPerg.codigo,kg:+formSubPerg.kg,valor_kg:+formSubPerg.valor_kg||0};
+    const entry={fecha:formSubPerg.fecha,mes:mesDe(formSubPerg.fecha),mesAnio:mesAnioDe(formSubPerg.fecha),semana:semanaISO(formSubPerg.fecha),codigo:formSubPerg.codigo,kg:+formSubPerg.kg,valor_kg:+formSubPerg.valor_kg||0};
     if(editSubPergId){setSubprodPerg(p=>p.map(sp=>sp.id===editSubPergId?{...sp,...entry}:sp));}
     else{setSubprodPerg(p=>[{id:genId(),...entry,salidas:[]},...p]);}
     setModalSubPerg(false);setEditSubPergId(null);setFormSubPerg({fecha:today(),codigo:"",kg:"",valor_kg:""});
@@ -43,7 +43,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     if(kgEnviar<=0||kgEnviar>stock){alert("Kg invalido: debe ser mayor a 0 y no superar el stock disponible ("+fmt(stock,1)+" kg).");return;}
     const vu=+sp.valor_kg||0;
     const nuevo={
-      id:genId(),fecha_proceso:formSalidaSubPerg.fecha,fecha_recibo:formSalidaSubPerg.fecha,semana:semanaISO(formSalidaSubPerg.fecha),mes:mesDe(formSalidaSubPerg.fecha),
+      id:genId(),fecha_proceso:formSalidaSubPerg.fecha,fecha_recibo:formSalidaSubPerg.fecha,semana:semanaISO(formSalidaSubPerg.fecha),mes:mesDe(formSalidaSubPerg.fecha),mesAnio:mesAnioDe(formSalidaSubPerg.fecha),
       tipo:"Manual",producto:sp.codigo||"Subproducto",codigo:sp.codigo,
       estado:"Bodega",origen_lote:"trilla_directa",origen_subprod_id:sp.id,
       cereza:[{finca:"Subproducto Pergamino",kg:kgEnviar,valor_kg:vu,flote:0,kg_proceso:kgEnviar}],
@@ -100,7 +100,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
     if(kg<=0){alert("Los kg de pergamino deben ser mayores a 0.");return;}
     if(costoKg<=0){alert("El costo por kg debe ser mayor a 0.");return;}
     const nuevo={
-      id:genId(),fecha_proceso:formLoteManual.fecha,fecha_recibo:formLoteManual.fecha,semana:semanaISO(formLoteManual.fecha),mes:mesDe(formLoteManual.fecha),
+      id:genId(),fecha_proceso:formLoteManual.fecha,fecha_recibo:formLoteManual.fecha,semana:semanaISO(formLoteManual.fecha),mes:mesDe(formLoteManual.fecha),mesAnio:mesAnioDe(formLoteManual.fecha),
       producto:formLoteManual.producto||"",codigo:formLoteManual.codigo||("MAN-"+dateToCode(formLoteManual.fecha)),
       estado:"Bodega",origen_lote:"carga_directa",
       cereza:[],
@@ -151,7 +151,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const crearInventario=()=>{
     if(!formNuevoInv.fecha_conteo||!formNuevoInv.usuario_conteo.trim())return;
     const detalle=lotesB.map(l=>({lote_id:l.id,lote_codigo:l.codigo,producto:l.producto||"",stock_teorico:stockDisponible(l),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInv.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"bodega_milan",mes:mesDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_milan",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"bodega_milan",mes:mesDe(formNuevoInv.fecha_conteo),mesAnio:mesAnioDe(formNuevoInv.fecha_conteo),anio:new Date(formNuevoInv.fecha_conteo+"T00:00:00").getFullYear(),seccion:"bodega_milan",fecha_conteo:formNuevoInv.fecha_conteo,usuario_conteo:formNuevoInv.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvId(nuevo.id);
     setModalNuevoInv(false);
@@ -354,12 +354,12 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
       return{...l,salidas_bodega:sal,estado:stockNew>0?"Bodega":"Finalizado"};}));
     if(formSalida.destino_key==="bodega_cf"){
       const fSal=formSalida.fecha||today();
-      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:vkg||calcCosto(selLote,costos,lotes)?.total||0,valor_total:vtotal,notas:"Transferido desde Bodega Milan — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),mesAnio:mesAnioDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:vkg||calcCosto(selLote,costos,lotes)?.total||0,valor_total:vtotal,notas:"Transferido desde Bodega Milan — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
     }
     if(formSalida.destino_key==="trilla_cf"){
       const fSal=formSalida.fecha||today();
       const ckTri=vkg||calcCosto(selLote,costos,lotes)?.total||0;
-      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:ckTri,valor_total:vtotal,notas:"Trasladado desde Bodega Milan a Trilladora CF — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,para_trilladora:true,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
+      setLotesFino(p=>[{id:genId(),codigo:selLote?.codigo||("CF-"+dateToCode(fSal)),fecha:fSal,mes:mesDe(fSal),mesAnio:mesAnioDe(fSal),semana:semanaISO(fSal),producto:selLote?.producto||"",proveedor:"Bodega Milan",kg_producto:peso,costo_compra_kg:ckTri,valor_total:vtotal,notas:"Trasladado desde Bodega Milan a Trilladora CF — "+selLote?.codigo,salidas_bodega:[],trilla:null,salidas_trilladora:[],pretrilla:selLote?.pretrilla||null,para_trilladora:true,trazabilidad:{codigo_lote_origen:selLote?.codigo||"",fecha_proceso:selLote?.fecha_proceso||"",fecha_trilla:"",fecha_secado:selLote?.fecha_fin_secado||"",lotes_blend:[]}},...p]);
     }
     setModalSalida(false);setEditSalidaId(null);setFormSalida({fecha:today(),factura:"",remision:"",cliente:"",destino_key:"",peso_salida:"",valor_kg:"",valor_total:""});setErrSalida("");
   };

@@ -1,7 +1,7 @@
 import{useState}from"react";
 import{C,S}from"../../theme";
 import{fmtCOP,fmt,numVal,today,genId,fmtFecha}from"../../lib/format";
-import{mesDe}from"../../lib/dates";
+import{mesDe,mesAnioDe}from"../../lib/dates";
 import{Fld,KPI,Modal,TablaScrollV,Bdg}from"../ui";
 
 const BOLSA_CLIENTE="__bolsa_cliente__";
@@ -40,7 +40,7 @@ export function TabEmpaque({blendsTostado,empaques,setEmpaques,tiposEmpaque,setT
     const costoEmpaqueUnit=empaqueSeleccionado?.costo||0;
     const costoCafeUnit=Math.round(vut*(+form.gramos_por_unidad)/1000);
     setEmpaques(p=>[{
-      id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),codigo_lote_empacado:form.codigo_lote_empacado.trim(),
+      id:genId(),fecha:form.fecha,mes:mesDe(form.fecha),mesAnio:mesAnioDe(form.fecha),codigo_lote_empacado:form.codigo_lote_empacado.trim(),
       lote_tostado_id:loteSeleccionado.id,lote_tostado_codigo:loteSeleccionado.codigo,nombre_producto:loteSeleccionado.nombre_producto,
       gramos_por_unidad:+form.gramos_por_unidad,unidades:+form.unidades,tipo_molienda:form.tipo_molienda,
       empaque_nombre:empaqueSeleccionado?.nombre||"",costo_empaque_unitario:costoEmpaqueUnit,

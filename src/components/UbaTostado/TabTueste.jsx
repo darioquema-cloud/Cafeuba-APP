@@ -55,10 +55,10 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
     const origenTipoFinal=form.fuentes.length>0?"":form.origen_tipo;
     const origenSalidaIdFinal=form.fuentes.length>0?"":form.origen_salida_id;
     if(editId){
-      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld.length>0?lotesBld:t.lotes_blend||[],origen_tipo:form.fuentes.length>0?"":t.origen_tipo,origen_salida_id:form.fuentes.length>0?"":t.origen_salida_id}:t));
+      setBlendsTostado(p=>p.map(t=>t.id===editId?{...t,fecha:form.fecha,mes:mesDe(form.fecha),mesAnio:mesAnioDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld.length>0?lotesBld:t.lotes_blend||[],origen_tipo:form.fuentes.length>0?"":t.origen_tipo,origen_salida_id:form.fuentes.length>0?"":t.origen_salida_id}:t));
     }else{
       const cod="UBA-"+form.nombre_producto.replace(/\s+/g,"")+"-"+dateToCode(form.fecha);
-      const newRec={id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld,origen_tipo:origenTipoFinal,origen_salida_id:origenSalidaIdFinal};
+      const newRec={id:genId(),codigo:cod,fecha:form.fecha,mes:mesDe(form.fecha),mesAnio:mesAnioDe(form.fecha),nombre_producto:form.nombre_producto,kg_a_tostar:kgTotal,valor_unitario:vunit,valor_total:vtTotal,numero_baches:form.numero_baches,tipo_tostion:form.tipo_tostion,kg_cafe_tostado:numVal(form.kg_cafe_tostado)||0,catacion:form.catacion,responsable:form.responsable,codigo_lote_origen:codOrigen,fecha_proceso:form.fecha_proceso,fecha_trilla:form.fecha_trilla,fecha_secado:form.fecha_secado,valor_unitario_tostado:vutostado,fuentes:form.fuentes,lotes_blend:lotesBld,origen_tipo:origenTipoFinal,origen_salida_id:origenSalidaIdFinal};
       setBlendsTostado(p=>[newRec,...p]);
     }
     setModal(false);
@@ -182,7 +182,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const crearInventarioMP=()=>{
     if(!formNuevoInvMP.fecha_conteo||!formNuevoInvMP.usuario_conteo.trim())return;
     const detalle=pendientes.map(t=>({pendiente_id:t.id,codigo:t.codigo,producto:t.nombre_producto||"",stock_teorico:t.kg_a_tostar||0,stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInvMP.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"uba_tostado_pendiente",mes:mesDe(formNuevoInvMP.fecha_conteo),anio:new Date(formNuevoInvMP.fecha_conteo+"T00:00:00").getFullYear(),seccion:"uba_tostado_pendiente",fecha_conteo:formNuevoInvMP.fecha_conteo,usuario_conteo:formNuevoInvMP.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"uba_tostado_pendiente",mes:mesDe(formNuevoInvMP.fecha_conteo),mesAnio:mesAnioDe(formNuevoInvMP.fecha_conteo),anio:new Date(formNuevoInvMP.fecha_conteo+"T00:00:00").getFullYear(),seccion:"uba_tostado_pendiente",fecha_conteo:formNuevoInvMP.fecha_conteo,usuario_conteo:formNuevoInvMP.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvMPId(nuevo.id);
     setModalNuevoInvMP(false);
@@ -230,7 +230,7 @@ export function TabTueste({blendsTostado,setBlendsTostado,blendsFino,lotesFino,s
   const crearInventarioVT=()=>{
     if(!formNuevoInvVT.fecha_conteo||!formNuevoInvVT.usuario_conteo.trim())return;
     const detalle=historico.map(t=>({tueste_id:t.id,codigo:t.codigo,producto:t.nombre_producto||"",stock_teorico:stockGranel(t),stock_fisico:null,diferencia_kg:0,diferencia_pct:0,estado_semaforo:null,nota_justificacion:"",fecha_conteo:formNuevoInvVT.fecha_conteo}));
-    const nuevo={id:genId(),modulo:"uba_tostado_granel",mes:mesDe(formNuevoInvVT.fecha_conteo),anio:new Date(formNuevoInvVT.fecha_conteo+"T00:00:00").getFullYear(),seccion:"uba_tostado_granel",fecha_conteo:formNuevoInvVT.fecha_conteo,usuario_conteo:formNuevoInvVT.usuario_conteo.trim(),estado:"borrador",detalle};
+    const nuevo={id:genId(),modulo:"uba_tostado_granel",mes:mesDe(formNuevoInvVT.fecha_conteo),mesAnio:mesAnioDe(formNuevoInvVT.fecha_conteo),anio:new Date(formNuevoInvVT.fecha_conteo+"T00:00:00").getFullYear(),seccion:"uba_tostado_granel",fecha_conteo:formNuevoInvVT.fecha_conteo,usuario_conteo:formNuevoInvVT.usuario_conteo.trim(),estado:"borrador",detalle};
     setInventariosMensuales(p=>[nuevo,...(p||[])]);
     setSelInvVTId(nuevo.id);
     setModalNuevoInvVT(false);
