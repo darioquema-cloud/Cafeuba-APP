@@ -69,7 +69,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const [formEditar,setFormEditar]=useState({kg_producto:"",bultos:"",humedad:"",fecha_fin_secado:"",equipo_secado:EQUIPOS_SECADO[0]});
   const [modalPre,setModalPre]=useState(false);
   const [formPre,setFormPre]=useState({
-    fecha:today(),perfil_taza:"",almendra_sana:"",
+    fecha:today(),perfil_taza:"",almendra_sana:"",pct_base:"",pct_regional:"",
     peso_muestra:"",almendra_total:"",humedad_muestra:"",densidad:"",actividad_agua:"",
     malla_14:"",inferiores:"",gr_merma:"",
     negro:"",vinagre:"",grano_verde:"",reventado:"",dano_maquina:"",broca_severa:"",broca_punto:""
@@ -311,12 +311,12 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const sumaComponentesPre=(+formPre.almendra_sana||0)+(+formPre.inferiores||0)+(+formPre.gr_merma||0);
   const alertaPesosPre=(+formPre.peso_muestra)>0&&sumaComponentesPre>(+formPre.peso_muestra);
   const abrirPre=(l)=>{setSelLote(l);setFormPre(l.pretrilla?{
-    fecha:l.pretrilla.fecha||today(),perfil_taza:l.pretrilla.perfil_taza||"",almendra_sana:l.pretrilla.almendra_sana||"",
+    fecha:l.pretrilla.fecha||today(),perfil_taza:l.pretrilla.perfil_taza||"",almendra_sana:l.pretrilla.almendra_sana||"",pct_base:l.pretrilla.pct_base||"",pct_regional:l.pretrilla.pct_regional||"",
     peso_muestra:l.pretrilla.peso_muestra||"",almendra_total:l.pretrilla.almendra_total||"",humedad_muestra:l.pretrilla.humedad_muestra||"",densidad:l.pretrilla.densidad||"",actividad_agua:l.pretrilla.actividad_agua||"",
     malla_14:l.pretrilla.malla_14||"",inferiores:l.pretrilla.inferiores||"",gr_merma:l.pretrilla.gr_merma||"",
     negro:l.pretrilla.negro||"",vinagre:l.pretrilla.vinagre||"",grano_verde:l.pretrilla.grano_verde||"",reventado:l.pretrilla.reventado||"",dano_maquina:l.pretrilla.dano_maquina||"",broca_severa:l.pretrilla.broca_severa||"",broca_punto:l.pretrilla.broca_punto||""
   }:{
-    fecha:today(),perfil_taza:"",almendra_sana:"",
+    fecha:today(),perfil_taza:"",almendra_sana:"",pct_base:"",pct_regional:"",
     peso_muestra:"",almendra_total:"",humedad_muestra:"",densidad:"",actividad_agua:"",
     malla_14:"",inferiores:"",gr_merma:"",
     negro:"",vinagre:"",grano_verde:"",reventado:"",dano_maquina:"",broca_severa:"",broca_punto:""
@@ -324,7 +324,7 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
   const guardarPre=()=>{
     if(!selLote)return;
     setLotes(p=>p.map(l=>l.id===selLote.id?{...l,pretrilla:{
-      fecha:formPre.fecha,perfil_taza:formPre.perfil_taza,almendra_sana:+formPre.almendra_sana||0,
+      fecha:formPre.fecha,perfil_taza:formPre.perfil_taza,almendra_sana:+formPre.almendra_sana||0,pct_base:+formPre.pct_base||0,pct_regional:+formPre.pct_regional||0,
       peso_muestra:+formPre.peso_muestra||0,almendra_total:+formPre.almendra_total||0,
       humedad_muestra:+formPre.humedad_muestra||0,densidad:+formPre.densidad||0,
       actividad_agua:+formPre.actividad_agua||0,malla_14:+formPre.malla_14||0,
@@ -678,6 +678,8 @@ export function Bodega({lotes,setLotes,costos,setLotesFino,subprodPerg,setSubpro
           </select>
         </Fld>
         <Fld label="Almendra Sana (gr)" half><input style={S.input} type="number" value={formPre.almendra_sana} onChange={e=>setFormPre(p=>({...p,almendra_sana:e.target.value}))}/></Fld>
+        <Fld label="% Base" half><input style={S.input} type="number" placeholder="0-100" value={formPre.pct_base} onChange={e=>setFormPre(p=>({...p,pct_base:e.target.value}))}/></Fld>
+        <Fld label="% Regional" half><input style={S.input} type="number" placeholder="0-100" value={formPre.pct_regional} onChange={e=>setFormPre(p=>({...p,pct_regional:e.target.value}))}/></Fld>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:14,marginBottom:14}}>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
